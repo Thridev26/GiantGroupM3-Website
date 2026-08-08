@@ -1,0 +1,148 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site.master.cs" Inherits="GiantGroupM3.SiteMaster" %>
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head runat="server">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%: Page.Title %> - My ASP.NET Application</title>
+
+    <asp:PlaceHolder runat="server">
+        <%: Scripts.Render("~/bundles/modernizr") %>
+    </asp:PlaceHolder>
+    <webopt:bundlereference runat="server" path="~/Content/css" />
+    <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+
+</head>
+<body>
+    <form runat="server">
+        <asp:ScriptManager runat="server">
+            <Scripts>
+                <%--To learn more about bundling scripts in ScriptManager see https://go.microsoft.com/fwlink/?LinkID=301884 --%>
+                <%--Framework Scripts--%>
+                <asp:ScriptReference Name="MsAjaxBundle" />
+                <asp:ScriptReference Name="jquery" />
+                <asp:ScriptReference Name="WebForms.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebForms.js" />
+                <asp:ScriptReference Name="WebUIValidation.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebUIValidation.js" />
+                <asp:ScriptReference Name="MenuStandards.js" Assembly="System.Web" Path="~/Scripts/WebForms/MenuStandards.js" />
+                <asp:ScriptReference Name="GridView.js" Assembly="System.Web" Path="~/Scripts/WebForms/GridView.js" />
+                <asp:ScriptReference Name="DetailsView.js" Assembly="System.Web" Path="~/Scripts/WebForms/DetailsView.js" />
+                <asp:ScriptReference Name="TreeView.js" Assembly="System.Web" Path="~/Scripts/WebForms/TreeView.js" />
+                <asp:ScriptReference Name="WebParts.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebParts.js" />
+                <asp:ScriptReference Name="Focus.js" Assembly="System.Web" Path="~/Scripts/WebForms/Focus.js" />
+                <asp:ScriptReference Name="WebFormsBundle" />
+                <%--Site Scripts--%>
+            </Scripts>
+        </asp:ScriptManager>
+
+       <nav class="navbar navbar-expand-lg bg-primary" data-bs-theme="light">
+    <div class="container-fluid">
+        <!-- Brand -->
+        <a class="navbar-brand" runat="server" href="~/Default.aspx">The Giant Group</a>
+        
+        <!-- Mobile Toggle Button -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navbar Links -->
+        <div class="collapse navbar-collapse" id="navbarColor01">
+            <ul class="navbar-nav me-auto">
+                
+                <!-- 1. Job Scheduling Calendar -->
+                <li class="nav-item">
+                    <a class="nav-link" runat="server" href="~/Calendar.aspx">Calendar</a>
+                </li>
+
+                <!-- 2. Client Tab (Sub Tabs) -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Clients</a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" runat="server" href="~/Clients/AddClient.aspx">Add New Client</a>
+                        <a class="dropdown-item" runat="server" href="~/Clients/UpdateClient.aspx">Update Client Info</a>
+                        <a class="dropdown-item" runat="server" href="~/Clients/ViewClients.aspx">View All Clients</a>
+                    </div>
+                </li>
+
+                <!-- 3. Job Request Tab (Sub Tabs) -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Job Requests</a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" runat="server" href="~/Requests/SubmitRequest.aspx">Submit Job Request</a>
+                        <a class="dropdown-item" runat="server" href="~/Requests/UpdateRequest.aspx">Update Job Request</a>
+                        <a class="dropdown-item" runat="server" href="~/Requests/SitePhotos.aspx">Add Site Photos</a>
+                    </div>
+                </li>
+
+                <!-- 4. Quotations Tab (Sub Tabs) -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Quotations</a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" runat="server" href="~/Quotes/CreateQuote.aspx">Create Quote</a>
+                        <a class="dropdown-item" runat="server" href="~/Quotes/EditQuote.aspx">Edit Quote</a>
+                        <a class="dropdown-item" runat="server" href="~/Quotes/ViewQuote.aspx">View Quote</a>
+                    </div>
+                </li>
+
+                <!-- 5. Scheduling Tab (Sub Tabs) -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Allocation</a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" runat="server" href="~/Allocation/Assets.aspx">View Assets Allocation</a>
+                        <a class="dropdown-item" runat="server" href="~/Allocation/Staff.aspx">View Staff Allocation</a>
+                    </div>
+                </li>
+
+                <!-- 6. Jobs Tab (Sub Tabs) -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Jobs</a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" runat="server" href="~/Jobs/ManageJob.aspx">Add/Edit Job Details</a>
+                        <a class="dropdown-item" runat="server" href="~/Jobs/Progress.aspx">View/Edit Job Progress</a>
+                    </div>
+                </li>
+
+                <!-- 7. Invoicing Tab (Sub Tabs) -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Invoicing</a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" runat="server" href="~/Invoicing/CreateInvoice.aspx">Create Invoice</a>
+                        <a class="dropdown-item" runat="server" href="~/Invoicing/Payments.aspx">Manage & Make Payments</a>
+                    </div>
+                </li>
+
+                <!-- 8. Reports & Help -->
+                <li class="nav-item">
+                    <a class="nav-link" runat="server" href="~/Reports.aspx">Reports</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" runat="server" href="~/Help.aspx">Help</a>
+                </li>
+            </ul>
+
+            <!-- Right-Hand Side: About, Contact, Register, Login -->
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" runat="server" href="~/About.aspx">About</a></li>
+                <li class="nav-item"><a class="nav-link" runat="server" href="~/Contact.aspx">Contact</a></li>
+                <li class="nav-item"><a class="nav-link" runat="server" href="~/Account/Register">Register</a></li>
+                <li class="nav-item"><a class="nav-link" runat="server" href="~/Account/Login">Log in</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+        <div class="container body-content">
+            <asp:ContentPlaceHolder ID="MainContent" runat="server">
+            </asp:ContentPlaceHolder>
+            <hr />
+            <footer>
+                <p>&copy; <%: DateTime.Now.Year %> - The Giant Group X Code Crusaders</p>
+            </footer>
+        </div>
+    </form>
+    <asp:PlaceHolder runat="server">
+        <%: Scripts.Render("~/bundles/bootstrap.js") %>
+    </asp:PlaceHolder>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
