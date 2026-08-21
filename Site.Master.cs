@@ -69,13 +69,242 @@ namespace GiantGroupM3
 
         protected void Page_Load(object sender, EventArgs e)
         {
-
+            // If the OWIN authentication cookie is gone, ensure session is completely wiped too
+            if (!Context.User.Identity.IsAuthenticated)
+            {
+                if (Session["UserLevel"] != null || Session["StaffName"] != null || Session["Username"] != null)
+                {
+                    Session.Clear();
+                    Session.Abandon();
+                }
+            }
         }
 
-        protected void Unnamed_LoggingOut(object sender, LoginCancelEventArgs e)
+        protected void BtnLogout_Click(object sender, EventArgs e)
         {
-            Context.GetOwinContext().Authentication.SignOut(DefaultAuthenticationTypes.ApplicationCookie);
+            // 1. Clear session variables and abandon session
+            Session.Clear();
+            Session.Abandon();
+
+            // 2. Sign out from Forms Authentication & OWIN Identity
+            FormsAuthentication.SignOut();
+            var authManager = Context.GetOwinContext().Authentication;
+            if (authManager != null)
+            {
+                authManager.SignOut(Microsoft.AspNet.Identity.DefaultAuthenticationTypes.ApplicationCookie);
+            }
+
+            // 3. CRITICAL: Instantly force current thread/context to anonymous 
+            // so LoginView recognizes the state change on the very same redirect cycle
+            var anonymousPrincipal = new System.Security.Principal.GenericPrincipal(
+                new System.Security.Principal.GenericIdentity(string.Empty), null);
+            Context.User = anonymousPrincipal;
+            System.Threading.Thread.CurrentPrincipal = anonymousPrincipal;
+
+            // 4. Expire and clear authentication and session cookies from the browser
+            string[] cookiesToClear = { FormsAuthentication.FormsCookieName, ".AspNet.ApplicationCookie", "ASP.NET_SessionId" };
+            foreach (var cookieName in cookiesToClear)
+            {
+                if (Request.Cookies[cookieName] != null)
+                {
+                    var cookie = new HttpCookie(cookieName, "")
+                    {
+                        Expires = DateTime.Now.AddYears(-1),
+                        HttpOnly = true
+                    };
+                    Response.Cookies.Add(cookie);
+                }
+            }
+
+            // 5. Prevent browser caching
+            Response.Cache.SetCacheability(HttpCacheability.NoCache);
+            Response.Cache.SetNoStore();
+            Response.Cache.SetExpires(DateTime.UtcNow.AddMinutes(-1));
+            // 6. FORCE CLEAR current user context immediately so UI methods re-evaluate
+            Context.User = new System.Security.Principal.GenericPrincipal(
+                new System.Security.Principal.GenericIdentity(string.Empty), null);
+
+            // 7. Clear the response buffer and redirect instantly
+            Response.Clear();
+            Response.Redirect("~/", true);
+        }
+
+
+
+        // --- Permission & Role Helper Methods for Navigation ---
+
+        public bool IsLoggedIn()
+        {
+            var authManager = HttpContext.Current.GetOwinContext().Authentication;
+            if (authManager == null || !HttpContext.Current.User.Identity.IsAuthenticated)
+            {
+                return false;
+            }
+
+            // Allow staff OR clients to pass the login check
+            if (Session["UserLevel"] == null && Session["StaffName"] == null && !IsClient())
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public bool IsClient()
+        {
+            // Check all possible session keys your login code might populate
+            if (Session["UserRole"] != null && Session["UserRole"].ToString().Equals("Client", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+            if (Session["Role"] != null && Session["Role"].ToString().Equals("Client", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+            // Added this to catch Session["UserType"] set during Login.aspx.cs
+            if (Session["UserType"] != null && Session["UserType"].ToString().Equals("Client", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+            if (Session["ClientID"] != null)
+            {
+                return true;
+            }
+
+            return false;
+        }        
+
+        public int GetUserLevel()
+        {
+            if (Session["UserLevel"] != null && int.TryParse(Session["UserLevel"].ToString(), out int level))
+            {
+                return level;
+            }
+            return 0;
+        }
+
+        // --- Tab & Feature Visibility Rules ---
+
+        public bool CanSeeClientsTab()
+        {
+            if (!IsLoggedIn()) return false;
+            if (IsClient()) return true; // Clients see the tab (for updating info)
+            int level = GetUserLevel();
+            // Level 4 and Level 1 should NOT see clients tab. Level 5 and 6 can see it.
+            if (level == 4 || level == 1) return false;
+            return level >= 5;
+        }
+
+        public bool CanSeeUpdateClientInfoOnly()
+        {
+            // Clients should only see "Update Client Info" under Clients tab
+            return IsClient();
+        }
+
+        public bool CanSeeJobRequestsTab()
+        {
+            if (!IsLoggedIn()) return false;
+
+            // Clients must ALWAYS be able to see the Job Requests tab
+            if (IsClient()) return true;
+
+            // Staff restrictions (Level 5 and above)
+            int level = GetUserLevel();
+            if (level < 5) return false;
+
+            return true;
+        }
+
+        public bool CanSeeQuotationsTab()
+        {
+            if (!IsLoggedIn()) return false;
+            return true; // Everyone logged in (Staff & Clients) can access the Quotations tab container
+        }
+
+        public bool CanSeeCreateEditQuote()
+        {
+            if (!IsLoggedIn()) return false;
+            if (IsClient()) return false; // Clients never see Create/Edit Quote
+            int level = GetUserLevel();
+            return level == 6; // Adjust if Level 5 needs it, but per your spec Level 5 only sees view quote
+        }
+
+        public bool CanSeeViewQuoteOnly()
+        {
+            // Level 5 and Clients should ONLY see View Quote
+            if (IsClient()) return true;
+            int level = GetUserLevel();
+            return level == 5 || level == 6;
+        }
+
+        public bool CanSeeAllocationTab()
+        {
+            if (!IsLoggedIn()) return false;
+            return true; // Available, but sub-items controlled below
+        }
+
+        public bool CanSeeStaffAllocationOnly()
+        {
+            // All clients should only see view staff allocation under Allocation tab
+            if (IsClient()) return true;
+            return true; // Staff can see too, or adjust if needed
+        }
+
+        public bool CanSeeJobsTab()
+        {
+            if (!IsLoggedIn()) return false;
+            return true;
+        }
+
+        public bool CanSeeAddEditJobDetails()
+        {
+            if (!IsLoggedIn()) return false;
+            if (IsClient()) return false;
+            int level = GetUserLevel();
+            return level >= 4;
+        }
+
+
+        public bool CanSeeViewJobProgress()
+        {
+            if (!IsLoggedIn()) return false;
+            return true; // View progress available to staff/clients who have job access
+        }
+
+        public bool CanSeeEditJobProgress()
+        {
+            if (!IsLoggedIn()) return false;
+            if (IsClient()) return false; // Clients cannot edit progress
+            int level = GetUserLevel();
+            return level >= 1; // Adjust based on which staff levels can edit progress
+        }
+
+        public bool CanSeeInvoicingTab()
+        {
+            if (!IsLoggedIn()) return false;
+            return true; // Both staff and clients need invoice tab access
+        }
+
+        public bool CanSeeCreateInvoice()
+        {
+            if (!IsLoggedIn()) return false;
+            if (IsClient()) return false;
+            int level = GetUserLevel();
+            return level == 6; // Level 6 only
+        }
+
+        public bool CanSeeManageMakePaymentsOnly()
+        {
+            // Clients should only see manage/make payments under invoice tab
+            return true;
+        }
+
+        public bool CanSeeReports()
+        {
+            if (!IsLoggedIn()) return false;
+            if (IsClient()) return false;
+            int level = GetUserLevel();
+            return level == 6; // Level 5 explicitly should NOT see reports tab anymore
         }
     }
-
 }

@@ -7,29 +7,22 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace GiantGroupM3.Account {
-    
-    
-    public partial class ResetPassword {
-        
+namespace GiantGroupM3.Account
+{
+
+
+    public partial class ResetPassword
+    {
+
         /// <summary>
-        /// ErrorMessage control.
+        /// PanelResetForm control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Literal ErrorMessage;
-        
-        /// <summary>
-        /// Email control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox Email;
-        
+        protected global::System.Web.UI.WebControls.Panel PanelResetForm;
+
         /// <summary>
         /// Password control.
         /// </summary>
@@ -38,7 +31,7 @@ namespace GiantGroupM3.Account {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.TextBox Password;
-        
+
         /// <summary>
         /// ConfirmPassword control.
         /// </summary>
@@ -47,5 +40,14 @@ namespace GiantGroupM3.Account {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.TextBox ConfirmPassword;
+
+        /// <summary>
+        /// PanelAccessDenied control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel PanelAccessDenied;
     }
 }

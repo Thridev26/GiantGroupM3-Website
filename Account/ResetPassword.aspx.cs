@@ -1,46 +1,72 @@
 ﻿using System;
-using System.Linq;
-using System.Web;
+using System.Configuration;
+using System.Data.SqlClient;
 using System.Web.UI;
-using Microsoft.AspNet.Identity;
-using Microsoft.AspNet.Identity.Owin;
-using Owin;
-using GiantGroupM3.Models;
 
 namespace GiantGroupM3.Account
 {
     public partial class ResetPassword : Page
     {
-        protected string StatusMessage
+        protected void Page_Load(object sender, EventArgs e)
         {
-            get;
-            private set;
+            // Check if the user came through the verified gateway token
+            string verified = Request.QueryString["verified"];
+            if (verified == "true")
+            {
+                PanelResetForm.Visible = true;
+                PanelAccessDenied.Visible = false;
+            }
+            else
+            {
+                PanelResetForm.Visible = false;
+                PanelAccessDenied.Visible = true;
+            }
         }
 
         protected void Reset_Click(object sender, EventArgs e)
         {
-            string code = IdentityHelper.GetCodeFromRequest(Request);
-            if (code != null)
+            if (IsValid)
             {
-                var manager = Context.GetOwinContext().GetUserManager<ApplicationUserManager>();
+                string email = Request.QueryString["email"];
+                string userType = Request.QueryString["type"];
+                string newPassword = Password.Text.Trim();
 
-                var user = manager.FindByName(Email.Text);
-                if (user == null)
+                string connString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
+                int userId = 0;
+
+                using (SqlConnection conn = new SqlConnection(connString))
                 {
-                    ErrorMessage.Text = "No user found";
-                    return;
+                    conn.Open();
+
+                    string getIdQuery = userType == "Staff"
+                        ? "SELECT staffID FROM staff WHERE emailAddress = @Email"
+                        : "SELECT clientID FROM client WHERE emailAddress = @Email";
+
+                    using (SqlCommand idCmd = new SqlCommand(getIdQuery, conn))
+                    {
+                        idCmd.Parameters.AddWithValue("@Email", email);
+                        object res = idCmd.ExecuteScalar();
+                        if (res != null) userId = Convert.ToInt32(res);
+                    }
+
+                    // Hash new password securely with BCrypt
+                    string hashedNewPassword = BCrypt.Net.BCrypt.HashPassword(newPassword);
+
+                    // Update the correct table
+                    string updateQuery = userType == "Staff"
+                        ? "UPDATE staff SET passwordHash = @PasswordHash WHERE staffID = @ID"
+                        : "UPDATE client SET passwordHash = @PasswordHash WHERE clientID = @ID";
+
+                    using (SqlCommand updateCmd = new SqlCommand(updateQuery, conn))
+                    {
+                        updateCmd.Parameters.AddWithValue("@PasswordHash", hashedNewPassword);
+                        updateCmd.Parameters.AddWithValue("@ID", userId);
+                        updateCmd.ExecuteNonQuery();
+                    }
                 }
-                var result = manager.ResetPassword(user.Id, code, Password.Text);
-                if (result.Succeeded)
-                {
-                    Response.Redirect("~/Account/ResetPasswordConfirmation");
-                    return;
-                }
-                ErrorMessage.Text = result.Errors.FirstOrDefault();
-                return;
+
+                Response.Redirect("~/Account/ResetPasswordConfirmation");
             }
-
-            ErrorMessage.Text = "An error has occurred";
         }
     }
 }
