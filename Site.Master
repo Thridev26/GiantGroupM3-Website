@@ -151,25 +151,27 @@
     </div>
 
     <!-- Back to Top Button -->
-    <button id="backToTopBtn" class="btn btn-success position-fixed bottom-0 start-0 m-4 shadow-lg" style="display: none; z-index: 1070; border-radius: 50%; width: 45px; height: 45px;" title="Back to Top">↑</button>
+<button id="backToTopBtn" class="btn btn-success position-fixed bottom-0 start-0 m-4 shadow-lg" style="display: none; z-index: 1060; border-radius: 50%; width: 45px; height: 45px; margin-bottom: 75px !important;" title="Back to Top">↑</button>
 
-    <!-- Floating Contact Button -->
-    <a id="floatingContactBtn" runat="server" href="~/Contact.aspx" class="btn btn-success position-fixed bottom-0 end-0 m-4 shadow-lg d-flex align-items-center justify-content-center text-white" style="z-index: 1075; border-radius: 50px; padding: 10px 20px; background-color: #2d6a4f; text-decoration: none;" title="Contact Us">
-        💬 Contact Us
-    </a>
+<!-- Floating Contact Button -->
+<a id="floatingContactBtn" runat="server" href="~/Contact.aspx" class="btn btn-success position-fixed bottom-0 end-0 m-4 shadow-lg d-flex align-items-center justify-content-center text-white" style="z-index: 1060; border-radius: 50px; padding: 10px 20px; background-color: #2d6a4f; text-decoration: none; margin-bottom: 75px !important;" title="Contact Us">
+    💬 Contact Us
+</a>
 
-   <!-- Modern Cookie Banner -->
-<div id="cookieBanner" class="position-fixed bottom-0 start-0 end-0 bg-white border-top shadow-lg p-3 d-none align-items-center justify-content-between px-md-5" style="z-index: 1100;">
+   <!-- Cookie Consent Banner -->
+<div id="cookieConsentBanner" class="position-fixed bottom-0 start-0 end-0 bg-dark text-white p-3 shadow-lg border-top border-success border-3" style="z-index: 1040; display: none;">
     <div class="container d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
-        <div class="text-dark small text-center text-md-start">
-            <span class="fs-6 me-2">🍪</span> We use cookies to enhance your browsing experience and analyze site traffic on The Giant Group portal.
+        <div class="text-center text-md-start">
+            <span class="fs-5 me-2">🍪</span>
+            <strong>Cookie Notice:</strong> We use cookies to enhance your navigation experience, manage secure login sessions, and analyze site traffic. You can accept all cookies or reject non-essential ones. 
+            <a href="~/Privacy.aspx" runat="server" class="text-success text-decoration-underline ms-1">Learn more</a>
         </div>
-        <div class="d-flex gap-2 text-nowrap">
-            <button id="acceptCookies" class="btn btn-dark btn-sm px-4 py-2" style="background-color: #1b4332; border-color: #1b4332;">Accept All</button>
+        <div class="d-flex gap-2 flex-shrink-0">
+            <button type="button" id="btnRejectCookies" class="btn btn-outline-light btn-sm px-3">Reject Non-Essential</button>
+            <button type="button" id="btnAcceptCookies" class="btn btn-success btn-sm px-4 fw-bold">Accept All</button>
         </div>
     </div>
 </div>
-
     <form runat="server">
         <asp:ScriptManager runat="server">
             <Scripts>
@@ -347,16 +349,11 @@
         <div id="main-content" class="container body-content mt-4">
             <!-- Large Floating Guest Prompt Card in Bottom-Right Corner -->
             <% if (!IsLoggedIn()) { %>
-                <div id="guestNoticeCard" class="card shadow-lg border-0 position-fixed bottom-0 end-0 m-4 p-4" style="z-index: 1080; background-color: #e9f5f0; color: #2d6a4f; border-left: 6px solid #40916c !important; border-radius: 12px; max-width: 420px; margin-bottom: 80px !important;">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <h4 class="fw-bold mb-0" style="color: #2d6a4f;">Welcome to The Giant Group!</h4>
-                        <button type="button" class="btn-close" data-bs-dismiss="card" aria-label="Close" onclick="this.closest('#guestNoticeCard').style.display='none';"></button>
+                <div id="guestNoticeCard" class="card shadow-lg border-0 position-fixed bottom-0 end-0 m-4 p-4" style="z-index: 1050; background-color: #e9f5f0; color: #2d6a4f; border-left: 6px solid #40916c !important; border-radius: 12px; max-width: 420px; margin-bottom: 180px !important;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h5 class="fw-bold mb-1">Welcome to The Giant Group!</h5>
                     </div>
-                    <p class="mb-0 fs-6" style="line-height: 1.5;">
-                        You are currently browsing as a guest. To access management tools, view records, or perform actions, please 
-                        <a href="~/Account/Login" runat="server" class="fw-bold text-decoration-underline" style="color: #1b4332;">Log In</a> or 
-                        <a href="~/Account/Register" runat="server" class="fw-bold text-decoration-underline" style="color: #1b4332;">Register</a>.
-                    </p>
+                    <p class="mb-0 small">You are currently browsing as a guest. To access management tools, view records, or perform actions, please <a href="~/Account/Login.aspx" runat="server" class="fw-bold text-success">Log In</a> or <a href="~/Account/Register.aspx" runat="server" class="fw-bold text-success">Register</a>.</p>
                 </div>
             <% } %>
 
@@ -496,19 +493,36 @@
             });
         }
 
-        // 3. Simple Cookie Banner
-        const cookieBanner = document.getElementById('cookieBanner');
-        const acceptCookies = document.getElementById('acceptCookies');
-        if (!localStorage.getItem('cookiesAccepted') && cookieBanner) {
-            cookieBanner.classList.remove('d-none');
-            cookieBanner.classList.add('d-flex');
+        // 3. Cookie Consent Banner Logic (Accept All / Reject Non-Essential)
+        const cookieBanner = document.getElementById('cookieConsentBanner');
+        const btnAccept = document.getElementById('btnAcceptCookies');
+        const btnReject = document.getElementById('btnRejectCookies');
+
+        // Helper to check cookie by name
+        function getCookie(name) {
+            let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            if (match) return match[2];
+            return null;
         }
 
-        if (acceptCookies && cookieBanner) {
-            acceptCookies.addEventListener('click', () => {
-                localStorage.setItem('cookiesAccepted', 'true');
-                cookieBanner.classList.remove('d-flex');
-                cookieBanner.classList.add('d-none');
+        // Show banner if no choice has been recorded yet
+        if (!getCookie("GiantGroupCookieConsent") && cookieBanner) {
+            cookieBanner.style.display = 'block';
+        }
+
+        // Handle "Accept All"
+        if (btnAccept && cookieBanner) {
+            btnAccept.addEventListener('click', () => {
+                document.cookie = "GiantGroupCookieConsent=Accepted; path=/; max-age=" + (60 * 60 * 24 * 365) + "; SameSite=Lax";
+                cookieBanner.style.display = 'none';
+            });
+        }
+
+        // Handle "Reject Non-Essential"
+        if (btnReject && cookieBanner) {
+            btnReject.addEventListener('click', () => {
+                document.cookie = "GiantGroupCookieConsent=Rejected; path=/; max-age=" + (60 * 60 * 24 * 365) + "; SameSite=Lax";
+                cookieBanner.style.display = 'none';
             });
         }
 
@@ -538,9 +552,7 @@
             const performSearch = () => {
                 const query = searchInput.value.trim().toLowerCase();
                 if (query) {
-                    // Simple browser text search / find feature
                     if (window.find) {
-                        // Clears previous selection and finds next match on page
                         window.find(query);
                     } else {
                         alert("Search query: " + query);

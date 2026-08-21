@@ -9,34 +9,25 @@ namespace GiantGroupM3
 {
     public partial class _Default : Page
     {
+        // Public properties so your .aspx markup can easily check them if needed
+        public bool IsStaff => Session["StaffName"] != null || (Session["UserLevel"] != null && Convert.ToInt32(Session["UserLevel"]) >= 4);
+        public bool IsClient => Session["Username"] != null || (Session["UserLevel"] != null && Convert.ToInt32(Session["UserLevel"]) == 1);
+        public bool IsLoggedIn => Request.IsAuthenticated || Session["Username"] != null || Session["StaffName"] != null;
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (!IsPostBack)
             {
-                // Check if a user is actively authenticated via cookie/login session
-                if (User.Identity.IsAuthenticated)
+                // Dynamic visibility control via code-behind panels
+                if (IsStaff)
                 {
-                    // User is logged in! Show the operations hub.
-                    OperationsHubPanel.Visible = true;
-
-                    // Hide the guest prompt banner since they are already signed in
-                    GuestPromptPanel.Visible = false;
-
-                    // Optional: If you want to differentiate Staff vs Normal Clients further down the line:
-                    if (User.IsInRole("Staff") || User.IsInRole("Admin"))
-                    {
-                        // Staff-specific UI adjustments can go here if needed
-                    }
-                    else
-                    {
-                        // Normal client UI adjustments can go here if needed
-                    }
+                    if (OperationsHubPanel != null) OperationsHubPanel.Visible = true;
+                    if (GuestPromptPanel != null) GuestPromptPanel.Visible = false;
                 }
                 else
                 {
-                    // Guest user (not logged in): Hide operations, show prompt to log in
-                    OperationsHubPanel.Visible = false;
-                    GuestPromptPanel.Visible = true;
+                    if (OperationsHubPanel != null) OperationsHubPanel.Visible = false;
+                    if (GuestPromptPanel != null) GuestPromptPanel.Visible = !IsLoggedIn;
                 }
             }
         }
