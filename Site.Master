@@ -126,6 +126,35 @@
                 padding: 0 !important;
             }
         }
+
+       /* Compact Hover Dropdown - Deep Forest Green Theme */
+    .navbar .dropdown:hover > .dropdown-menu {
+        display: block !important;
+        margin-top: 0px !important;
+        border-radius: 6px;
+        border-top: 3px solid #52b788;
+        min-width: 200px;
+    }
+    .dropdown-menu {
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        background-color: #1b4332 !important;
+        border: 1px solid #2d6a4f !important;
+    }
+    .dropdown-item {
+        padding: 8px 16px;
+        transition: background-color 0.15s ease-in-out;
+        color: #e9ecef !important;
+    }
+    .dropdown-item:hover {
+        background-color: #2d6a4f !important;
+        color: #ffffff !important;
+    }
+    .dropdown-header {
+        color: #95d5b2 !important;
+    }
+    .dropdown-divider {
+        border-top-color: #2d6a4f !important;
+    }
     </style>
 </head>
 <body>
@@ -216,13 +245,17 @@
     <% if (CanSeeClientsTab()) { %>
     <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Clients</a>
-        <div class="dropdown-menu">
+        <div class="dropdown-menu p-2">
+            <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem; letter-spacing: 0.5px;">Actions</h6>
             <% if (!IsClient()) { %>
-                <a class="dropdown-item" runat="server" href="~/Clients/AddClient.aspx">Add New Client</a>
+                <a class="dropdown-item" runat="server" href="~/Clients/AddClient.aspx"><i class="bi bi-person-plus me-1"></i> Add New Client</a>
             <% } %>
-            <a class="dropdown-item" runat="server" href="~/Clients/UpdateClient.aspx">Update Client Info</a>
+            <a class="dropdown-item" runat="server" href="~/Clients/UpdateClient.aspx"><i class="bi bi-person-gear me-1"></i> Update Client Info</a>
+            
             <% if (!IsClient()) { %>
-                <a class="dropdown-item" runat="server" href="~/Clients/ViewClients.aspx">View All Clients</a>
+                <div class="dropdown-divider my-1"></div>
+                <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem; letter-spacing: 0.5px;">Records</h6>
+                <a class="dropdown-item" runat="server" href="~/Clients/ViewClients.aspx"><i class="bi bi-people me-1"></i> View All Clients</a>
             <% } %>
         </div>
     </li>
@@ -230,28 +263,34 @@
 
     <!-- Job Requests Tab -->
     <% if (CanSeeJobRequestsTab()) { %>
-   <li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Job Requests</a>
-    <div class="dropdown-menu">
-        <a class="dropdown-item" runat="server" href="~/Requests/SubmitRequest.aspx">Submit Job Request</a>
-        <a class="dropdown-item" runat="server" href="~/Requests/UpdateRequest.aspx">Update Job Request</a>
-        <a class="dropdown-item" runat="server" href="~/Requests/SitePhotos.aspx">Add Site Photos</a>
-    </div>
-</li>
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Job Requests</a>
+        <div class="dropdown-menu p-2">
+            <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem; letter-spacing: 0.5px;">Actions</h6>
+            <a class="dropdown-item" runat="server" href="~/Requests/SubmitRequest.aspx"><i class="bi bi-file-earmark-plus me-1"></i> Submit Job Request</a>
+            <a class="dropdown-item" runat="server" href="~/Requests/UpdateRequest.aspx"><i class="bi bi-file-earmark-text me-1"></i> Update Job Request</a>
+            <div class="dropdown-divider my-1"></div>
+            <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem; letter-spacing: 0.5px;">Media</h6>
+            <a class="dropdown-item" runat="server" href="~/Requests/SitePhotos.aspx"><i class="bi bi-camera me-1"></i> Add Site Photos</a>
+        </div>
+    </li>
     <% } %>
 
     <!-- Quotations Tab -->
     <% if (CanSeeQuotationsTab()) { %>
     <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Quotations</a>
-        <div class="dropdown-menu">
+        <div class="dropdown-menu p-2">
             <% if (CanSeeCreateEditQuote()) { %>
-                <a class="dropdown-item" runat="server" href="~/Quotes/CreateQuote.aspx">Create Quote</a>
-                <a class="dropdown-item" runat="server" href="~/Quotes/EditQuote.aspx">Edit Quote</a>
+                <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem; letter-spacing: 0.5px;">Actions</h6>
+                <a class="dropdown-item" runat="server" href="~/Quotes/CreateQuote.aspx"><i class="bi bi-plus-circle me-1"></i> Create Quote</a>
+                <a class="dropdown-item" runat="server" href="~/Quotes/EditQuote.aspx"><i class="bi bi-pencil me-1"></i> Edit Quote</a>
+                <div class="dropdown-divider my-1"></div>
             <% } %>
-            
+
             <% if (CanSeeViewQuoteOnly()) { %>
-                <a class="dropdown-item" runat="server" href="~/Quotes/ViewQuote.aspx">View Quote</a>
+                <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem; letter-spacing: 0.5px;">Records</h6>
+                <a class="dropdown-item" runat="server" href="~/Quotes/ViewQuote.aspx"><i class="bi bi-eye me-1"></i> View Quote</a>
             <% } %>
         </div>
     </li>
@@ -261,26 +300,31 @@
     <% if (CanSeeAllocationTab()) { %>
     <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Allocation</a>
-        <div class="dropdown-menu">
+        <div class="dropdown-menu p-2">
+            <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem; letter-spacing: 0.5px;">Resources</h6>
             <% if (!IsClient()) { %>
-                <a class="dropdown-item" runat="server" href="~/Allocation/Assets.aspx">View Assets Allocation</a>
+                <a class="dropdown-item" runat="server" href="~/Allocation/Assets.aspx"><i class="bi bi-tools me-1"></i> View Assets Allocation</a>
             <% } %>
-            <a class="dropdown-item" runat="server" href="~/Allocation/Staff.aspx">View Staff Allocation</a>
+            <a class="dropdown-item" runat="server" href="~/Allocation/Staff.aspx"><i class="bi bi-person-badge me-1"></i> View Staff Allocation</a>
         </div>
     </li>
     <% } %>
 
-    <!-- Jobs Tab (Split View and Edit Progress) -->
+    <!-- Jobs Tab -->
     <% if (CanSeeJobsTab()) { %>
     <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Jobs</a>
-        <div class="dropdown-menu">
+        <div class="dropdown-menu p-2">
             <% if (CanSeeAddEditJobDetails()) { %>
-                <a class="dropdown-item" runat="server" href="~/Jobs/ManageJob.aspx">Add/Edit Job Details</a>
+                <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem; letter-spacing: 0.5px;">Actions</h6>
+                <a class="dropdown-item" runat="server" href="~/Jobs/ManageJob.aspx"><i class="bi bi-gear me-1"></i> Add/Edit Job Details</a>
+                <div class="dropdown-divider my-1"></div>
             <% } %>
-            <a class="dropdown-item" runat="server" href="~/Jobs/Progress.aspx">View Job Progress</a>
+
+            <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem; letter-spacing: 0.5px;">Progress</h6>
+            <a class="dropdown-item" runat="server" href="~/Jobs/Progress.aspx"><i class="bi bi-graph-up-arrow me-1"></i> View Job Progress</a>
             <% if (CanSeeEditJobProgress()) { %>
-                <a class="dropdown-item" runat="server" href="~/Jobs/EditProgress.aspx">Edit Job Progress</a>
+                <a class="dropdown-item" runat="server" href="~/Jobs/EditProgress.aspx"><i class="bi bi-pencil-square me-1"></i> Edit Job Progress</a>
             <% } %>
         </div>
     </li>
@@ -290,11 +334,12 @@
     <% if (CanSeeInvoicingTab()) { %>
     <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Invoicing</a>
-        <div class="dropdown-menu">
+        <div class="dropdown-menu p-2">
+            <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem; letter-spacing: 0.5px;">Actions</h6>
             <% if (CanSeeCreateInvoice()) { %>
-                <a class="dropdown-item" runat="server" href="~/Invoicing/CreateInvoice.aspx">Create Invoice</a>
+                <a class="dropdown-item" runat="server" href="~/Invoicing/CreateInvoice.aspx"><i class="bi bi-receipt me-1"></i> Create Invoice</a>
             <% } %>
-            <a class="dropdown-item" runat="server" href="~/Invoicing/Payments.aspx">Manage & Make Payments</a>
+            <a class="dropdown-item" runat="server" href="~/Invoicing/Payments.aspx"><i class="bi bi-credit-card me-1"></i> Manage & Make Payments</a>
         </div>
     </li>
     <% } %>
