@@ -384,13 +384,12 @@
                 <li class="nav-item"><a class="nav-link text-white-50 px-2" runat="server" href="~/About.aspx">About</a></li>
                 <li class="nav-item"><a class="nav-link text-white-50 px-2" runat="server" href="~/Contact.aspx">Contact</a></li>
                               
-
-                <!-- Sleek Dark Mode Toggle (Using clear text icon fallback to prevent blank circles) -->
-                <li class="nav-item">
-                    <button id="darkModeToggle" class="btn btn-sm text-white rounded-circle d-flex align-items-center justify-content-center" type="button" title="Toggle Theme" style="width: 32px; height: 32px; background: rgba(255,255,255,0.1);">
-                        🌙
-                    </button>
-                </li>
+<!-- Sleek Dark Mode Toggle Button -->
+<li class="nav-item">
+    <button id="darkModeToggle" class="btn btn-sm text-white rounded-circle d-flex align-items-center justify-content-center border-0" type="button" title="Toggle Theme" style="width: 32px; height: 32px; background: rgba(255,255,255,0.1);">
+        <i id="darkModeIcon" class="bi bi-moon-fill small"></i>
+    </button>
+</li>
 
                 <!-- Professional Authentication Layout -->
                 <asp:LoginView runat="server" ViewStateMode="Disabled">
@@ -639,22 +638,26 @@
 
         // 1. Dark Mode Toggle
         const darkModeToggle = document.getElementById('darkModeToggle');
+        const darkModeIcon = document.getElementById('darkModeIcon');
         const currentTheme = localStorage.getItem('theme');
+
         if (currentTheme === 'dark') {
             document.body.classList.add('dark-mode');
-            if (darkModeToggle) darkModeToggle.textContent = '☀️';
+            if (darkModeIcon) darkModeIcon.className = 'bi bi-sun-fill small';
         }
 
         if (darkModeToggle) {
             darkModeToggle.addEventListener('click', () => {
                 document.body.classList.toggle('dark-mode');
                 let theme = 'light';
+
                 if (document.body.classList.contains('dark-mode')) {
                     theme = 'dark';
-                    darkModeToggle.textContent = '☀️';
+                    if (darkModeIcon) darkModeIcon.className = 'bi bi-sun-fill small'; // Sun icon for dark mode
                 } else {
-                    darkModeToggle.textContent = '🌙';
+                    if (darkModeIcon) darkModeIcon.className = 'bi bi-moon-fill small'; // Moon icon for light mode
                 }
+
                 localStorage.setItem('theme', theme);
             });
         }
