@@ -247,7 +247,10 @@
                 <a class="dropdown-item" runat="server" href="~/Quotes/CreateQuote.aspx">Create Quote</a>
                 <a class="dropdown-item" runat="server" href="~/Quotes/EditQuote.aspx">Edit Quote</a>
             <% } %>
-            <a class="dropdown-item" runat="server" href="~/Quotes/ViewQuote.aspx">View Quote</a>
+            
+            <% if (CanSeeViewQuoteOnly()) { %>
+                <a class="dropdown-item" runat="server" href="~/Quotes/ViewQuote.aspx">View Quote</a>
+            <% } %>
         </div>
     </li>
     <% } %>
@@ -586,7 +589,7 @@
                 toggleBtn.addEventListener('click', () => {
                     if (passwordField.type === 'password') {
                         passwordField.type = 'text';
-                        toggleBtn.textContent = '🙈';
+                        toggleBtn.textContent = '🔒︎';
                     } else {
                         passwordField.type = 'password';
                         toggleBtn.textContent = '👁️';

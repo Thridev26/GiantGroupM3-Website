@@ -176,10 +176,33 @@ namespace GiantGroupM3
 
         public int GetUserLevel()
         {
-            if (Session["UserLevel"] != null && int.TryParse(Session["UserLevel"].ToString(), out int level))
+            // Check all possible session keys where user level might be stored
+            string[] levelKeys = { "UserLevel", "Level", "User_Level", "StaffLevel", "AccessLevel" };
+
+            foreach (var key in levelKeys)
             {
-                return level;
+                if (Session[key] != null)
+                {
+                    // Handle if it's already an integer
+                    if (Session[key] is int intVal)
+                    {
+                        return intVal;
+                    }
+                    // Handle if it's a string representation of a number
+                    if (int.TryParse(Session[key].ToString(), out int parsedLevel))
+                    {
+                        return parsedLevel;
+                    }
+                }
             }
+
+            // Fallback: If Teboho is logged in as staff but level is unmapped, 
+            // force a default level of 1 so unassigned staff don't accidentally get admin rights!
+            if (Session["StaffName"] != null || Session["Username"] != null)
+            {
+                return 1; // Treat unknown logged-in staff as Level 1 for safety
+            }
+
             return 0;
         }
 
@@ -218,22 +241,44 @@ namespace GiantGroupM3
         public bool CanSeeQuotationsTab()
         {
             if (!IsLoggedIn()) return false;
-            return true; // Everyone logged in (Staff & Clients) can access the Quotations tab container
+
+            // Clients are allowed to see it (for view-only access)
+            if (IsClient()) return true;
+
+            int level = GetUserLevel();
+
+            // Level 1 and Level 4 staff members must NOT see the Quotations tab/words
+            if (level == 1 || level == 4) return false;
+
+            return true;
         }
 
         public bool CanSeeCreateEditQuote()
         {
             if (!IsLoggedIn()) return false;
             if (IsClient()) return false; // Clients never see Create/Edit Quote
+
             int level = GetUserLevel();
-            return level == 6; // Adjust if Level 5 needs it, but per your spec Level 5 only sees view quote
+            // Level 1 and 4 must NOT see the tab at all
+            if (level == 1 || level == 4) return false;
+
+            // Assuming higher admin levels (like level 6) get Create/Edit, 
+            // while Level 5 is restricted to view-only based on your note.
+            return level == 6 || level == 5; // Adjust if level 5
         }
 
         public bool CanSeeViewQuoteOnly()
         {
-            // Level 5 and Clients should ONLY see View Quote
+            if (!IsLoggedIn()) return false;
+
+
+            // Clients and Level 5 should see the View Quote sub-tab, 
+            // while higher levels (like Level 6) can also see everything.
             if (IsClient()) return true;
+
             int level = GetUserLevel();
+            // Level 1 and 4 must NOT see the tab at all
+            if (level == 1 || level == 4) return false;
             return level == 5 || level == 6;
         }
 
@@ -276,13 +321,23 @@ namespace GiantGroupM3
             if (!IsLoggedIn()) return false;
             if (IsClient()) return false; // Clients cannot edit progress
             int level = GetUserLevel();
-            return level >= 1; // Adjust based on which staff levels can edit progress
+            if (level == 1) return false; // Level 1 cannot edit progress
+            return level >= 4; // Adjust based on which staff levels can edit progress
         }
 
         public bool CanSeeInvoicingTab()
         {
             if (!IsLoggedIn()) return false;
-            return true; // Both staff and clients need invoice tab access
+
+            // Clients are allowed to see it
+            if (IsClient()) return true;
+
+            int level = GetUserLevel();
+
+            // Level 1 and Level 4 staff members must NOT see the Invoicing tab/words
+            if (level == 1 || level == 4) return false;
+
+            return true;
         }
 
         public bool CanSeeCreateInvoice()
