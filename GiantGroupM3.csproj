@@ -178,6 +178,7 @@
     <Content Include="Account\TwoFactorAuthenticationSignIn.aspx" />
     <Content Include="Account\VerifyOtp.aspx" />
     <Content Include="Account\VerifyPhoneNumber.aspx" />
+    <Content Include="Calendar.aspx" />
     <Content Include="Contact.aspx" />
     <Content Include="Content\Alt Logo .png" />
     <Content Include="Content\bootstrap-grid.css" />
@@ -395,6 +396,10 @@
     <Compile Include="App_Start\IdentityConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="App_Start\Startup.Auth.cs" />
+    <Compile Include="Calendar.aspx.cs">
+      <SubType>ASPXCodeBehind</SubType>
+      <DependentUpon>Calendar.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Contact.aspx.cs">
       <DependentUpon>Contact.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>

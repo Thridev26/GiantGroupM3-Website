@@ -368,44 +368,54 @@
     </li>
 </ul>
 
-                    <!-- Right-Hand Side: Search, About, Contact, Dark Mode Toggle, and Auth Links -->
-                    <ul class="navbar-nav ms-auto align-items-center">
-                        <!-- Site Search Bar -->
-                        <li class="nav-item me-2">
-                            <div class="input-group input-group-sm">
-                                <input type="text" id="siteSearchInput" class="form-control" placeholder="Search site..." aria-label="Search">
-                                <button class="btn btn-outline-light" type="button" id="siteSearchBtn">🔍</button>
-                            </div>
+                   <!-- Right-Hand Side: Search, Navigation, and Professional Auth -->
+            <ul class="navbar-nav ms-auto align-items-center gap-2">
+                
+                <!-- Refined Minimalist Search Bar -->
+                <li class="nav-item" style="width: 200px;">
+                    <div class="input-group input-group-sm rounded-pill overflow-hidden border border-light border-opacity-25" style="background: rgba(255,255,255,0.08);">
+                        <input type="text" id="siteSearchInput" class="form-control form-control-sm bg-transparent text-white border-0 shadow-none px-3" placeholder="Search..." aria-label="Search" style="color: #fff !important;">
+                        <button class="btn btn-sm text-white border-0 px-2" type="button" id="siteSearchBtn" style="background: rgba(255,255,255,0.15);">
+                            <i class="fa fa-search small"></i>
+                        </button>
+                    </div>
+                </li>
+
+                <li class="nav-item"><a class="nav-link text-white-50 px-2" runat="server" href="~/About.aspx">About</a></li>
+                <li class="nav-item"><a class="nav-link text-white-50 px-2" runat="server" href="~/Contact.aspx">Contact</a></li>
+                              
+
+                <!-- Sleek Dark Mode Toggle (Using clear text icon fallback to prevent blank circles) -->
+                <li class="nav-item">
+                    <button id="darkModeToggle" class="btn btn-sm text-white rounded-circle d-flex align-items-center justify-content-center" type="button" title="Toggle Theme" style="width: 32px; height: 32px; background: rgba(255,255,255,0.1);">
+                        🌙
+                    </button>
+                </li>
+
+                <!-- Professional Authentication Layout -->
+                <asp:LoginView runat="server" ViewStateMode="Disabled">
+                    <AnonymousTemplate>
+                        <li class="nav-item ms-1"><a class="nav-link text-white px-2" runat="server" href="~/Account/Register">Register</a></li>
+                        <li class="nav-item"><a class="btn btn-sm text-white px-3 py-1 rounded-pill ms-1 fw-semibold" runat="server" href="~/Account/Login" style="background-color: rgba(255,255,255,0.2);">Log In</a></li>
+                    </AnonymousTemplate>
+                   <LoggedInTemplate>
+                        <li class="nav-item ms-2 d-flex align-items-center">
+                            <span class="nav-link text-white small px-2 lh-sm text-end">
+                                <span class="d-block text-white-50" style="font-size: 0.7rem;">Welcome back,</span> 
+                                <span class="fw-bold"><%: Session["StaffName"] ?? Session["Username"] %></span>
+                            </span>
                         </li>
-
-                        <li class="nav-item"><a class="nav-link" runat="server" href="~/About.aspx">About</a></li>
-                        <li class="nav-item"><a class="nav-link" runat="server" href="~/Contact.aspx">Contact</a></li>
-
-                        <!-- Dark Mode Toggle Button -->
-                        <li class="nav-item ms-2 me-2">
-                            <button id="darkModeToggle" class="btn btn-sm btn-outline-light rounded-pill px-2 py-1" type="button" title="Toggle Dark/Light Mode">🌙</button>
+                        <li class="nav-item ms-1">
+                            <asp:LinkButton runat="server" ID="BtnLogout" OnClick="BtnLogout_Click" CssClass="btn btn-sm btn-outline-light rounded-pill px-3 py-2 small fw-semibold text-white text-nowrap" CausesValidation="false">
+                                Log Out
+                            </asp:LinkButton>
                         </li>
-
-                        <asp:LoginView runat="server" ViewStateMode="Disabled">
-                            <AnonymousTemplate>
-                                <li class="nav-item"><a class="nav-link" runat="server" href="~/Account/Register">Register</a></li>
-                                <li class="nav-item"><a class="nav-link" runat="server" href="~/Account/Login">Log In</a></li>
-                            </AnonymousTemplate>
-                            <LoggedInTemplate>
-                                <li class="nav-item">
-                                    <span class="nav-link text-light">Hello, <%: Session["StaffName"] ?? Session["Username"] %>!</span>
-                                </li>
-                                <li class="nav-item">
-                                    <asp:LinkButton runat="server" ID="BtnLogout" OnClick="BtnLogout_Click" CssClass="nav-link text-warning" CausesValidation="false">
-                                        Log Out
-                                    </asp:LinkButton>
-                                </li>
-                            </LoggedInTemplate>
-                        </asp:LoginView>
-                    </ul>
-                </div>
-            </div>
-        </nav>
+                    </LoggedInTemplate>
+                </asp:LoginView>
+            </ul>
+        </div>
+    </div>
+</nav>
 
        <!-- Floating Chatbot Widget Window -->
 <div id="chatbotPopup" class="card shadow-lg border-0 position-fixed bottom-0 end-0 m-4 rounded-4 overflow-hidden" style="z-index: 1070; width: 360px; max-height: 500px; display: none; margin-bottom: 90px !important;">
