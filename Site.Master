@@ -156,6 +156,8 @@
         border-top-color: #2d6a4f !important;
     }
     </style>
+    <!-- Bootstrap Icons CSS CDN -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 <body>
     <!-- Skip to Content Link (Accessibility) -->
@@ -182,10 +184,20 @@
     <!-- Back to Top Button -->
 <button id="backToTopBtn" class="btn btn-success position-fixed bottom-0 start-0 m-4 shadow-lg" style="display: none; z-index: 1060; border-radius: 50%; width: 45px; height: 45px; margin-bottom: 75px !important;" title="Back to Top">↑</button>
 
-<!-- Floating Contact Button -->
-<a id="floatingContactBtn" runat="server" href="~/Contact.aspx" class="btn btn-success position-fixed bottom-0 end-0 m-4 shadow-lg d-flex align-items-center justify-content-center text-white" style="z-index: 1060; border-radius: 50px; padding: 10px 20px; background-color: #2d6a4f; text-decoration: none; margin-bottom: 75px !important;" title="Contact Us">
-    💬 Contact Us
-</a>
+<!-- Container for Bottom-Right Floating Buttons -->
+<div class="position-fixed bottom-0 end-0 m-4 d-flex align-items-center gap-2" style="z-index: 1060;">
+    
+    <!-- 1. Chatbot Popup Trigger Button (Single Icon) -->
+    <button type="button" class="btn shadow-lg d-flex align-items-center justify-content-center text-white rounded-circle" style="width: 55px; height: 55px; background-color: #2d6a4f !important; border: none;" title="Open Quick Chat" onclick="toggleChatbot()">
+        <i class="bi bi-chat-dots-fill fs-5"></i>
+    </button>
+
+    <!-- 2. Contact Us Page Link Button -->
+    <a id="floatingContactBtn" runat="server" href="~/Contact.aspx" class="btn shadow-lg d-flex align-items-center justify-content-center text-white" style="border-radius: 50px; padding: 12px 22px; background-color: #2d6a4f !important; border: none; text-decoration: none;" title="Contact Us">
+        💬 <span class="ms-2 fw-bold">Contact Us</span>
+    </a>
+
+</div>
 
    <!-- Cookie Consent Banner -->
 <div id="cookieConsentBanner" class="position-fixed bottom-0 start-0 end-0 bg-dark text-white p-3 shadow-lg border-top border-success border-3" style="z-index: 1040; display: none;">
@@ -395,17 +407,108 @@
             </div>
         </nav>
 
+       <!-- Floating Chatbot Widget Window -->
+<div id="chatbotPopup" class="card shadow-lg border-0 position-fixed bottom-0 end-0 m-4 rounded-4 overflow-hidden" style="z-index: 1070; width: 360px; max-height: 500px; display: none; margin-bottom: 90px !important;">
+    <!-- Chat Header -->
+    <div class="card-header text-white d-flex justify-content-between align-items-center py-3 px-4" style="background-color: #2d6a4f !important;">
+        <div class="d-flex align-items-center">
+            <span class="me-2">💬</span>
+            <h6 class="fw-bold mb-0">Giant Group Assistant</h6>
+        </div>
+        <button type="button" class="btn text-white p-0 shadow-none border-0 fw-bold" style="font-size: 1.2rem; line-height: 1;" onclick="toggleChatbot()">&times;</button>
+    </div>
+    
+    <!-- Chat Body / Messages Area -->
+    <div class="card-body bg-light p-3 overflow-auto" style="height: 320px;" id="chatBody">
+        <div class="d-flex mb-3">
+            <div class="p-3 bg-white rounded-3 shadow-sm text-dark small" style="max-width: 80%;">
+                👋 Hello! Welcome to Giant Tree Felling. How can we help you with your tree or garden services today?
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Footer / Input Form -->
+    <div class="card-footer bg-white border-0 p-3">
+        <div class="input-group">
+            <input type="text" id="chatInput" class="form-control form-control-sm bg-light border-0 py-2 px-3" placeholder="Type your message..." />
+            <button class="btn btn-success px-3" type="button" style="background-color: #2d6a4f !important; border: none;" onclick="sendChatMessage()">
+                ➤
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleChatbot() {
+        var chatPopup = document.getElementById("chatbotPopup");
+        if (chatPopup) {
+            if (chatPopup.style.display === "none" || chatPopup.style.display === "") {
+                chatPopup.style.display = "block";
+                document.getElementById("chatInput").focus();
+            } else {
+                chatPopup.style.display = "none";
+            }
+        }
+    }
+
+    function sendChatMessage() {
+        var input = document.getElementById("chatInput");
+        var chatBody = document.getElementById("chatBody");
+
+        if (input.value.trim() !== "") {
+            var userMsgDiv = document.createElement("div");
+            userMsgDiv.className = "d-flex justify-content-end mb-3";
+            userMsgDiv.innerHTML = '<div class="p-3 text-white rounded-3 shadow-sm small" style="max-width: 80%; background-color: #2d6a4f;">' + input.value + '</div>';
+            chatBody.appendChild(userMsgDiv);
+
+            var userText = input.value;
+            input.value = "";
+            chatBody.scrollTop = chatBody.scrollHeight;
+
+            setTimeout(function () {
+                var botMsgDiv = document.createElement("div");
+                botMsgDiv.className = "d-flex mb-3";
+                botMsgDiv.innerHTML = '<div class="p-3 bg-white rounded-3 shadow-sm text-dark small" style="max-width: 80%;">Thanks for reaching out! One of our team members will review your message regarding "' + userText + '" shortly. You can also call us directly at 0848 331 373.</div>';
+                chatBody.appendChild(botMsgDiv);
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }, 1000);
+        }
+    }
+</script>
+
         <!-- Main Content Area -->
         <div id="main-content" class="container body-content mt-4">
             <!-- Large Floating Guest Prompt Card in Bottom-Right Corner -->
-            <% if (!IsLoggedIn()) { %>
-                <div id="guestNoticeCard" class="card shadow-lg border-0 position-fixed bottom-0 end-0 m-4 p-4" style="z-index: 1050; background-color: #e9f5f0; color: #2d6a4f; border-left: 6px solid #40916c !important; border-radius: 12px; max-width: 420px; margin-bottom: 180px !important;">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <h5 class="fw-bold mb-1">Welcome to The Giant Group!</h5>
-                    </div>
-                    <p class="mb-0 small">You are currently browsing as a guest. To access management tools, view records, or perform actions, please <a href="~/Account/Login.aspx" runat="server" class="fw-bold text-success">Log In</a> or <a href="~/Account/Register.aspx" runat="server" class="fw-bold text-success">Register</a>.</p>
-                </div>
-            <% } %>
+<% if (!IsLoggedIn()) { %>
+     <div id="guestNoticeCard" class="card shadow-lg border-0 position-fixed bottom-80 end-0 m-4 p-4" style="z-index: 1050; bottom: 100px; background-color: #e9f5f0; color: #2d6a4f; border-left: 6px solid #40916c !important; border-radius: 12px; max-width: 420px; display: none;">
+         <div class="d-flex justify-content-between align-items-start mb-2">
+    <h5 class="fw-bold mb-0">Welcome to The Giant Group!</h5>
+    <button type="button" class="btn border-0 p-0 shadow-none fw-bold" style="color: #2d6a4f !important; font-size: 1.4rem; line-height: 0.8;" aria-label="Close" onclick="dismissGuestCard()">&times;</button>
+</div>
+         <p class="mb-0 small">You are currently browsing as a guest. To access management tools, view records, or perform actions, please <a href="~/Account/Login.aspx" runat="server" class="fw-bold text-success">Log In</a> or <a href="~/Account/Register.aspx" runat="server" class="fw-bold text-success">Register</a>.</p>
+     </div>
+
+     <script>
+         // Check session storage on load so it stays closed if dismissed earlier
+         document.addEventListener("DOMContentLoaded", function () {
+             if (!sessionStorage.getItem("guestCardDismissed")) {
+                 var card = document.getElementById("guestNoticeCard");
+                 if (card) {
+                     card.style.display = "block";
+                 }
+             }
+         });
+
+         // Function triggered when the X button is clicked
+         function dismissGuestCard() {
+             var card = document.getElementById("guestNoticeCard");
+             if (card) {
+                 card.style.display = "none";
+                 sessionStorage.setItem("guestCardDismissed", "true");
+             }
+         }
+     </script>
+<% } %>
 
             <asp:ContentPlaceHolder ID="MainContent" runat="server">
             </asp:ContentPlaceHolder>
@@ -644,6 +747,74 @@
                 });
             }
         });
+    </script>
+
+    <script>
+        function toggleChatbot() {
+            var chatPopup = document.getElementById("chatbotPopup");
+            if (chatPopup) {
+                if (chatPopup.style.display === "none" || chatPopup.style.display === "") {
+                    chatPopup.style.display = "block";
+                    document.getElementById("chatInput").focus();
+                } else {
+                    chatPopup.style.display = "none";
+                }
+            }
+        }
+
+        function sendChatMessage() {
+            var input = document.getElementById("chatInput");
+            var chatBody = document.getElementById("chatBody");
+            var userText = input.value.trim();
+
+            if (userText !== "") {
+                // 1. Append user message
+                var userMsgDiv = document.createElement("div");
+                userMsgDiv.className = "d-flex justify-content-end mb-3";
+                userMsgDiv.innerHTML = '<div class="p-3 bg-success text-white rounded-3 shadow-sm small" style="max-width: 80%;">' + escapeHtml(userText) + '</div>';
+                chatBody.appendChild(userMsgDiv);
+
+                input.value = "";
+                chatBody.scrollTop = chatBody.scrollHeight;
+
+                // 2. Simulated automated response with keyword matching after a brief delay
+                setTimeout(function () {
+                    var botReply = getSmartFAQResponse(userText);
+
+                    var botMsgDiv = document.createElement("div");
+                    botMsgDiv.className = "d-flex mb-3";
+                    botMsgDiv.innerHTML = '<div class="p-3 bg-white rounded-3 shadow-sm text-dark small" style="max-width: 80%;">' + botReply + '</div>';
+                    chatBody.appendChild(botMsgDiv);
+                    chatBody.scrollTop = chatBody.scrollHeight;
+                }, 600);
+            }
+        }
+
+        function getSmartFAQResponse(input) {
+            const text = input.toLowerCase();
+
+            if (text.includes('price') || text.includes('cost') || text.includes('rate') || text.includes('fee')) {
+                return "Our pricing depends on the size and complexity of the tree-felling job. Contact us for a free on-site quote!";
+            }
+            else if (text.includes('hours') || text.includes('open') || text.includes('time') || text.includes('working')) {
+                return "We operate Monday to Saturday, from 7:00 AM to 5:00 PM.";
+            }
+            else if (text.includes('contact') || text.includes('phone') || text.includes('call') || text.includes('email')) {
+                return "You can reach us directly via our Contact page or call our support line at 0848 331 373.";
+            }
+            else if (text.includes('service') || text.includes('tree') || text.includes('felling') || text.includes('garden')) {
+                return "We specialize in professional tree-felling, stump removal, site clearance, and general garden maintenance.";
+            }
+            else {
+                return "Thanks for reaching out! One of our team members will review your message shortly. You can also call us directly at 0848 331 373.";
+            }
+        }
+
+        // Helper to prevent basic HTML injection
+        function escapeHtml(text) {
+            var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return text.replace(/[&<>"']/g, function (m) { return map[m]; });
+        }
     </script>
 </body>
 </html>
