@@ -66,7 +66,7 @@
                 <div class="col-lg-6 mb-4 mb-lg-0">
                     <h3 class="fw-bold text-dark mb-3">Specialized Tree Felling & Estate Maintenance</h3>
                     <p class="text-secondary">
-                        The Giant Group delivers heavy-duty arboreal solutions, site clearing, and hazardous tree dismantling for commercial estates, municipal facilities, and private properties. 
+                        The Giant Group delivers heavy-duty tree-felling solutions, site clearing, and hazardous tree dismantling for commercial estates, municipal facilities, and private properties. 
                     </p>
                     <p class="text-secondary mb-4">
                         Our integrated digital tracking platforms ensure total accountability from initial site quotation to final debris removal and safety sign-off.
@@ -97,7 +97,7 @@
                 <div class="col-md-4">
                     <div class="card h-100 shadow-sm border-0 p-4 rounded-4">
                         <div class="card-body">
-                            <div class="text-warning mb-2">⭐⭐⭐⭐⭐</div>
+                            <div class="text-warning mb-2">⭐⭐⭐⭐</div>
                             <p class="card-text fst-italic">"The Giant Group handled our complex hazardous tree removal seamlessly. Their asset tracking and rapid response teams are top-tier!"</p>
                             <h6 class="fw-bold mt-3 mb-0">— Marcus Vance</h6>
                             <small class="text-muted">Operations Director, Greenfield Estates</small>
@@ -117,7 +117,7 @@
                 <div class="col-md-4">
                     <div class="card h-100 shadow-sm border-0 p-4 rounded-4">
                         <div class="card-body">
-                            <div class="text-warning mb-2">⭐⭐⭐⭐⭐</div>
+                            <div class="text-warning mb-2">⭐⭐⭐⭐</div>
                             <p class="card-text fst-italic">"Outstanding turnaround times on quotes and site photo updates. Truly a cutting-edge team for tree-felling management."</p>
                             <h6 class="fw-bold mt-3 mb-0">— David Naidoo</h6>
                             <small class="text-muted">Head of Infrastructure, Titan Civil</small>
@@ -150,7 +150,7 @@
                             <div class="mb-3 text-success fs-2">👥</div>
                             <h3 class="card-title h5 fw-bold">Client Portals</h3>
                             <p class="card-text text-secondary">Add, update, and manage all organizational client information in one place.</p>
-                            <a runat="server" href="~/Clients/ViewClients.aspx" class="stretched-link text-success text-decoration-none fw-bold">View Clients &rarr;</a>
+                            <a runat="server" href="~/Clients/ViewClients.aspx" class="stretched-link text-success text-decoration-none fw-bold">Client Portal &rarr;</a>
                         </div>
                     </div>
                 </div>
@@ -160,7 +160,7 @@
                             <div class="mb-3 text-success fs-2">💰</div>
                             <h3 class="card-title h5 fw-bold">Quotations & Invoicing</h3>
                             <p class="card-text text-secondary">Generate quotes, track payment processing, and streamline financial records.</p>
-                            <a runat="server" href="~/Quotes/CreateQuote.aspx" class="stretched-link text-success text-decoration-none fw-bold">Create Quote &rarr;</a>
+                            <a runat="server" href="~/Quotes/CreateQuote.aspx" class="stretched-link text-success text-decoration-none fw-bold">Quotations Portal &rarr;</a>
                         </div>
                     </div>
                 </div>

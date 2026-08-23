@@ -206,9 +206,11 @@
                 <div class="collapse navbar-collapse" id="navbarColor01">
                     <!-- Left-Hand Side: Dynamic Menu Navigation -->
                     <ul class="navbar-nav me-auto">
-    <li class="nav-item">
-        <a class="nav-link" runat="server" href="~/Calendar.aspx">Calendar</a>
-    </li>
+    <% if (CanSeeCalendar()) { %>
+<li class="nav-item">
+    <a class="nav-link" runat="server" href="~/Calendar.aspx">Calendar</a>
+</li>
+<% } %>
 
     <!-- Clients Tab -->
     <% if (CanSeeClientsTab()) { %>

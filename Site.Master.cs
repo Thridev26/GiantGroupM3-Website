@@ -208,6 +208,18 @@ namespace GiantGroupM3
 
         // --- Tab & Feature Visibility Rules ---
 
+        public bool CanSeeCalendar()
+        {
+            // If not logged in at all, return false
+            if (!IsLoggedIn()) return false;
+
+            // If the user is a client, return false
+            if (IsClient()) return false;
+
+            // If it's a logged-in staff member (meaning they are logged in and not a client), return true
+            return true;
+        }
+
         public bool CanSeeClientsTab()
         {
             if (!IsLoggedIn()) return false;
