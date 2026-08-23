@@ -13,5 +13,21 @@ namespace GiantGroupM3
         {
 
         }
+
+        protected void btnSubmit_Click(object sender, EventArgs e)
+        {
+            // Here you can add your logic to process the form or send an email to info@gianttreefelling.co.za
+            if (Page.IsValid)
+            {
+                pnlSuccess.Visible = true;
+
+                // Clear form fields
+                txtName.Text = string.Empty;
+                txtEmail.Text = string.Empty;
+                txtPhone.Text = string.Empty;
+                txtMessage.Text = string.Empty;
+            }
+        }
     }
 }
+    
