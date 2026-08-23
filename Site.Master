@@ -6,6 +6,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><%: Page.Title %> - The Giant Group</title>
+    
+    <!-- Meta Description for SEO and Link Sharing -->
+    <meta name="description" content="The Giant Group enterprise management platform. Powered by Code Crusaders for professional tree-felling operations, quoting, and asset management." />
 
     <asp:PlaceHolder runat="server">
         <%: Scripts.Render("~/bundles/modernizr") %>
