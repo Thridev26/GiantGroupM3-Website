@@ -123,20 +123,13 @@
                         </div>
 
 
-
-                        <!-- Remember Me Checkbox -->
-
-                        <div class="mb-4 d-flex align-items-center">
-
-                            <div class="form-check">
-
-                                <asp:CheckBox runat="server" ID="RememberMe" CssClass="form-check-input" />
-
-                                <asp:Label runat="server" AssociatedControlID="RememberMe" CssClass="form-check-label text-secondary small user-select-none ms-1" style="cursor: pointer;">Remember me on this device</asp:Label>
-
-                            </div>
-
-                        </div>
+<!-- Remember Me Checkbox -->
+<div class="mb-4">
+    <div class="form-check">
+        <input type="checkbox" runat="server" id="RememberMe" class="form-check-input" />
+        <label runat="server" for="RememberMe" class="form-check-label text-secondary small user-select-none" style="cursor: pointer;">Remember me on this device</label>
+    </div>
+</div>
 
 
 
@@ -238,11 +231,10 @@
 
    <!-- Custom Styling & Scripts -->
     <style>
-        .btn:hover { background-color: #256328 !important; transform: translateY(-1px); }
+      .btn:hover { background-color: #256328 !important; transform: translateY(-1px); }
         #togglePassword:hover { background-color: #f8f9fa !important; color: #2e7d32 !important; }
         .form-control:focus { background-color: #fff !important; box-shadow: none !important; }
         .input-group:focus-within { box-shadow: 0 0 0 0.25rem rgba(46, 125, 50, 0.15) !important; border-color: #2e7d32 !important; }
-        .form-check-input:checked { background-color: #2e7d32 !important; border-color: #2e7d32 !important; }
 
         /* Realistic Google Sign-In Button Styling */
         .google-signin-btn {
@@ -256,6 +248,17 @@
             box-shadow: 0 1px 3px rgba(60, 64, 67, 0.3) !important;
             transform: none !important;
         }
+           
+        /* Lowkey, professional dark slate/charcoal check appearance */
+        .form-check-input:checked {
+            background-color: #495057 !important; 
+            border-color: #495057 !important;
+        }
+        .form-check-input:focus {
+            border-color: #495057 !important;
+            box-shadow: 0 0 0 0.25rem rgba(73, 80, 87, 0.15) !important;
+        }
+        
     </style>
 
 
