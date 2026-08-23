@@ -54,7 +54,7 @@ namespace GiantGroupM3.Account
                         // 2. Generate 6-digit OTP and 5-minute expiry window
                         string otp = new Random().Next(100000, 999999).ToString();
                         DateTime expiryTime = DateTime.Now.AddMinutes(5);
-                        // 3. Save the OTP record into your database tracking table based on user type
+                        // 3. Save the OTP record into your database tracking table using SQL Server's GETDATE()
                         using (SqlConnection conn = new SqlConnection(connString))
                         {
                             conn.Open();
@@ -70,18 +70,18 @@ namespace GiantGroupM3.Account
 
                             if (userType == "Staff")
                             {
-                                insertQuery = "INSERT INTO PasswordResets (StaffID, OTP, ExpiryTime) VALUES (@UserId, @Otp, @ExpiryTime)";
+                                insertQuery = "INSERT INTO PasswordResets (StaffID, OTP, ExpiryTime) VALUES (@UserId, @Otp, DATEADD(minute, 5, GETDATE()))";
                             }
                             else
                             {
-                                insertQuery = "INSERT INTO PasswordResets (ClientID, OTP, ExpiryTime) VALUES (@UserId, @Otp, @ExpiryTime)";
+                                insertQuery = "INSERT INTO PasswordResets (ClientID, OTP, ExpiryTime) VALUES (@UserId, @Otp, DATEADD(minute, 5, GETDATE()))";
                             }
 
                             using (SqlCommand cmd = new SqlCommand(insertQuery, conn))
                             {
                                 cmd.Parameters.AddWithValue("@UserId", userId);
                                 cmd.Parameters.AddWithValue("@Otp", otp);
-                                cmd.Parameters.AddWithValue("@ExpiryTime", expiryTime);
+                                // Notice we removed @ExpiryTime parameter because SQL Server handles it via DATEADD now!
                                 cmd.ExecuteNonQuery();
                             }
                         }
@@ -178,7 +178,10 @@ namespace GiantGroupM3.Account
                 return;
             }
 
-            string redirectUri = $"{Request.Url.GetLeftPart(UriPartial.Authority)}/Account/Login.aspx";
+            string scheme = Request.Headers["X-Forwarded-Proto"] ?? Request.Url.Scheme;
+            string authority = Request.Url.Authority;
+            string redirectUri = $"{scheme}://{authority}/Account/Login.aspx";
+
             string googleAuthUrl = $"https://accounts.google.com/o/oauth2/v2/auth?client_id={HttpUtility.UrlEncode(clientId)}&redirect_uri={HttpUtility.UrlEncode(redirectUri)}&response_type=code&scope=email%20profile";
 
             Response.Redirect(googleAuthUrl);

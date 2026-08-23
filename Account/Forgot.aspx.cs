@@ -74,25 +74,34 @@ namespace GiantGroupM3.Account
                 try
                 {
                     string otp = new Random().Next(100000, 999999).ToString();
-                    DateTime expiryTime = DateTime.Now.AddMinutes(5); // 5-minute window matching your table schema
 
-                    // Save the OTP record into your PasswordResets table
                     using (SqlConnection conn = new SqlConnection(connString))
                     {
                         conn.Open();
-                        // 1. Clean up expired tokens older than 24 hours
+
+                        // Clean up expired records older than 24 hours
                         string cleanupQuery = "DELETE FROM PasswordResets WHERE ExpiryTime < DATEADD(hour, -24, GETDATE());";
                         using (SqlCommand cmdCleanup = new SqlCommand(cleanupQuery, conn))
                         {
                             cmdCleanup.ExecuteNonQuery();
                         }
 
-                        string insertQuery = "INSERT INTO PasswordResets (StaffID, OTP, ExpiryTime) VALUES (@UserId, @Otp, @ExpiryTime)";
+                        string insertQuery;
+
+                        if (userType == "Staff")
+                        {
+                            insertQuery = "INSERT INTO PasswordResets (StaffID, OTP, ExpiryTime) VALUES (@UserId, @Otp, DATEADD(minute, 5, GETDATE()))";
+                        }
+                        else
+                        {
+                            insertQuery = "INSERT INTO PasswordResets (ClientID, OTP, ExpiryTime) VALUES (@UserId, @Otp, DATEADD(minute, 5, GETDATE()))";
+                        }
+
                         using (SqlCommand cmd = new SqlCommand(insertQuery, conn))
                         {
                             cmd.Parameters.AddWithValue("@UserId", userId);
                             cmd.Parameters.AddWithValue("@Otp", otp);
-                            cmd.Parameters.AddWithValue("@ExpiryTime", expiryTime);
+                            // Notice @ExpiryTime parameter is removed since SQL handles it now!
                             cmd.ExecuteNonQuery();
                         }
                     }
