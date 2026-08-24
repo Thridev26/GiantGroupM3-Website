@@ -54,6 +54,7 @@ namespace GiantGroupM3.Account
                         // 2. Generate 6-digit OTP and 5-minute expiry window
                         string otp = new Random().Next(100000, 999999).ToString();
                         DateTime expiryTime = DateTime.Now.AddMinutes(5);
+
                         // 3. Save the OTP record into your database tracking table using SQL Server's GETDATE()
                         using (SqlConnection conn = new SqlConnection(connString))
                         {
@@ -66,9 +67,23 @@ namespace GiantGroupM3.Account
                                 cmdCleanup.ExecuteNonQuery();
                             }
 
+                            // --- BULLETPROOF FIX: Check the database directly to confirm if this email belongs to Staff ---
+                            bool isActuallyStaff = false;
+                            string checkStaffQuery = "SELECT COUNT(1) FROM staff WHERE emailAddress = @Email";
+                            using (SqlCommand staffCheckCmd = new SqlCommand(checkStaffQuery, conn))
+                            {
+                                staffCheckCmd.Parameters.AddWithValue("@Email", email);
+                                int staffExists = Convert.ToInt32(staffCheckCmd.ExecuteScalar());
+                                if (staffExists > 0)
+                                {
+                                    isActuallyStaff = true;
+                                }
+                            }
+
                             string insertQuery;
 
-                            if (userType == "Staff")
+                            // Route strictly based on real table membership, or fallback to your userType check
+                            if (isActuallyStaff || (userType != null && (userType.Equals("Staff", StringComparison.OrdinalIgnoreCase) || userType.Equals("Owner", StringComparison.OrdinalIgnoreCase) || userType.Equals("Admin", StringComparison.OrdinalIgnoreCase))))
                             {
                                 insertQuery = "INSERT INTO PasswordResets (StaffID, OTP, ExpiryTime) VALUES (@UserId, @Otp, DATEADD(minute, 5, GETDATE()))";
                             }
@@ -81,7 +96,6 @@ namespace GiantGroupM3.Account
                             {
                                 cmd.Parameters.AddWithValue("@UserId", userId);
                                 cmd.Parameters.AddWithValue("@Otp", otp);
-                                // Notice we removed @ExpiryTime parameter because SQL Server handles it via DATEADD now!
                                 cmd.ExecuteNonQuery();
                             }
                         }

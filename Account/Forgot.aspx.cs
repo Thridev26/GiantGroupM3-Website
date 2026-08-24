@@ -67,8 +67,6 @@ namespace GiantGroupM3.Account
                     ErrorMessage.Visible = true;
                     return;
                 }
-
-                // ==========================================
                 // GENERATE OTP, SAVE TO DATABASE, & SEND EMAIL
                 // ==========================================
                 try
@@ -86,9 +84,22 @@ namespace GiantGroupM3.Account
                             cmdCleanup.ExecuteNonQuery();
                         }
 
-                        string insertQuery;
+                        // 1. Explicitly check if this email exists in the staff table
+                        bool isStaff = false;
+                        string staffCheckQuery = "SELECT COUNT(1) FROM staff WHERE emailAddress = @EmailCheck";
+                        using (SqlCommand cmdStaffCheck = new SqlCommand(staffCheckQuery, conn))
+                        {
+                            cmdStaffCheck.Parameters.AddWithValue("@EmailCheck", email);
+                            int count = Convert.ToInt32(cmdStaffCheck.ExecuteScalar());
+                            if (count > 0)
+                            {
+                                isStaff = true;
+                            }
+                        }
 
-                        if (userType == "Staff")
+                        // 2. Build the insert query dynamically based on actual table membership
+                        string insertQuery;
+                        if (isStaff)
                         {
                             insertQuery = "INSERT INTO PasswordResets (StaffID, OTP, ExpiryTime) VALUES (@UserId, @Otp, DATEADD(minute, 5, GETDATE()))";
                         }
@@ -101,7 +112,6 @@ namespace GiantGroupM3.Account
                         {
                             cmd.Parameters.AddWithValue("@UserId", userId);
                             cmd.Parameters.AddWithValue("@Otp", otp);
-                            // Notice @ExpiryTime parameter is removed since SQL handles it now!
                             cmd.ExecuteNonQuery();
                         }
                     }
