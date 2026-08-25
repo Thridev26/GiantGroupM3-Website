@@ -525,38 +525,41 @@
             <asp:ContentPlaceHolder ID="MainContent" runat="server">
             </asp:ContentPlaceHolder>
             <hr />
-            <footer class="border-top bg-light text-muted py-4 mt-auto shadow-sm">
-    <div class="container">
-        <div class="row align-items-center gy-3">
-            
-            <!-- Left: Company & Team Branding -->
-            <div class="col-md-6 text-center text-md-start">
-                <p class="mb-1 fw-semibold text-dark small">
-                    &copy; <%: DateTime.Now.Year %> The Giant Group &bull; Engineered by <span class="text-success fw-bold">Code Crusaders</span>
-                </p>
-                <p class="mb-0 text-muted" style="font-size: 0.8rem;">
-                    Enterprise Tree-Felling & Asset Management System &bull; Last Updated: <span id="lastUpdatedDate" class="fw-medium text-dark"></span>
-                </p>
-            </div>
+        </div> <!-- Closes your main container/wrapper -->
+  
 
-            <!-- Right: Quick Navigation & Legal Links -->
-            <div class="col-md-6 text-center text-md-end">
-                <div class="d-flex justify-content-center justify-content-md-end align-items-center gap-3 small">
-                    <a runat="server" href="~/Default.aspx" class="text-decoration-none text-muted hover-success">Home</a>
-                    <span class="text-muted opacity-50">/</span>
-                    <a runat="server" href="~/Help.aspx" class="text-decoration-none text-muted hover-success">Help Guide</a>
-                    <span class="text-muted opacity-50">/</span>
-                    <a runat="server" href="~/Contact.aspx" class="text-decoration-none text-muted hover-success">Support</a>
-                    <span class="text-muted opacity-50">/</span>
-                    <a runat="server" href="~/Privacy.aspx" class="text-decoration-none text-success fw-bold">Privacy Policy</a>
+    <!-- Footer now sits outside the container, spanning full width -->
+    <footer class="border-top bg-light text-muted py-4 mt-auto shadow-sm w-100">
+        <div class="container">
+            <div class="row align-items-center gy-3">
+                
+                <!-- Left: Company & Team Branding -->
+                <div class="col-md-6 text-center text-md-start">
+                    <p class="mb-1 fw-semibold text-dark small">
+                        &copy; <%: DateTime.Now.Year %> The Giant Group &bull; Engineered by <span class="text-success fw-bold">Code Crusaders</span>
+                    </p>
+                    <p class="mb-0 text-muted" style="font-size: 0.8rem;">
+                        Enterprise Operations & Asset Management System &bull; Last Updated: <span id="lastUpdatedDate" class="fw-medium text-dark"></span>
+                    </p>
                 </div>
-            </div>
 
+                <!-- Right: Quick Navigation & Legal Links -->
+                <div class="col-md-6 text-center text-md-end">
+                    <div class="d-flex justify-content-center justify-content-md-end align-items-center gap-3 small">
+                        <a runat="server" href="~/Default.aspx" class="text-decoration-none text-muted hover-success">Home</a>
+                        <span class="text-muted opacity-50">/</span>
+                        <a runat="server" href="~/Help.aspx" class="text-decoration-none text-muted hover-success">Help Guide</a>
+                        <span class="text-muted opacity-50">/</span>
+                        <a runat="server" href="~/Contact.aspx" class="text-decoration-none text-muted hover-success">Support</a>
+                        <span class="text-muted opacity-50">/</span>
+                        <a runat="server" href="~/Privacy.aspx" class="text-decoration-none text-success fw-bold">Privacy Policy</a>
+                    </div>
+                </div>
+
+            </div>
         </div>
-    </div>
-</footer>
-        </div>
-    </form>
+    </footer>
+</form>
 
     <asp:PlaceHolder runat="server">
         <%: Scripts.Render("~/bundles/bootstrap.js") %>

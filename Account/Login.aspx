@@ -258,6 +258,19 @@
             border-color: #495057 !important;
             box-shadow: 0 0 0 0.25rem rgba(73, 80, 87, 0.15) !important;
         }
+
+        /* Hide browser default password reveal icons (Edge, IE, Chrome, Safari) */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none !important;
+}
+
+input[type="password"]::-webkit-contacts-auto-fill-button,
+input[type="password"]::-webkit-credentials-auto-fill-button {
+    visibility: hidden;
+    position: absolute;
+    right: 0;
+}
         
     </style>
 
