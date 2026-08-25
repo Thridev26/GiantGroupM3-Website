@@ -225,21 +225,87 @@ namespace GiantGroupM3.Account
                         {
                             string googleEmail = userInfo["email"].ToString().Trim();
 
-                            if (DoesUserExistInDatabase(googleEmail, out string userType, out string userName, out int userLevel))
+                            // Check database and grab user details + userId
+                            if (DoesUserExistInDatabase(googleEmail, out string userType, out string userName, out int userLevel, out int userId))
                             {
-                                Session["StaffName"] = userName;
-                                Session["UserType"] = userType;
-                                Session["UserRole"] = userType; // Add this line for Google login too
-                                Session["UserLevel"] = userLevel;
-                                FormsAuthentication.SetAuthCookie(googleEmail, false);
-                                RedirectToReturnUrl();
-                                return;
+                                string connString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
+
+                                // 1. Generate 6-digit OTP and 5-minute expiry window (identical to standard login)
+                                string otp = new Random().Next(100000, 999999).ToString();
+                                DateTime expiryTime = DateTime.Now.AddMinutes(5);
+
+                                using (SqlConnection conn = new SqlConnection(connString))
+                                {
+                                    conn.Open();
+
+                                    // Clean up expired records older than 24 hours
+                                    string cleanupQuery = "DELETE FROM PasswordResets WHERE ExpiryTime < DATEADD(hour, -24, GETDATE());";
+                                    using (SqlCommand cmdCleanup = new SqlCommand(cleanupQuery, conn))
+                                    {
+                                        cmdCleanup.ExecuteNonQuery();
+                                    }
+
+                                    // Confirm if staff using robust check
+                                    bool isActuallyStaff = false;
+                                    string checkStaffQuery = "SELECT COUNT(1) FROM staff WHERE emailAddress = @Email";
+                                    using (SqlCommand staffCheckCmd = new SqlCommand(checkStaffQuery, conn))
+                                    {
+                                        staffCheckCmd.Parameters.AddWithValue("@Email", googleEmail);
+                                        int staffExists = Convert.ToInt32(staffCheckCmd.ExecuteScalar());
+                                        if (staffExists > 0)
+                                        {
+                                            isActuallyStaff = true;
+                                        }
+                                    }
+
+                                    string insertQuery;
+                                    if (isActuallyStaff || (userType != null && (userType.Equals("Staff", StringComparison.OrdinalIgnoreCase) || userType.Equals("Owner", StringComparison.OrdinalIgnoreCase) || userType.Equals("Admin", StringComparison.OrdinalIgnoreCase))))
+                                    {
+                                        insertQuery = "INSERT INTO PasswordResets (StaffID, OTP, ExpiryTime) VALUES (@UserId, @Otp, DATEADD(minute, 5, GETDATE()))";
+                                    }
+                                    else
+                                    {
+                                        insertQuery = "INSERT INTO PasswordResets (ClientID, OTP, ExpiryTime) VALUES (@UserId, @Otp, DATEADD(minute, 5, GETDATE()))";
+                                    }
+
+                                    using (SqlCommand cmd = new SqlCommand(insertQuery, conn))
+                                    {
+                                        cmd.Parameters.AddWithValue("@UserId", userId);
+                                        cmd.Parameters.AddWithValue("@Otp", otp);
+                                        cmd.ExecuteNonQuery();
+                                    }
+                                }
+
+                                // 2. Dispatch via Google Apps Script Web App
+                                string webAppUrl = "https://script.google.com/macros/s/AKfycbyvFh_W-sCbWxIxtWdpO4PcAfdUEcfKrXsNnxlSVMIVZzNTjOqpvoSgqDnvpE4t_B6g/exec";
+                                string jsonData = $"{{\"email\":\"{googleEmail}\", \"otp\":\"{otp}\", \"type\":\"login\"}}";
+
+                                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
+                                using (WebClient client = new WebClient())
+                                {
+                                    client.Encoding = Encoding.UTF8;
+                                    client.Headers[HttpRequestHeader.ContentType] = "application/json";
+                                    client.UploadString(webAppUrl, "POST", jsonData);
+                                }
+
+                                // 3. Store pending session variables for verification check
+                                Session["PendingEmail"] = googleEmail;
+                                Session["PendingUserType"] = userType;
+                                Session["PendingUserName"] = userName;
+                                Session["PendingUserLevel"] = userLevel;
+                                Session["PendingRememberMe"] = false; // Google login defaults to standard session cookie
+                                Session["MfaOtpCode"] = otp;
+                                Session["MfaExpiry"] = expiryTime;
+
+                                // 4. Switch views to your MFA Verification panel (reusing your existing VerifyMfa_Click logic)
+                                loginForm.Visible = false;
+                                MfaPanel.Visible = true;
                             }
                             else
                             {
                                 FailureText.Text = $"The Google account ({googleEmail}) is not registered in the staff or client database.";
                                 ErrorMessage.Visible = true;
-                                return;
                             }
                         }
                     }
@@ -356,17 +422,18 @@ namespace GiantGroupM3.Account
             return false;
         }
 
-        private bool DoesUserExistInDatabase(string email, out string userType, out string userName, out int userLevel)
+        private bool DoesUserExistInDatabase(string email, out string userType, out string userName, out int userLevel, out int userId)
         {
             userType = "";
             userName = "";
             userLevel = 0;
+            userId = 0;
             string connString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
 
             using (SqlConnection conn = new SqlConnection(connString))
             {
                 conn.Open();
-                string staffQuery = "SELECT s.firstName, r.accessLevel FROM staff s LEFT JOIN Role r ON s.roleID = r.roleID WHERE s.emailAddress = @Email";
+                string staffQuery = "SELECT s.staffID, s.firstName, r.accessLevel FROM staff s LEFT JOIN Role r ON s.roleID = r.roleID WHERE s.emailAddress = @Email";
                 using (SqlCommand cmd = new SqlCommand(staffQuery, conn))
                 {
                     cmd.Parameters.AddWithValue("@Email", email);
@@ -374,6 +441,7 @@ namespace GiantGroupM3.Account
                     {
                         if (reader.Read())
                         {
+                            userId = Convert.ToInt32(reader["staffID"]);
                             userName = reader["firstName"].ToString();
                             userType = "Staff";
                             userLevel = reader["accessLevel"] != DBNull.Value ? Convert.ToInt32(reader["accessLevel"]) : 1;
@@ -382,7 +450,7 @@ namespace GiantGroupM3.Account
                     }
                 }
 
-                string clientQuery = "SELECT clientName FROM client WHERE emailAddress = @Email";
+                string clientQuery = "SELECT clientID, clientName FROM client WHERE emailAddress = @Email";
                 using (SqlCommand cmd = new SqlCommand(clientQuery, conn))
                 {
                     cmd.Parameters.AddWithValue("@Email", email);
@@ -390,6 +458,7 @@ namespace GiantGroupM3.Account
                     {
                         if (reader.Read())
                         {
+                            userId = Convert.ToInt32(reader["clientID"]);
                             userName = reader["clientName"].ToString();
                             userType = "Client";
                             userLevel = 0;
