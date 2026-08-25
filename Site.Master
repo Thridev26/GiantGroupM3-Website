@@ -158,6 +158,33 @@
     .dropdown-divider {
         border-top-color: #2d6a4f !important;
     }
+
+    /* Mobile Navigation Bar Polish */
+@media (max-width: 768px) {
+    /* Style the dropdown expansion box on mobile */
+    .navbar-collapse {
+        background-color: #ffffff;
+        padding: 1.25rem;
+        border-radius: 0.75rem;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        margin-top: 0.75rem;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Give each nav link a subtle touch target and padding */
+    .navbar-nav .nav-link {
+        padding: 0.65rem 1rem;
+        border-radius: 0.5rem;
+        transition: background-color 0.2s ease;
+    }
+    
+    /* Clean hover/active state for mobile taps */
+    .navbar-nav .nav-link:hover, 
+    .navbar-nav .nav-link:active {
+        background-color: #f8f9fa;
+        color: #2e7d32 !important;
+    }
+}
     </style>
     <!-- Bootstrap Icons CSS CDN -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -367,7 +394,7 @@
     <% } %>
 
     <li class="nav-item">       
-        <a runat="server" href="~/Help.aspx" class="nav-link text-decoration-none">HELP</a>
+        <a runat="server" href="~/Help.aspx" class="nav-link text-decoration-none">FAQ</a>
     </li>
 </ul>
 
@@ -839,7 +866,7 @@
         function getSmartFAQResponse(input) {
             const text = input.toLowerCase();
 
-            if (text.includes('price') || text.includes('cost') || text.includes('rate') || text.includes('fee')) {
+            if (text.includes('price') || text.includes('cost') || text.includes('rate') || text.includes('price')) {
                 return "Our pricing depends on the size and complexity of the tree-felling job. Contact us for a free on-site quote!";
             }
             else if (text.includes('hours') || text.includes('open') || text.includes('time') || text.includes('working')) {
