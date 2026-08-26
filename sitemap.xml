@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+	<url>
+		<loc>https://ist-wst-group-1.azurewebsites.net/</loc>
+		<changefreq>weekly</changefreq>
+	</url>
+	<url>
+		<loc>https://ist-wst-group-1.azurewebsites.net/About</loc>
+		<changefreq>monthly</changefreq>
+	</url>
+	<url>
+		<loc>https://ist-wst-group-1.azurewebsites.net/Contact</loc>
+		<changefreq>monthly</changefreq>
+	</url>
+	<url>
+		<loc>https://ist-wst-group-1.azurewebsites.net/FAQ</loc>
+		<changefreq>monthly</changefreq>
+	</url>
+	<url>
+		<loc>https://ist-wst-group-1.azurewebsites.net/Privacy</loc>
+		<changefreq>monthly</changefreq>
+	</url>
+	<url>
+		<loc>https://ist-wst-group-1.azurewebsites.net/Account/Register</loc>
+		<changefreq>monthly</changefreq>
+	</url>
+	<url>
+		<loc>https://ist-wst-group-1.azurewebsites.net/Account/Login</loc>
+		<changefreq>monthly</changefreq>
+	</url>
+</urlset>
