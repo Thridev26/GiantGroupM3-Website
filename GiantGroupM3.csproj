@@ -207,6 +207,9 @@
     <Content Include="Default.aspx" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
+    <Content Include="google0e84b456a6f12b15.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="Help.aspx" />
     <Content Include="NotFound.aspx" />
     <Content Include="Privacy.aspx" />
