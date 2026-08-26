@@ -205,6 +205,7 @@
     <Content Include="Content\Site.css" />
     <Content Include="Content\The Giant Group Logo .png" />
     <Content Include="Default.aspx" />
+    <Content Include="Default\google0e84b456a6f12b15.html" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="google0e84b456a6f12b15.html">
