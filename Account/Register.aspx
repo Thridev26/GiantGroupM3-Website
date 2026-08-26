@@ -17,12 +17,12 @@
                     <p class="text-muted small">Sign up to join The Giant Group portal</p>
                 </div>
 
-                <!-- Error Message Alert -->
-                <asp:PlaceHolder runat="server" ID="ErrorPlaceHolder" Visible="false">
-                    <div class="alert alert-danger py-2 small text-center mb-3 rounded-3" role="alert">
-                        <asp:Literal runat="server" ID="FailureText" />
-                    </div>
-                </asp:PlaceHolder>
+              <!-- Status / Error Message Alert -->
+<asp:PlaceHolder runat="server" ID="ErrorPlaceHolder" Visible="false">
+    <div class="alert alert-danger py-2 small text-center mb-3 rounded-3" role="alert">
+        <asp:Literal runat="server" ID="FailureText" />
+    </div>
+</asp:PlaceHolder>
 
                 <div class="form-horizontal">
                     

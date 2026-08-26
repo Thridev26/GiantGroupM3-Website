@@ -119,8 +119,8 @@ namespace GiantGroupM3.Account
                     }
                 }
 
-                // Successfully processed, redirect to Login
-                Response.Redirect("~/Account/Login");
+                // Successfully processed, redirect to Login with a success flag
+                Response.Redirect("~/Account/Login?registered=true");
             }
         }
     }

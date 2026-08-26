@@ -33,6 +33,24 @@ namespace GiantGroupM3.Account
         protected global::System.Web.UI.WebControls.PlaceHolder ErrorMessage;
 
         /// <summary>
+        /// alertBox control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl alertBox;
+
+        /// <summary>
+        /// alertIcon control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl alertIcon;
+
+        /// <summary>
         /// FailureText control.
         /// </summary>
         /// <remarks>

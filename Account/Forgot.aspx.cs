@@ -117,7 +117,7 @@ namespace GiantGroupM3.Account
                     }
 
                     // Dispatch via Google Apps Script Web App
-                    string webAppUrl = "https://script.google.com/macros/s/AKfycbyvFh_W-sCbWxIxtWdpO4PcAfdUEcfKrXsNnxlSVMIVZzNTjOqpvoSgqDnvpE4t_B6g/exec";
+                    string webAppUrl = ConfigurationManager.AppSettings["EmailServiceUrl"];
                     string jsonData = $"{{\"email\":\"{email}\", \"otp\":\"{otp}\", \"type\":\"reset\"}}";
 
                     ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;

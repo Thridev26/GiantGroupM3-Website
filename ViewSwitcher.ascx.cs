@@ -38,6 +38,10 @@ namespace GiantGroupM3
             var url = GetRouteUrl(switchViewRouteName, new { view = AlternateView, __FriendlyUrls_SwitchViews = true });
             url += "?ReturnUrl=" + HttpUtility.UrlEncode(Request.RawUrl);
             SwitchUrl = url;
+
+            // SAFETY OVERRIDE: Keep all original calculations running, 
+            // but hide the switcher element so it doesn't render on the UI.
+            this.Visible = false;
         }
     }
 }

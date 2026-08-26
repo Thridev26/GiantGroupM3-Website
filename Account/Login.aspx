@@ -55,16 +55,11 @@
                         
 
                         <!-- Validation/Error Summary -->
-
-                        <asp:PlaceHolder runat="server" ID="ErrorMessage" Visible="false">
-
-                            <div class="alert py-2 small text-center mb-3 rounded-3 border-0 bg-danger bg-opacity-10 text-danger" role="alert">
-
-                                <i class="bi bi-exclamation-circle-fill me-1"></i> <asp:Literal runat="server" ID="FailureText" />
-
-                            </div>
-
-                        </asp:PlaceHolder>
+<asp:PlaceHolder runat="server" ID="ErrorMessage" Visible="false">
+    <div id="alertBox" runat="server" class="alert py-2 small text-center mb-3 rounded-3 border-0" role="alert">
+        <i id="alertIcon" runat="server" class="me-1"></i> <asp:Literal runat="server" ID="FailureText" />
+    </div>
+</asp:PlaceHolder>
 
 
 

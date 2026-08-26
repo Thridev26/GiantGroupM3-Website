@@ -19,19 +19,34 @@ namespace GiantGroupM3.Account
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (!IsPostBack)
+            RegisterHyperLink.NavigateUrl = "Register";
+            var returnUrl = HttpUtility.UrlEncode(Request.QueryString["ReturnUrl"]);
+            if (!String.IsNullOrEmpty(returnUrl))
             {
-                RegisterHyperLink.NavigateUrl = "Register";
-                var returnUrl = HttpUtility.UrlEncode(Request.QueryString["ReturnUrl"]);
-                if (!String.IsNullOrEmpty(returnUrl))
-                {
-                    RegisterHyperLink.NavigateUrl += "?ReturnUrl=" + returnUrl;
-                }
-
-                // Check if Google returned an authorization response (Callback handling)
-                CheckGoogleAuthCallback();
+                RegisterHyperLink.NavigateUrl += "?ReturnUrl=" + returnUrl;
             }
+
+            // Check if the user just registered successfully
+            if (Request.QueryString["registered"] == "true")
+            {
+                // Dynamically change the alert box styling to green for success
+                alertBox.Attributes["class"] = "alert py-2 small text-center mb-3 rounded-3 border-0 bg-success bg-opacity-10 text-success";
+                alertIcon.Attributes["class"] = "bi bi-check-circle-fill me-1";
+
+                FailureText.Text = "Registration successful! Please log in with your credentials.";
+                ErrorMessage.Visible = true;
+            }
+            else
+            {
+                // Ensure default red styling for standard login errors
+                alertBox.Attributes["class"] = "alert py-2 small text-center mb-3 rounded-3 border-0 bg-danger bg-opacity-10 text-danger";
+                alertIcon.Attributes["class"] = "bi bi-exclamation-circle-fill me-1";
+            }
+
+            // Check if Google returned an authorization response (Callback handling)
+            CheckGoogleAuthCallback();
         }
+        
 
         protected void LogIn(object sender, EventArgs e)
         {
@@ -101,7 +116,7 @@ namespace GiantGroupM3.Account
                         }
 
                         // 4. Dispatch via your Google Apps Script Web App (Synchronous WebClient)
-                        string webAppUrl = "https://script.google.com/macros/s/AKfycbyvFh_W-sCbWxIxtWdpO4PcAfdUEcfKrXsNnxlSVMIVZzNTjOqpvoSgqDnvpE4t_B6g/exec";
+                        string webAppUrl = ConfigurationManager.AppSettings["EmailServiceUrl"];
                         string jsonData = $"{{\"email\":\"{email}\", \"otp\":\"{otp}\", \"type\":\"login\"}}";
 
                         ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
@@ -277,7 +292,7 @@ namespace GiantGroupM3.Account
                                 }
 
                                 // 2. Dispatch via Google Apps Script Web App
-                                string webAppUrl = "https://script.google.com/macros/s/AKfycbyvFh_W-sCbWxIxtWdpO4PcAfdUEcfKrXsNnxlSVMIVZzNTjOqpvoSgqDnvpE4t_B6g/exec";
+                                string webAppUrl = ConfigurationManager.AppSettings["EmailServiceUrl"];
                                 string jsonData = $"{{\"email\":\"{googleEmail}\", \"otp\":\"{otp}\", \"type\":\"login\"}}";
 
                                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;

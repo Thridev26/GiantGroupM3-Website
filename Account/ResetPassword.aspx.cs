@@ -49,23 +49,33 @@ namespace GiantGroupM3.Account
                         if (res != null) userId = Convert.ToInt32(res);
                     }
 
-                    // Hash new password securely with BCrypt
-                    string hashedNewPassword = BCrypt.Net.BCrypt.HashPassword(newPassword);
-
-                    // Update the correct table
-                    string updateQuery = userType == "Staff"
-                        ? "UPDATE staff SET passwordHash = @PasswordHash WHERE staffID = @ID"
-                        : "UPDATE client SET passwordHash = @PasswordHash WHERE clientID = @ID";
-
-                    using (SqlCommand updateCmd = new SqlCommand(updateQuery, conn))
+                    // Only proceed if a valid user ID was actually found
+                    if (userId > 0)
                     {
-                        updateCmd.Parameters.AddWithValue("@PasswordHash", hashedNewPassword);
-                        updateCmd.Parameters.AddWithValue("@ID", userId);
-                        updateCmd.ExecuteNonQuery();
+                        // Hash new password securely with BCrypt
+                        string hashedNewPassword = BCrypt.Net.BCrypt.HashPassword(newPassword);
+
+                        // Update the correct table
+                        string updateQuery = userType == "Staff"
+                            ? "UPDATE staff SET passwordHash = @PasswordHash WHERE staffID = @ID"
+                            : "UPDATE client SET passwordHash = @PasswordHash WHERE clientID = @ID";
+
+                        using (SqlCommand updateCmd = new SqlCommand(updateQuery, conn))
+                        {
+                            updateCmd.Parameters.AddWithValue("@PasswordHash", hashedNewPassword);
+                            updateCmd.Parameters.AddWithValue("@ID", userId);
+                            updateCmd.ExecuteNonQuery();
+                        }
+
+                        Response.Redirect("~/Account/ResetPasswordConfirmation");
+                    }
+                    else
+                    {
+                        // Hide the form and show the access denied / error panel gracefully
+                        PanelResetForm.Visible = false;
+                        PanelAccessDenied.Visible = true;
                     }
                 }
-
-                Response.Redirect("~/Account/ResetPasswordConfirmation");
             }
         }
     }
