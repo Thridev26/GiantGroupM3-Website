@@ -1,23 +1,736 @@
-<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site.Mobile.master.cs" Inherits="GiantGroupM3.Site_Mobile" %>
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site.Mobile.master.cs" Inherits="GiantGroupM3.Site_Mobile" %>
 <%@ Register Src="~/ViewSwitcher.ascx" TagPrefix="friendlyUrls" TagName="ViewSwitcher" %>
 
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html lang="en">
 <head runat="server">
-    <meta name="viewport" content="width=device-width" />
-    <title></title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%: Page.Title %> - The Giant Group</title>
+    
+    <!-- Meta Description for SEO and Link Sharing -->
+    <meta name="description" content="The Giant Group enterprise management platform. Powered by Code Crusaders for professional tree-felling operations, quoting, and asset management." />
+
+    <asp:PlaceHolder runat="server">
+        <%: Scripts.Render("~/bundles/modernizr") %>
+    </asp:PlaceHolder>
+    <webopt:bundlereference runat="server" path="~/Content/css" />
+    <link rel="shortcut icon" href="~/Content/New Giant Tree Icon (1).ico" type="image/x-icon" />
+    
+    <!-- AOS Animation CSS -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <!-- 3D Effects & Loader Styling -->
+    <style>
+       /* Loader Styles */
+    #loader-wrapper {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #40916c;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        transition: opacity 0.5s ease;
+    }
+
+    #loader-wrapper p {
+        color: #ffffff;
+        font-family: sans-serif;
+        margin-top: 30px;
+        letter-spacing: 1px;
+        font-weight: 500;
+    }
+
+    /* 3D Rotating Cube Loader */
+    .cube-loader {
+        perspective: 800px;
+    }
+
+    .cube {
+        width: 60px;
+        height: 60px;
+        position: relative;
+        transform-style: preserve-3d;
+        animation: spinCube 2s infinite linear;
+    }
+
+    .face {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.15);
+        border: 2px solid #ffffff;
+    }
+
+    .front  { transform: translateZ(30px); }
+    .back   { transform: rotateY(180deg) translateZ(30px); }
+    .left   { transform: rotateY(-90deg) translateZ(30px); }
+    .right  { transform: rotateY(90deg) translateZ(30px); }
+    .top    { transform: rotateX(90deg) translateZ(30px); }
+    .bottom { transform: rotateX(-90deg) translateZ(30px); }
+
+    @keyframes spinCube {
+        0% { transform: rotateX(0deg) rotateY(0deg); }
+        100% { transform: rotateX(360deg) rotateY(360deg); }
+    }
+
+    /* Universal 3D Tilt Card Class */
+    .tilt-card {
+        transform-style: preserve-3d;
+        transform: perspective(1000px);
+        cursor: pointer;
+        transition: box-shadow 0.3s ease, transform 0.3s ease;
+    }
+    .tilt-card:hover {
+        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+    }
+
+    /* Dark Mode Theme Styles */
+    body.dark-mode {
+        background-color: #121212 !important;
+        color: #e0e0e0 !important;
+    }
+    body.dark-mode .card {
+        background-color: #1e1e1e !important;
+        color: #e0e0e0 !important;
+        border-color: #333 !important;
+    }
+    body.dark-mode .dropdown-menu {
+        background-color: #242424 !important;
+    }
+    body.dark-mode .dropdown-item {
+        color: #e0e0e0 !important;
+    }
+    body.dark-mode .dropdown-item:hover {
+        background-color: #333 !important;
+        color: #ffffff !important;
+    }
+    body.dark-mode footer {
+        color: #adb5bd !important;
+    }
+
+    /* Print Stylesheet */
+    @media print {
+        #loader-wrapper, .navbar, #guestNoticeCard, #backToTopBtn, #cookieBanner, footer, #scroll-progress, #floatingContactBtn {
+            display: none !important;
+        }
+        body {
+            background: white !important;
+            color: black !important;
+        }
+        .container {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+    }
+
+    /* Compact Hover Dropdown - Deep Forest Green Theme */
+    .navbar .dropdown:hover > .dropdown-menu {
+        display: block !important;
+        margin-top: 0px !important;
+        border-radius: 6px;
+        border-top: 3px solid #52b788;
+        min-width: 200px;
+    }
+    .dropdown-menu {
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        background-color: #1b4332 !important;
+        border: 1px solid #2d6a4f !important;
+    }
+    .dropdown-item {
+        padding: 8px 16px;
+        transition: background-color 0.15s ease-in-out;
+        color: #e9ecef !important;
+    }
+    .dropdown-item:hover {
+        background-color: #2d6a4f !important;
+        color: #ffffff !important;
+    }
+    .dropdown-header {
+        color: #95d5b2 !important;
+    }
+    .dropdown-divider {
+        border-top-color: #2d6a4f !important;
+    }
+
+   /* Mobile Navigation Dropdown Fixes */
+    @media (max-width: 991px) {
+        .navbar-collapse {
+            background-color: #ffffff !important;
+            padding: 1rem 1.25rem !important;
+            border-radius: 0.5rem;
+            margin-top: 0.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            border: 1px solid #dee2e6;
+        }
+
+        /* Ensure all navigation links inside the mobile menu are clearly visible */
+        .navbar-collapse .navbar-nav .nav-link,
+        .navbar-collapse .dropdown-item,
+        .navbar-collapse span,
+        .navbar-collapse a {
+            color: #1b4332 !important;
+            font-weight: 500;
+            padding: 8px 12px;
+        }
+
+        .navbar-collapse .nav-link:hover,
+        .navbar-collapse .dropdown-item:hover {
+            background-color: #e9ecef !important;
+            color: #2d6a4f !important;
+            border-radius: 4px;
+        }
+
+        /* Make dropdown menus inside mobile view look nested nicely instead of hidden */
+        .navbar-collapse .dropdown-menu {
+            background-color: #f8f9fa !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding-left: 15px;
+        }
+    }    
+    </style>
+    <!-- Bootstrap Icons CSS CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <asp:ContentPlaceHolder runat="server" ID="HeadContent" />
 </head>
 <body>
-    <form id="form1" runat="server">
-    <div>
-        <h1>Mobile Master Page</h1>
-        <asp:ContentPlaceHolder runat="server" ID="FeaturedContent" />
-        <section class="content-wrapper main-content clear-fix">
-            <asp:ContentPlaceHolder runat="server" ID="MainContent" />
-        </section>
-        <friendlyUrls:ViewSwitcher runat="server" />
+    <!-- Skip to Content Link (Accessibility) -->
+    <a class="visually-hidden-focusable btn btn-light position-absolute top-0 start-0 m-2 shadow" href="#main-content" style="z-index: 1100;">Skip to content ↓</a>
+
+    <!-- Scroll Progress Bar -->
+    <div id="scroll-progress" style="position: fixed; top: 0; left: 0; height: 4px; background-color: #52b788; width: 0%; z-index: 1095; transition: width 0.1s ease;"></div>
+
+    <!-- 3D Loader Overlay -->
+    <div id="loader-wrapper">
+        <div class="cube-loader">
+            <div class="cube">
+                <div class="face front"></div>
+                <div class="face back"></div>
+                <div class="face left"></div>
+                <div class="face right"></div>
+                <div class="face top"></div>
+                <div class="face bottom"></div>
+            </div>
+        </div>
+        <p>Loading The Giant Group...</p>
     </div>
+
+    <!-- Back to Top Button -->
+    <button id="backToTopBtn" class="btn btn-success position-fixed bottom-0 start-0 m-4 shadow-lg" style="display: none; z-index: 1060; border-radius: 50%; width: 45px; height: 45px; margin-bottom: 75px !important;" title="Back to Top">↑</button>
+
+    <!-- Container for Bottom-Right Floating Buttons -->
+    <div class="position-fixed bottom-0 end-0 mb-5 pb-3 me-4 d-flex align-items-center gap-2" style="z-index: 1060;">
+        <button type="button" class="btn shadow-lg d-flex align-items-center justify-content-center text-white rounded-circle" style="width: 55px; height: 55px; background-color: #2d6a4f !important; border: none;" title="Open Quick Chat" onclick="toggleChatbot()">
+            <i class="bi bi-chat-dots-fill fs-5"></i>
+        </button>
+        <a id="floatingContactBtn" runat="server" href="~/Contact.aspx" class="btn shadow-lg d-flex align-items-center justify-content-center text-white" style="border-radius: 50px; padding: 12px 22px; background-color: #2d6a4f !important; border: none; text-decoration: none;" title="Contact Us">
+            💬 <span class="ms-2 fw-bold">Contact Us</span>
+        </a>
+    </div>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookieConsentBanner" class="position-fixed bottom-0 start-0 end-0 bg-dark text-white p-3 shadow-lg border-top border-success border-3" style="z-index: 1040; display: none;">
+        <div class="container d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
+            <div class="text-center text-md-start">
+                <span class="fs-5 me-2">🍪</span>
+                <strong>Cookie Notice:</strong> We use cookies to enhance your navigation experience, manage secure login sessions, and analyze site traffic. 
+                <a href="~/Privacy.aspx" runat="server" class="text-success text-decoration-underline ms-1">Learn more</a>
+            </div>
+            <div class="d-flex gap-2 flex-shrink-0">
+                <button type="button" id="btnRejectCookies" class="btn btn-outline-light btn-sm px-3">Reject Non-Essential</button>
+                <button type="button" id="btnAcceptCookies" class="btn btn-success btn-sm px-4 fw-bold">Accept All</button>
+            </div>
+        </div>
+    </div>
+
+    <form runat="server">
+        <asp:ScriptManager runat="server">
+            <Scripts>
+                <asp:ScriptReference Name="MsAjaxBundle" />
+                <asp:ScriptReference Name="jquery" />
+                <asp:ScriptReference Name="WebForms.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebForms.js" />
+                <asp:ScriptReference Name="WebUIValidation.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebUIValidation.js" />
+                <asp:ScriptReference Name="MenuStandards.js" Assembly="System.Web" Path="~/Scripts/WebForms/MenuStandards.js" />
+                <asp:ScriptReference Name="GridView.js" Assembly="System.Web" Path="~/Scripts/WebForms/GridView.js" />
+                <asp:ScriptReference Name="DetailsView.js" Assembly="System.Web" Path="~/Scripts/WebForms/DetailsView.js" />
+                <asp:ScriptReference Name="TreeView.js" Assembly="System.Web" Path="~/Scripts/WebForms/TreeView.js" />
+                <asp:ScriptReference Name="WebParts.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebParts.js" />
+                <asp:ScriptReference Name="Focus.js" Assembly="System.Web" Path="~/Scripts/WebForms/Focus.js" />
+                <asp:ScriptReference Name="WebFormsBundle" />
+            </Scripts>
+        </asp:ScriptManager>
+
+        <!-- Navbar matching exact desktop code -->
+        <nav class="navbar navbar-expand-lg sticky-top shadow-sm" style="background-color: #40916c;" data-bs-theme="dark">
+            <div class="container-fluid">
+                <a class="navbar-brand p-0" runat="server" href="~/Default">
+                    <img runat="server" src="~/Content/The Giant Group Logo .png" alt="The Giant Group" style="height: 40px; width: auto;" />
+                </a>
+                
+                <div class="d-flex align-items-center gap-2">
+                    <friendlyUrls:ViewSwitcher runat="server" />
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                </div>
+
+                <div class="collapse navbar-collapse" id="navbarColor01">
+                    <ul class="navbar-nav me-auto">
+                        <% if (CanSeeCalendar()) { %>
+                        <li class="nav-item"><a class="nav-link" runat="server" href="~/Calendar.aspx">Calendar</a></li>
+                        <% } %>
+
+                        <% if (CanSeeClientsTab()) { %>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Clients</a>
+                            <div class="dropdown-menu p-2">
+                                <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem;">Actions</h6>
+                                <% if (!IsClient()) { %>
+                                    <a class="dropdown-item" runat="server" href="~/Clients/AddClient.aspx"><i class="bi bi-person-plus me-1"></i> Add New Client</a>
+                                <% } %>
+                                <a class="dropdown-item" runat="server" href="~/Clients/UpdateClient.aspx"><i class="bi bi-person-gear me-1"></i> Update Client Info</a>
+                                <% if (!IsClient()) { %>
+                                    <div class="dropdown-divider my-1"></div>
+                                    <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem;">Records</h6>
+                                    <a class="dropdown-item" runat="server" href="~/Clients/ViewClients.aspx"><i class="bi bi-people me-1"></i> View All Clients</a>
+                                <% } %>
+                            </div>
+                        </li>
+                        <% } %>
+
+                        <% if (CanSeeJobRequestsTab()) { %>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Job Requests</a>
+                            <div class="dropdown-menu p-2">
+                                <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem;">Actions</h6>
+                                <a class="dropdown-item" runat="server" href="~/Requests/SubmitRequest.aspx"><i class="bi bi-file-earmark-plus me-1"></i> Submit Job Request</a>
+                                <a class="dropdown-item" runat="server" href="~/Requests/UpdateRequest.aspx"><i class="bi bi-file-earmark-text me-1"></i> Update Job Request</a>
+                                <div class="dropdown-divider my-1"></div>
+                                <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem;">Media</h6>
+                                <a class="dropdown-item" runat="server" href="~/Requests/SitePhotos.aspx"><i class="bi bi-camera me-1"></i> Add Site Photos</a>
+                            </div>
+                        </li>
+                        <% } %>
+
+                        <% if (CanSeeQuotationsTab()) { %>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Quotations</a>
+                            <div class="dropdown-menu p-2">
+                                <% if (CanSeeCreateEditQuote()) { %>
+                                    <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem;">Actions</h6>
+                                    <a class="dropdown-item" runat="server" href="~/Quotes/CreateQuote.aspx"><i class="bi bi-plus-circle me-1"></i> Create Quote</a>
+                                    <a class="dropdown-item" runat="server" href="~/Quotes/EditQuote.aspx"><i class="bi bi-pencil me-1"></i> Edit Quote</a>
+                                    <div class="dropdown-divider my-1"></div>
+                                <% } %>
+                                <% if (CanSeeViewQuoteOnly()) { %>
+                                    <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem;">Records</h6>
+                                    <a class="dropdown-item" runat="server" href="~/Quotes/ViewQuote.aspx"><i class="bi bi-eye me-1"></i> View Quote</a>
+                                <% } %>
+                            </div>
+                        </li>
+                        <% } %>
+
+                        <% if (CanSeeAllocationTab()) { %>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Allocation</a>
+                            <div class="dropdown-menu p-2">
+                                <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem;">Resources</h6>
+                                <% if (!IsClient()) { %>
+                                    <a class="dropdown-item" runat="server" href="~/Allocation/Assets.aspx"><i class="bi bi-tools me-1"></i> View Assets Allocation</a>
+                                <% } %>
+                                <a class="dropdown-item" runat="server" href="~/Allocation/Staff.aspx"><i class="bi bi-person-badge me-1"></i> View Staff Allocation</a>
+                            </div>
+                        </li>
+                        <% } %>
+
+                        <% if (CanSeeJobsTab()) { %>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Jobs</a>
+                            <div class="dropdown-menu p-2">
+                                <% if (CanSeeAddEditJobDetails()) { %>
+                                    <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem;">Actions</h6>
+                                    <a class="dropdown-item" runat="server" href="~/Jobs/ManageJob.aspx"><i class="bi bi-gear me-1"></i> Add/Edit Job Details</a>
+                                    <div class="dropdown-divider my-1"></div>
+                                <% } %>
+                                <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem;">Progress</h6>
+                                <a class="dropdown-item" runat="server" href="~/Jobs/Progress.aspx"><i class="bi bi-graph-up-arrow me-1"></i> View Job Progress</a>
+                                <% if (CanSeeEditJobProgress()) { %>
+                                    <a class="dropdown-item" runat="server" href="~/Jobs/EditProgress.aspx"><i class="bi bi-pencil-square me-1"></i> Edit Job Progress</a>
+                                <% } %>
+                            </div>
+                        </li>
+                        <% } %>
+
+                        <% if (CanSeeInvoicingTab()) { %>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Invoicing</a>
+                            <div class="dropdown-menu p-2">
+                                <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem;">Actions</h6>
+                                <% if (CanSeeCreateInvoice()) { %>
+                                    <a class="dropdown-item" runat="server" href="~/Invoicing/CreateInvoice.aspx"><i class="bi bi-receipt me-1"></i> Create Invoice</a>
+                                <% } %>
+                                <a class="dropdown-item" runat="server" href="~/Invoicing/Payments.aspx"><i class="bi bi-credit-card me-1"></i> Manage Payments</a>
+                            </div>
+                        </li>
+                        <% } %>
+
+                        <% if (CanSeeReports()) { %>
+                        <li class="nav-item"><a class="nav-link" runat="server" href="~/Reports.aspx">Reports</a></li>
+                        <% } %>
+
+                        <li class="nav-item"><a runat="server" href="~/Help.aspx" class="nav-link">FAQ</a></li>
+                    </ul>
+
+                    <ul class="navbar-nav ms-auto align-items-center gap-2">
+                        <li class="nav-item"><a class="nav-link text-white-50 px-2" runat="server" href="~/About.aspx">About</a></li>
+                        <li class="nav-item"><a class="nav-link text-white-50 px-2" runat="server" href="~/Contact.aspx">Contact</a></li>
+                        
+                        <li class="nav-item">
+                            <button id="darkModeToggle" class="btn btn-sm text-white rounded-circle d-flex align-items-center justify-content-center border-0" type="button" title="Toggle Theme" style="width: 32px; height: 32px; background: rgba(255,255,255,0.1);">
+                                <i id="darkModeIcon" class="bi bi-moon-fill small"></i>
+                            </button>
+                        </li>
+
+                        <asp:LoginView runat="server" ViewStateMode="Disabled">
+                            <AnonymousTemplate>
+                                <li class="nav-item ms-1"><a class="nav-link text-white px-2" runat="server" href="~/Account/Register">Register</a></li>
+                                <li class="nav-item"><a class="btn btn-sm text-white px-3 py-1 rounded-pill ms-1 fw-semibold" runat="server" href="~/Account/Login" style="background-color: rgba(255,255,255,0.2);">Log In</a></li>
+                            </AnonymousTemplate>
+                            <LoggedInTemplate>
+                                <li class="nav-item ms-2 d-flex align-items-center">
+                                    <span class="nav-link text-white small px-2 lh-sm text-end">
+                                        <span class="d-block text-white-50" style="font-size: 0.7rem;">Welcome back,</span> 
+                                        <span class="fw-bold"><%: Session["StaffName"] ?? Session["Username"] %></span>
+                                    </span>
+                                </li>
+                                <li class="nav-item ms-1">
+                                    <asp:LinkButton runat="server" ID="BtnLogout" OnClick="BtnLogout_Click" CssClass="btn btn-sm btn-outline-light rounded-pill px-3 py-2 small fw-semibold text-white text-nowrap" CausesValidation="false">
+                                        Log Out
+                                    </asp:LinkButton>
+                                </li>
+                            </LoggedInTemplate>
+                        </asp:LoginView>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Floating Chatbot Widget Window -->
+        <div id="chatbotPopup" class="card shadow-lg border-0 position-fixed bottom-0 end-0 m-4 rounded-4 overflow-hidden" style="z-index: 1070; width: 340px; max-height: 450px; display: none; margin-bottom: 90px !important;">
+            <div class="card-header text-white d-flex justify-content-between align-items-center py-3 px-4" style="background-color: #2d6a4f !important;">
+                <div class="d-flex align-items-center">
+                    <span class="me-2">💬</span>
+                    <h6 class="fw-bold mb-0">Giant Group Assistant</h6>
+                </div>
+                <button type="button" class="btn text-white p-0 shadow-none border-0 fw-bold" style="font-size: 1.2rem;" onclick="toggleChatbot()">&times;</button>
+            </div>
+            <div class="card-body bg-light p-3 overflow-auto" style="height: 280px;" id="chatBody">
+                <div class="d-flex mb-3">
+                    <div class="p-3 bg-white rounded-3 shadow-sm text-dark small" style="max-width: 80%;">
+                        👋 Hello! Welcome to Giant Tree Felling. How can we help you today?
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-white border-0 p-3">
+                <div class="input-group">
+                    <input type="text" id="chatInput" class="form-control form-control-sm bg-light border-0 py-2 px-3" placeholder="Type your message..." onkeypress="if(event.key === 'Enter') { event.preventDefault(); sendChatMessage(); }" />
+                    <button class="btn btn-success px-3" type="button" style="background-color: #2d6a4f !important;" onclick="sendChatMessage()">➤</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div id="main-content" class="container body-content mt-4">
+            <asp:ContentPlaceHolder ID="MainContent" runat="server">
+            </asp:ContentPlaceHolder>
+            <hr />
+        </div>
+
+        <!-- Footer -->
+        <footer class="border-top bg-light text-muted py-4 mt-auto shadow-sm w-100">
+            <div class="container">
+                <div class="row align-items-center gy-3">
+                    <div class="col-md-6 text-center text-md-start">
+                        <p class="mb-1 fw-semibold text-dark small">
+                            &copy; <%: DateTime.Now.Year %> The Giant Group &bull; Engineered by <span class="text-success fw-bold">Code Crusaders</span>
+                        </p>
+                        <p class="mb-0 text-muted" style="font-size: 0.75rem;">Last Modified: <span id="lastUpdatedDate"></span></p>
+                    </div>
+                    <div class="col-md-6 text-center text-md-end">
+                        <div class="d-flex justify-content-center justify-content-md-end align-items-center gap-3 small">
+                            <a runat="server" href="~/Default.aspx" class="text-decoration-none text-muted">Home</a>
+                            <span class="text-muted opacity-50">/</span>
+                            <a runat="server" href="~/Help.aspx" class="text-decoration-none text-muted">Help Guide</a>
+                            <span class="text-muted opacity-50">/</span>
+                            <a runat="server" href="~/Privacy.aspx" class="text-decoration-none text-success fw-bold">Privacy Policy</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
     </form>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 800, once: true });
+        window.addEventListener('load', function () {
+            const loader = document.getElementById('loader-wrapper');
+            if (loader) {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 500);
+            }
+        });
+
+        // Global 3D Tilt Effect
+        document.querySelectorAll('.tilt-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const rotateX = -((y - centerY) / centerY) * 12;
+                const rotateY = ((x - centerX) / centerX) * 12;
+
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+                card.style.transition = 'transform 0.5s ease';
+            });
+
+            card.addEventListener('mouseenter', () => {
+                card.style.transition = 'none';
+            });
+        });
+
+        // --- UX FEATURES INTEGRATION ---
+
+        // 1. Dark Mode Toggle
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const darkModeIcon = document.getElementById('darkModeIcon');
+        const currentTheme = localStorage.getItem('theme');
+
+        if (currentTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            if (darkModeIcon) darkModeIcon.className = 'bi bi-sun-fill small';
+        }
+
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('click', () => {
+                document.body.classList.toggle('dark-mode');
+                let theme = 'light';
+
+                if (document.body.classList.contains('dark-mode')) {
+                    theme = 'dark';
+                    if (darkModeIcon) darkModeIcon.className = 'bi bi-sun-fill small';
+                } else {
+                    if (darkModeIcon) darkModeIcon.className = 'bi bi-moon-fill small';
+                }
+
+                localStorage.setItem('theme', theme);
+            });
+        }
+
+        // 2. Scroll Progress Bar & Back to Top Button
+        const scrollProgress = document.getElementById('scroll-progress');
+        const backToTopBtn = document.getElementById('backToTopBtn');
+
+        window.addEventListener('scroll', () => {
+            const totalHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const progress = (window.scrollY / totalHeight) * 100;
+            if (scrollProgress) scrollProgress.style.width = progress + '%';
+
+            if (backToTopBtn) {
+                if (window.scrollY > 300) {
+                    backToTopBtn.style.display = 'block';
+                } else {
+                    backToTopBtn.style.display = 'none';
+                }
+            }
+        });
+
+        if (backToTopBtn) {
+            backToTopBtn.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+
+        // 3. Cookie Consent Banner Logic (Accept All / Reject Non-Essential)
+        const cookieBanner = document.getElementById('cookieConsentBanner');
+        const btnAccept = document.getElementById('btnAcceptCookies');
+        const btnReject = document.getElementById('btnRejectCookies');
+
+        function getCookie(name) {
+            let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            if (match) return match[2];
+            return null;
+        }
+
+        if (!getCookie("GiantGroupCookieConsent") && cookieBanner) {
+            cookieBanner.style.display = 'block';
+        }
+
+        if (btnAccept && cookieBanner) {
+            btnAccept.addEventListener('click', () => {
+                document.cookie = "GiantGroupCookieConsent=Accepted; path=/; max-age=" + (60 * 60 * 24 * 365) + "; SameSite=Lax";
+                cookieBanner.style.display = 'none';
+            });
+        }
+
+        if (btnReject && cookieBanner) {
+            btnReject.addEventListener('click', () => {
+                document.cookie = "GiantGroupCookieConsent=Rejected; path=/; max-age=" + (60 * 60 * 24 * 365) + "; SameSite=Lax";
+                cookieBanner.style.display = 'none';
+            });
+        }
+
+        // 4. Last Updated Date in Footer
+        const lastUpdatedSpan = document.getElementById('lastUpdatedDate');
+        if (lastUpdatedSpan) {
+            lastUpdatedSpan.textContent = document.lastModified;
+        }
+
+        // 5. UTM Tracking Capture
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const utmSource = urlParams.get('utm_source');
+            const utmMedium = urlParams.get('utm_medium');
+            const utmCampaign = urlParams.get('utm_campaign');
+            if (utmSource) {
+                localStorage.setItem('utm_source', utmSource);
+                localStorage.setItem('utm_medium', utmMedium);
+                localStorage.setItem('utm_campaign', utmCampaign);
+            }
+        });
+
+        // 6. Site Search Quick Filter
+        const searchBtn = document.getElementById('siteSearchBtn');
+        const searchInput = document.getElementById('siteSearchInput');
+        if (searchBtn && searchInput) {
+            const performSearch = () => {
+                const query = searchInput.value.trim().toLowerCase();
+                if (query) {
+                    if (window.find) {
+                        window.find(query);
+                    } else {
+                        alert("Search query: " + query);
+                    }
+                }
+            };
+            searchBtn.addEventListener('click', performSearch);
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    performSearch();
+                }
+            });
+        }
+
+        // 7. Password Visibility Toggle
+        document.querySelectorAll('input[type="password"]').forEach(passwordField => {
+            if (!passwordField.parentNode.classList.contains('input-group')) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'input-group';
+                passwordField.parentNode.insertBefore(wrapper, passwordField);
+                wrapper.appendChild(passwordField);
+
+                const toggleBtn = document.createElement('button');
+                toggleBtn.className = 'btn btn-outline-secondary';
+                toggleBtn.type = 'button';
+                toggleBtn.textContent = '👁️';
+                toggleBtn.title = 'Show/Hide Password';
+                wrapper.appendChild(toggleBtn);
+
+                toggleBtn.addEventListener('click', () => {
+                    if (passwordField.type === 'password') {
+                        passwordField.type = 'text';
+                        toggleBtn.textContent = '🔒︎';
+                    } else {
+                        passwordField.type = 'password';
+                        toggleBtn.textContent = '👁️';
+                    }
+                });
+            }
+        });
+
+        // Chatbot functionality
+        function toggleChatbot() {
+            var chatPopup = document.getElementById("chatbotPopup");
+            if (chatPopup) {
+                if (chatPopup.style.display === "none" || chatPopup.style.display === "") {
+                    chatPopup.style.display = "block";
+                    document.getElementById("chatInput").focus();
+                } else {
+                    chatPopup.style.display = "none";
+                }
+            }
+        }
+
+        function sendChatMessage() {
+            var input = document.getElementById("chatInput");
+            var chatBody = document.getElementById("chatBody");
+            var userText = input.value.trim();
+
+            if (userText !== "") {
+                var userMsgDiv = document.createElement("div");
+                userMsgDiv.className = "d-flex justify-content-end mb-3";
+                userMsgDiv.innerHTML = '<div class="p-3 text-white rounded-3 shadow-sm small" style="max-width: 80%; background-color: #2d6a4f;">' + escapeHtml(userText) + '</div>';
+                chatBody.appendChild(userMsgDiv);
+
+                input.value = "";
+                chatBody.scrollTop = chatBody.scrollHeight;
+
+                setTimeout(function () {
+                    var botReply = getSmartFAQResponse(userText);
+                    var botMsgDiv = document.createElement("div");
+                    botMsgDiv.className = "d-flex mb-3";
+                    botMsgDiv.innerHTML = '<div class="p-3 bg-white rounded-3 shadow-sm text-dark small" style="max-width: 80%;">' + botReply + '</div>';
+                    chatBody.appendChild(botMsgDiv);
+                    chatBody.scrollTop = chatBody.scrollHeight;
+                }, 600);
+            }
+        }
+
+        function getSmartFAQResponse(input) {
+            const text = input.toLowerCase();
+            if (text.includes('price') || text.includes('cost') || text.includes('rate')) {
+                return "Our pricing depends on the size and complexity of the tree-felling job. Contact us for a free on-site quote!";
+            } else if (text.includes('hours') || text.includes('open') || text.includes('time') || text.includes('working')) {
+                return "We operate Monday to Saturday, from 7:00 AM to 5:00 PM.";
+            } else if (text.includes('contact') || text.includes('phone') || text.includes('call') || text.includes('email')) {
+                return "You can reach us directly via our Contact page or call our support line at 0848 331 373.";
+            } else if (text.includes('service') || text.includes('tree') || text.includes('felling') || text.includes('garden')) {
+                return "We specialize in professional tree-felling, stump removal, site clearance, and general garden maintenance.";
+            } else {
+                return "Thanks for reaching out! One of our team members will review your message shortly. You can also call us directly at 0848 331 373.";
+            }
+        }
+
+        function escapeHtml(text) {
+            var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return text.replace(/[&<>"']/g, function (m) { return map[m]; });
+        }
+
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted) {
+                var loader = document.getElementById('loader-wrapper') || document.querySelector('.loader');
+                if (loader) {
+                    loader.style.display = 'none';
+                }
+            }
+        });
+    </script>
 </body>
 </html>
