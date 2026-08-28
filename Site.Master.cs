@@ -225,9 +225,9 @@ namespace GiantGroupM3
             if (!IsLoggedIn()) return false;
             if (IsClient()) return true; // Clients see the tab (for updating info)
             int level = GetUserLevel();
-            // Level 4 and Level 1 should NOT see clients tab. Level 5 and 6 can see it.
-            if (level == 4 || level == 1) return false;
-            return level >= 5;
+            // Level 4 and Level 1 and Level 5 should NOT see clients tab. Level 6 can see it.
+            if (level == 4 || level == 1 || level == 5) return false;
+            return level >= 6;
         }
 
         public bool CanSeeUpdateClientInfoOnly()
@@ -245,7 +245,7 @@ namespace GiantGroupM3
 
             // Staff restrictions (Level 5 and above)
             int level = GetUserLevel();
-            if (level < 5) return false;
+            if (level < 6) return false;
 
             return true;
         }
