@@ -189,11 +189,14 @@
     <!-- Bootstrap Icons CSS CDN -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-    <meta property="og:title" content="The Giant Group | Enterprise Tree-Felling & Operations Management" />
-<meta property="og:description" content="Official enterprise portal developed by Code Crusaders for seamless client quoting, machine allocation, and staff scheduling." />
-<meta property="og:image" content="https://ist-wst-group-1.azurewebsites.net/images/The%20Giant%20Group%20Logo.png" />
+    <meta property="og:title" content="The Giant Group | Enterprise Tree-Felling & Vegetation Management" />
+<meta property="og:description" content="Official enterprise portal developed by Code Crusaders." />
+<meta property="og:image" content="https://ist-wst-group-1.azurewebsites.net/images/The%20Giant%20Group%20Logo%20.png" />
 <meta property="og:url" content="https://ist-wst-group-1.azurewebsites.net/" />
 <meta property="og:type" content="website" />
+    <meta name="description" content="Powering next-gen tree-felling operations. Experience seamless client quoting, real-time machine allocation, and smart staff scheduling with The Giant Group." />
+<meta name="keywords" content="tree felling, vegetation management, enterprise portal, quoting system, operations management, Code Crusaders" />
+<meta name="author" content="Code Crusaders" />
 </head>
 <body>
     <!-- Skip to Content Link (Accessibility) -->
