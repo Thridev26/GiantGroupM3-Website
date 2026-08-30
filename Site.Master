@@ -887,7 +887,7 @@
         function getSmartFAQResponse(input) {
             const text = input.toLowerCase();
 
-            if (text.includes('price') || text.includes('cost') || text.includes('rate') || text.includes('price')) {
+            if (text.includes('Price') || text.includes('cost') || text.includes('rate') || text.includes('price')) {
                 return "Our pricing depends on the size and complexity of the tree-felling job. Contact us for a free on-site quote!";
             }
             else if (text.includes('hours') || text.includes('open') || text.includes('time') || text.includes('working')) {
