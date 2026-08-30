@@ -347,7 +347,7 @@ namespace GiantGroupM3
             int level = GetUserLevel();
 
             // Level 1 and Level 4 staff members must NOT see the Invoicing tab/words
-            if (level == 1 || level == 4) return false;
+            if (level == 1 || level == 4 || level == 5) return false;
 
             return true;
         }
