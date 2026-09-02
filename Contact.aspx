@@ -82,7 +82,7 @@
                             <asp:TextBox ID="txtMessage" runat="server" TextMode="MultiLine" Rows="4" CssClass="form-control bg-light border-0" placeholder="Tell us about the trees or garden services you need..." />
                         </div>
                         <div class="col-12 mt-4">
-                            <asp:Button ID="btnSubmit" runat="server" Text="Send Message" OnClick="btnSubmit_Click" CssClass="btn btn-success btn-lg w-100 fw-bold shadow-sm py-3 rounded-3" />
+                            <asp:Button ID="btnSubmit" runat="server" Text="Send Message" OnClick="btnSubmit_Click" UseSubmitBehavior="false" CssClass="btn btn-success btn-lg w-100 fw-bold shadow-sm py-3 rounded-3" />
                         </div>
                     </div>
                 </div>
