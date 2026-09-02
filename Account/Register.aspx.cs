@@ -42,6 +42,7 @@ namespace GiantGroupM3.Account
                         {
                             FailureText.Text = "Staff members cannot register through the portal. Please use the standard login page.";
                             ErrorPlaceHolder.Visible = true;
+                            ClearForm();
                             return;
                         }
                     }
@@ -74,6 +75,7 @@ namespace GiantGroupM3.Account
                         // Scenario: Client already exists and has already set a password before
                         FailureText.Text = "An account with this email already exists and is active. Please log in.";
                         ErrorPlaceHolder.Visible = true;
+                        ClearForm();
                         return;
                     }
                     else if (clientExists)
@@ -121,6 +123,19 @@ namespace GiantGroupM3.Account
 
                 // Successfully processed, redirect to Login with a success flag
                 Response.Redirect("~/Account/Login?registered=true");
+            }
+        }
+
+        private void ClearForm()
+        {
+            Email.Text = string.Empty;
+            Password.Text = string.Empty;
+            FirstName.Text = string.Empty;
+            Surname.Text = string.Empty;
+            PhoneNumber.Text = string.Empty;
+            if (ClientType.Items.Count > 0)
+            {
+                ClientType.SelectedIndex = 0;
             }
         }
     }
