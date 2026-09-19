@@ -327,7 +327,7 @@
     </li>
     <% } %>
 
-    <!-- Quotations Tab -->
+   <!-- Quotations Tab -->
     <% if (CanSeeQuotationsTab()) { %>
     <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Quotations</a>
@@ -341,7 +341,8 @@
 
             <% if (CanSeeViewQuoteOnly()) { %>
                 <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem; letter-spacing: 0.5px;">Records</h6>
-                <a class="dropdown-item" runat="server" href="~/Quotes/ViewQuote.aspx"><i class="bi bi-eye me-1"></i> View Quote</a>
+                <!-- FIXED PATH BELOW -->
+                <a class="dropdown-item" runat="server" href="~/ViewQuote.aspx"><i class="bi bi-eye me-1"></i> View Quote</a>
             <% } %>
         </div>
     </li>
