@@ -279,8 +279,24 @@ namespace GiantGroupM3
             return level == 6 || level == 5; // Adjust if level 5
         }
 
+        public bool CanSeeRequestQuote()
+        {
+            if (!IsLoggedIn()) return false;
+
+            // Clients and Level 5/6 share this access level
+            if (IsClient()) return true;
+
+            int level = GetUserLevel();
+
+            // Level 1 and 4 must NOT see it at all
+            if (level == 1 || level == 4) return false;
+
+            return level == 5 || level == 6;
+        }
+
         public bool CanSeeViewQuoteOnly()
         {
+            
             if (!IsLoggedIn()) return false;
 
 
