@@ -107,7 +107,7 @@ namespace GiantGroupM3
 
             using (SqlConnection conn = new SqlConnection(connString))
             {
-                // Fixed table name from 'quotes' to 'Quote'
+                // Fixed table name from 'quotes' to 'Quote' to ensure successful update
                 string query = "UPDATE Quote SET expiryDate = @expiryDate, amount = @amount, quoteStatus = @quoteStatus WHERE QuoteID = @QuoteID";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
