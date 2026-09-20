@@ -133,6 +133,7 @@ namespace GiantGroupM3.Account
                         Session["PendingUserType"] = userType;
                         Session["PendingUserName"] = userName;
                         Session["PendingUserLevel"] = userLevel;
+                        Session["PendingUserId"] = userId; // <-- Save the ID here!
                         Session["PendingRememberMe"] = RememberMe.Checked;
                         Session["MfaOtpCode"] = otp;
                         Session["MfaExpiry"] = expiryTime;
@@ -170,10 +171,24 @@ namespace GiantGroupM3.Account
                 string email = Session["PendingEmail"] as string;
                 string userType = Session["PendingUserType"] as string; // "Staff" or "Client"
 
+                // --- ADD THIS LINE TO FIX THE ERROR ---
+                int pendingUserId = Convert.ToInt32(Session["PendingUserId"]);
+                // ---------------------------------------
+
                 Session["StaffName"] = Session["PendingUserName"];
                 Session["UserType"] = userType;
                 Session["UserRole"] = userType; // Set UserRole so master page IsClient() works seamlessly!
                 Session["UserLevel"] = Session["PendingUserLevel"];
+
+                // Dynamically assign based on role type so your queries find it instantly
+                if (userType.Equals("Client", StringComparison.OrdinalIgnoreCase))
+                {
+                    Session["ClientID"] = pendingUserId;
+                }
+                else
+                {
+                    Session["StaffID"] = pendingUserId;
+                }
 
                 bool rememberMe = Session["PendingRememberMe"] != null && (bool)Session["PendingRememberMe"];
 
@@ -309,6 +324,7 @@ namespace GiantGroupM3.Account
                                 Session["PendingUserType"] = userType;
                                 Session["PendingUserName"] = userName;
                                 Session["PendingUserLevel"] = userLevel;
+                                Session["PendingUserId"] = userId; // <-- Save the ID here!
                                 Session["PendingRememberMe"] = false; // Google login defaults to standard session cookie
                                 Session["MfaOtpCode"] = otp;
                                 Session["MfaExpiry"] = expiryTime;

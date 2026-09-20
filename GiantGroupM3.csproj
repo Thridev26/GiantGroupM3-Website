@@ -213,7 +213,9 @@
     </Content>
     <Content Include="Help.aspx" />
     <Content Include="NotFound.aspx" />
+    <Content Include="PrintQuote.aspx" />
     <Content Include="Privacy.aspx" />
+    <Content Include="RequestQuote.aspx" />
     <Content Include="Scripts\bootstrap.bundle.js" />
     <Content Include="Scripts\bootstrap.bundle.min.js" />
     <Content Include="Scripts\bootstrap.esm.js" />
@@ -435,11 +437,25 @@
       <DependentUpon>NotFound.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
+    <Compile Include="PrintQuote.aspx.cs">
+      <DependentUpon>PrintQuote.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="PrintQuote.designer.aspx.cs">
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
     <Compile Include="Privacy.aspx.cs">
       <SubType>ASPXCodeBehind</SubType>
       <DependentUpon>Privacy.aspx</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RequestQuote.aspx.cs">
+      <DependentUpon>RequestQuote.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="RequestQuote.aspx.designer.cs">
+      <DependentUpon>RequestQuote.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Site.Master.cs">
       <DependentUpon>Site.Master</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>

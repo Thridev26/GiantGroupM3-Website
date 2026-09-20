@@ -51,6 +51,15 @@ namespace GiantGroupM3
         protected global::System.Web.UI.WebControls.HiddenField hfQuoteID;
 
         /// <summary>
+        /// pnlManagementControls control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel pnlManagementControls;
+
+        /// <summary>
         /// txtExpiryDate control.
         /// </summary>
         /// <remarks>
@@ -85,5 +94,32 @@ namespace GiantGroupM3
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Button btnUpdate;
+
+        /// <summary>
+        /// pnlClientResponse control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel pnlClientResponse;
+
+        /// <summary>
+        /// btnAcceptQuote control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnAcceptQuote;
+
+        /// <summary>
+        /// btnRejectQuote control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnRejectQuote;
     }
 }
