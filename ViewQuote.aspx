@@ -7,7 +7,7 @@
         
         <asp:Label ID="lblMessage" runat="server" CssClass="fw-bold text-success mb-3 d-block" />
         
-        <!-- Quotes GridView -->
+        <!-- Quotes GridView x -->
         <div class="table-responsive">
        <asp:GridView ID="gvQuotes" runat="server" AutoGenerateColumns="False" 
     DataKeyNames="QuoteID" 
