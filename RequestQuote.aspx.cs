@@ -90,11 +90,11 @@ namespace GiantGroupM3
         private void BindRequestItems(int jobRequestId)
         {
             string query = "SELECT jt.JobTypeName, jt.JobRate, ISNULL(id.detailValue, 1) AS Quantity, " +
-                           "(jt.JobRate * ISNULL(id.detailValue, 1)) AS LineTotal " +
-                           "FROM RequestItem ri " +
-                           "INNER JOIN JobType jt ON ri.jobTypeID = jt.jobTypeID " +
-                           "LEFT JOIN ItemDetail id ON ri.requestItemID = id.requestItemID " +
-                           "WHERE ri.jobRequestID = @JobRequestID";
+                   "(jt.JobRate * ISNULL(id.detailValue, 1)) AS LineTotal " +
+                   "FROM RequestItem ri " +
+                   "INNER JOIN JobType jt ON ri.jobTypeID = jt.jobTypeID " +
+                   "LEFT JOIN ItemDetail id ON ri.requestItemID = id.requestItemID " +
+                   "WHERE ri.jobRequestID = @JobRequestID";
 
             using (SqlConnection conn = new SqlConnection(connString))
             {
@@ -177,51 +177,120 @@ namespace GiantGroupM3
                 lblMessage.Text = "Please select an existing Job Request first.";
                 pnlMessage.CssClass = "alert alert-warning rounded-3 mb-4";
                 pnlMessage.Visible = true;
+                btnViewPdfQuote.Visible = false;
                 return;
             }
 
             int jobRequestId = Convert.ToInt32(txtSelectedJobId.Text);
 
-            // Check if item details exist for this job request
-            bool hasDetails = false;
-            string checkQuery = "SELECT COUNT(*) FROM RequestItem ri INNER JOIN ItemDetail id ON ri.requestItemID = id.requestItemID WHERE ri.jobRequestID = @JobRequestID";
-
             using (SqlConnection conn = new SqlConnection(connString))
             {
                 conn.Open();
-                using (SqlCommand cmd = new SqlCommand(checkQuery, conn))
+
+                // 1. Check if item details/measurements exist for this job request
+                string checkDetailsQuery = "SELECT COUNT(*) FROM RequestItem ri INNER JOIN ItemDetail id ON ri.requestItemID = id.requestItemID WHERE ri.jobRequestID = @JobRequestID";
+                using (SqlCommand cmdDetails = new SqlCommand(checkDetailsQuery, conn))
                 {
-                    cmd.Parameters.AddWithValue("@JobRequestID", jobRequestId);
-                    int count = (int)cmd.ExecuteScalar();
-                    hasDetails = (count > 0);
+                    cmdDetails.Parameters.AddWithValue("@JobRequestID", jobRequestId);
+                    int detailCount = (int)cmdDetails.ExecuteScalar();
+                    if (detailCount == 0)
+                    {
+                        lblMessage.Text = "Cannot generate a quote yet. Site measurements or item details have not been provided for this job request, so costs cannot be realistically calculated.";
+                        pnlMessage.CssClass = "alert alert-danger rounded-3 mb-4";
+                        pnlMessage.Visible = true;
+                        btnViewPdfQuote.Visible = false;
+                        return;
+                    }
+                }
+
+                // 2. Check if a quote already exists for this job request
+                string checkQuoteQuery = "SELECT COUNT(*) FROM Quote WHERE jobRequestID = @JobRequestID";
+                using (SqlCommand cmdQuoteCheck = new SqlCommand(checkQuoteQuery, conn))
+                {
+                    cmdQuoteCheck.Parameters.AddWithValue("@JobRequestID", jobRequestId);
+                    int quoteCount = (int)cmdQuoteCheck.ExecuteScalar();
+                    if (quoteCount > 0)
+                    {
+                        lblMessage.Text = "A quote for this job request already exists. A new quote cannot be created.";
+                        pnlMessage.CssClass = "alert alert-warning rounded-3 mb-4";
+                        pnlMessage.Visible = true;
+                        btnViewPdfQuote.Visible = true; // Allow them to view the existing document
+                        return;
+                    }
+                }
+
+                // 3. Calculate the total amount to store it in the Quote table
+                decimal servicesSubtotal = 0;
+                string calcQuery = "SELECT ISNULL(SUM(jt.JobRate * ISNULL(id.detailValue, 1)), 0) AS TotalRate " +
+                                   "FROM RequestItem ri " +
+                                   "INNER JOIN JobType jt ON ri.jobTypeID = jt.jobTypeID " +
+                                   "LEFT JOIN ItemDetail id ON ri.requestItemID = id.requestItemID " +
+                                   "WHERE ri.jobRequestID = @JobRequestID";
+
+                using (SqlCommand cmdCalc = new SqlCommand(calcQuery, conn))
+                {
+                    cmdCalc.Parameters.AddWithValue("@JobRequestID", jobRequestId);
+                    servicesSubtotal = (decimal)cmdCalc.ExecuteScalar();
+                }
+
+                double lon = string.IsNullOrEmpty(txtLongitude.Text) ? 0.0 : Convert.ToDouble(txtLongitude.Text);
+                double lat = string.IsNullOrEmpty(txtLatitude.Text) ? 0.0 : Convert.ToDouble(txtLatitude.Text);
+
+                decimal travelFee = CalculateTravelFee(lat, lon);
+                decimal subtotalWithTravel = servicesSubtotal + travelFee;
+                decimal vat = subtotalWithTravel * 0.15m;
+                decimal totalWithVat = subtotalWithTravel + vat;
+
+                // 4. Insert the new quote into the Quote table with status "Sent"
+                string insertQuoteQuery = @"INSERT INTO Quote (jobRequestID, dateIssued, expiryDate, dateGenerated, amount, quoteStatus) 
+                            VALUES (@JobRequestID, GETDATE(), DATEADD(month, 1, GETDATE()), GETDATE(), @Amount, @QuoteStatus)";
+
+                using (SqlCommand cmdInsert = new SqlCommand(insertQuoteQuery, conn))
+                {
+                    cmdInsert.Parameters.AddWithValue("@JobRequestID", jobRequestId);
+                    cmdInsert.Parameters.AddWithValue("@QuoteStatus", "Sent");
+                    cmdInsert.Parameters.AddWithValue("@Amount", totalWithVat); // Make sure this matches @Amount in the query string!
+                    cmdInsert.ExecuteNonQuery();
                 }
             }
 
-            // If no item details exist, block quote generation and show disclaimer
-            if (!hasDetails)
-            {
-                lblMessage.Text = "Cannot generate a preliminary quote yet. Site measurements or item details have not been provided for this job request, so costs cannot be realistically calculated.";
-                pnlMessage.CssClass = "alert alert-danger rounded-3 mb-4";
-                pnlMessage.Visible = true;
-                btnViewPdfQuote.Visible = false;
-                return;
-            }
-
-            // Otherwise, proceed successfully
-            lblMessage.Text = "Cost preview accepted! You can now view your preliminary quote document below.";
+            // 5. Success feedback
+            lblMessage.Text = "Quote successfully generated, saved, and marked as Sent! You can now view your quote document below.";
             pnlMessage.CssClass = "alert alert-success rounded-3 mb-4";
             pnlMessage.Visible = true;
-
-            // Reveals the view document button
             btnViewPdfQuote.Visible = true;
+        }
+        protected void btnCancel_Click(object sender, EventArgs e)
+        {
+            // 1. Deselect the row in the Job Requests GridView
+            gvJobRequests.SelectedIndex = -1;
+
+            // 2. Clear input/display textboxes
+            txtSelectedJobId.Text = string.Empty;
+            txtLongitude.Text = string.Empty;
+            txtLatitude.Text = string.Empty;
+
+            // 3. Clear the Services GridView completely
+            gvRequestItems.DataSource = null;
+            gvRequestItems.DataBind();
+
+            // 4. Reset financial summary labels back to default zeros
+            lblSubtotal.Text = "R 0,00";
+            lblTravelFee.Text = "R 0,00";
+            lblSubtotalWithTravel.Text = "R 0,00";
+            lblVat.Text = "R 0,00";
+            lblTotalWithVat.Text = "R 0,00";
+
+            // 5. Hide any optional view buttons/messages if open
+            btnViewPdfQuote.Visible = false;
+            pnlMessage.Visible = false;
         }
 
         protected void btnViewPdfQuote_Click(object sender, EventArgs e)
         {
             if (!string.IsNullOrEmpty(txtSelectedJobId.Text))
             {
-                string url = $"ViewQuoteDoc.aspx?jobRequestID={txtSelectedJobId.Text}";
-                ClientScript.RegisterStartupScript(this.GetType(), "openWindow", $"window.open('{url}', '_blank');", true);
+                Response.Redirect($"PrintQuote.aspx?jobRequestID={txtSelectedJobId.Text}");
             }
         }
     }

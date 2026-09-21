@@ -213,6 +213,7 @@
     </Content>
     <Content Include="Help.aspx" />
     <Content Include="NotFound.aspx" />
+    <Content Include="PrintQuote.aspx" />
     <Content Include="Privacy.aspx" />
     <Content Include="RequestQuote.aspx" />
     <Content Include="Scripts\bootstrap.bundle.js" />
@@ -434,6 +435,13 @@
     <Compile Include="Models\IdentityModels.cs" />
     <Compile Include="NotFound.aspx.cs">
       <DependentUpon>NotFound.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="PrintQuote.aspx.cs">
+      <DependentUpon>PrintQuote.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="PrintQuote.designer.aspx.cs">
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="Privacy.aspx.cs">

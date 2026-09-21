@@ -33,6 +33,15 @@ namespace GiantGroupM3
         protected global::System.Web.UI.WebControls.Label lblMessage;
 
         /// <summary>
+        /// gvJobRequests control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.GridView gvJobRequests;
+
+        /// <summary>
         /// txtSelectedJobId control.
         /// </summary>
         /// <remarks>
@@ -40,15 +49,6 @@ namespace GiantGroupM3
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.TextBox txtSelectedJobId;
-
-        /// <summary>
-        /// txtLatitude control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtLatitude;
 
         /// <summary>
         /// txtLongitude control.
@@ -60,13 +60,13 @@ namespace GiantGroupM3
         protected global::System.Web.UI.WebControls.TextBox txtLongitude;
 
         /// <summary>
-        /// gvJobRequests control.
+        /// txtLatitude control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.GridView gvJobRequests;
+        protected global::System.Web.UI.WebControls.TextBox txtLatitude;
 
         /// <summary>
         /// gvRequestItems control.
@@ -139,5 +139,14 @@ namespace GiantGroupM3
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Button btnViewPdfQuote;
+
+        /// <summary>
+        /// btnCancel control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnCancel;
     }
 }

@@ -8,25 +8,34 @@ namespace GiantGroupM3
 {
     public partial class ViewQuote : System.Web.UI.Page
     {
-        private readonly string connString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
+        string connString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
 
         protected void Page_Load(object sender, EventArgs e)
         {
             if (!IsPostBack)
             {
                 // Verify authentication via Identity or Session
-                if (!User.Identity.IsAuthenticated && Session["UserID"] == null && Session["ClientID"] == null)
+                if (!User.Identity.IsAuthenticated && Session["UserID"] == null)
                 {
                     Response.Redirect("~/Account/Login.aspx");
                     return;
                 }
 
                 LoadQuoteData();
+
+                //// If the user is a client, hide the select/edit command column action buttons
+                //if (IsClientUser())
+                //{
+                //    if (gvQuotes.Columns.Count > 0)
+                //    {
+                //        gvQuotes.Columns[0].Visible = false;
+                //    }
+                //}
             }
         }
 
-        // Helper method to detect if the current user session belongs to a Client
-        private bool IsClient()
+        // Local helper mirroring your access check
+        private bool IsClientUser()
         {
             if (Session["UserRole"] != null && Session["UserRole"].ToString().Equals("Client", StringComparison.OrdinalIgnoreCase))
                 return true;
@@ -42,14 +51,14 @@ namespace GiantGroupM3
 
         private void LoadQuoteData()
         {
-            bool isClientUser = IsClient();
+            bool isClient = IsClientUser();
             string query = "";
 
             using (SqlConnection conn = new SqlConnection(connString))
             {
-                if (!isClientUser)
+                if (!isClient)
                 {
-                    // Management / Admin view: see all quotes across all clients
+                    // Management can view all quote entries
                     query = @"SELECT q.QuoteID, q.jobRequestID, c.clientName AS Name, q.dateIssued, q.expiryDate, q.dateGenerated, q.amount, q.quoteStatus, q.filePath 
                               FROM Quote q 
                               JOIN JobRequest jr ON q.jobRequestID = jr.jobRequestID
@@ -57,7 +66,7 @@ namespace GiantGroupM3
                 }
                 else
                 {
-                    // Client view: restrict records strictly to the logged-in client's ID
+                    // Customers only see quotes linked to their account via JobRequest
                     query = @"SELECT q.QuoteID, q.jobRequestID, c.clientName AS Name, q.dateIssued, q.expiryDate, q.dateGenerated, q.amount, q.quoteStatus, q.filePath 
                               FROM Quote q 
                               JOIN JobRequest jr ON q.jobRequestID = jr.jobRequestID
@@ -67,9 +76,8 @@ namespace GiantGroupM3
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    if (isClientUser)
+                    if (isClient)
                     {
-                        // Safely pull the client identifier from session variables
                         object clientIdVal = Session["ClientID"] ?? Session["UserID"];
                         cmd.Parameters.AddWithValue("@clientID", clientIdVal ?? (object)DBNull.Value);
                     }
@@ -97,6 +105,12 @@ namespace GiantGroupM3
             int quoteId = Convert.ToInt32(gvQuotes.SelectedDataKey.Value);
             hfQuoteID.Value = quoteId.ToString();
 
+            bool isClient = IsClientUser();
+
+            // Toggle panels depending on whether it's a manager or client view
+            pnlManagementControls.Visible = !isClient;
+            pnlClientResponse.Visible = isClient;
+
             using (SqlConnection conn = new SqlConnection(connString))
             {
                 string query = "SELECT expiryDate, amount, quoteStatus FROM Quote WHERE QuoteID = @QuoteID";
@@ -110,7 +124,11 @@ namespace GiantGroupM3
                         {
                             txtExpiryDate.Text = reader["expiryDate"] != DBNull.Value ? Convert.ToDateTime(reader["expiryDate"]).ToString("yyyy-MM-dd") : "";
                             txtAmount.Text = reader["amount"]?.ToString() ?? "";
-                            ddlQuoteStatus.SelectedValue = reader["quoteStatus"]?.ToString();
+
+                            if (ddlQuoteStatus.Items.FindByValue(reader["quoteStatus"]?.ToString()) != null)
+                            {
+                                ddlQuoteStatus.SelectedValue = reader["quoteStatus"]?.ToString();
+                            }
                         }
                     }
                 }
@@ -140,6 +158,40 @@ namespace GiantGroupM3
             }
 
             lblMessage.Text = "Quote updated successfully!";
+            pnlEditQuote.Visible = false;
+            LoadQuoteData();
+        }
+
+        protected void btnAcceptQuote_Click(object sender, EventArgs e)
+        {
+            UpdateQuoteStatus("Accepted", "Quote successfully accepted!");
+        }
+
+        protected void btnRejectQuote_Click(object sender, EventArgs e)
+        {
+            UpdateQuoteStatus("Rejected", "Quote has been rejected.");
+        }
+
+        private void UpdateQuoteStatus(string newStatus, string successMessage)
+        {
+            if (string.IsNullOrEmpty(hfQuoteID.Value)) return;
+
+            int quoteId = Convert.ToInt32(hfQuoteID.Value);
+
+            using (SqlConnection conn = new SqlConnection(connString))
+            {
+                string query = "UPDATE Quote SET quoteStatus = @quoteStatus WHERE QuoteID = @QuoteID";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@quoteStatus", newStatus);
+                    cmd.Parameters.AddWithValue("@QuoteID", quoteId);
+
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+
+            lblMessage.Text = successMessage;
             pnlEditQuote.Visible = false;
             LoadQuoteData();
         }

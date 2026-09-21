@@ -283,20 +283,19 @@ namespace GiantGroupM3
         {
             if (!IsLoggedIn()) return false;
 
-            // Clients and Level 5/6 share this access level
+            // Clients see it (same logic as View Quote)
             if (IsClient()) return true;
 
             int level = GetUserLevel();
-
-            // Level 1 and 4 must NOT see it at all
+            // Level 1 and 4 must NOT see it
             if (level == 1 || level == 4) return false;
 
+            // Matches View Quote visibility logic
             return level == 5 || level == 6;
         }
 
         public bool CanSeeViewQuoteOnly()
         {
-            
             if (!IsLoggedIn()) return false;
 
 
