@@ -358,7 +358,7 @@
             <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem; letter-spacing: 0.5px;">Actions</h6>
             
             <% if (CanSeeRequestQuote()) { %>
-                <a class="dropdown-item" runat="server" href="~/Quotes/RequestQuote.aspx"><i class="bi bi-plus-circle me-1"></i> Request Quote</a>
+                <a class="dropdown-item" runat="server" href="~/RequestQuote.aspx"><i class="bi bi-plus-circle me-1"></i> Request Quote</a>
             <% } %>
             
             <% if (CanSeeCreateEditQuote()) { %>

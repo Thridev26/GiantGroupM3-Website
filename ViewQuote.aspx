@@ -1,57 +1,71 @@
-﻿<%@ Page Title="View Quotes" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="ViewQuote.aspx.cs" Inherits="GiantGroupM3.ViewQuote" %>
+﻿<%@ Page Title="Quotes Management & Archive" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="ViewQuote.aspx.cs" Inherits="GiantGroupM3.ViewQuote" %>
 
 <asp:Content ID="BodyContent" ContentPlaceHolderID="MainContent" runat="server">
-    <div class="container py-4">
-        <h2 class="mb-3">Quotes Management & Archive</h2>
-        <hr />
-        
-        <asp:Label ID="lblMessage" runat="server" CssClass="fw-bold text-success mb-3 d-block" />
-        
-        <!-- Quotes GridView x -->
-        <div class="table-responsive">
-       <asp:GridView ID="gvQuotes" runat="server" AutoGenerateColumns="False" 
-    DataKeyNames="QuoteID" 
-    OnSelectedIndexChanged="gvQuotes_SelectedIndexChanged" 
-    OnPageIndexChanging="gvQuotes_PageIndexChanging" 
-    CssClass="table table-striped table-bordered align-middle" AllowPaging="True">
-    <Columns>
-        <asp:CommandField ShowSelectButton="True" SelectText="Select/Edit" ControlStyle-CssClass="btn btn-sm btn-outline-success" />
-        <asp:BoundField DataField="QuoteID" HeaderText="Quote ID" />
-        <asp:BoundField DataField="jobRequestID" HeaderText="Job Request ID" />
-        <asp:BoundField DataField="Name" HeaderText="Client Name" />
-        <asp:BoundField DataField="dateIssued" HeaderText="Date Issued" DataFormatString="{0:yyyy-MM-dd}" />
-        <asp:BoundField DataField="expiryDate" HeaderText="Expiry Date" DataFormatString="{0:yyyy-MM-dd}" />
-        <asp:BoundField DataField="amount" HeaderText="Amount (ZAR)" DataFormatString="{0:C}" />
-        <asp:BoundField DataField="quoteStatus" HeaderText="Status" />
-    </Columns>
-</asp:GridView>
+    <main aria-labelledby="title" class="container py-4">
+        <h2 id="title" class="mb-4">Quotes Management & Archive</h2>
+
+        <!-- Notification Message -->
+        <div class="mb-3">
+            <asp:Label runat="server" ID="lblMessage" CssClass="fw-bold text-success" />
         </div>
 
-        <br />
+        <!-- Clean Quotations Table -->
+        <div class="table-responsive mb-4">
+            <asp:GridView runat="server" ID="gvQuotes" AutoGenerateColumns="False" DataKeyNames="QuoteID"
+                AllowPaging="True" PageSize="10" OnPageIndexChanging="gvQuotes_PageIndexChanging"
+                OnSelectedIndexChanged="gvQuotes_SelectedIndexChanged"
+                CssClass="table table-hover align-middle bg-white border" SelectedRowStyle-CssClass="table-light">
+                <HeaderStyle CssClass="table-light text-secondary border-bottom" />
+                <Columns>
+                    <asp:BoundField DataField="QuoteID" HeaderText="Quote ID" />
+                    <asp:BoundField DataField="jobRequestID" HeaderText="Job Request ID" />
+                    <asp:BoundField DataField="Name" HeaderText="Client Name" />
+                    <asp:BoundField DataField="dateIssued" HeaderText="Date Issued" DataFormatString="{0:yyyy-MM-dd}" />
+                    <asp:BoundField DataField="expiryDate" HeaderText="Expiry Date" DataFormatString="{0:yyyy-MM-dd}" />
+                    <asp:BoundField DataField="amount" HeaderText="Amount (ZAR)" DataFormatString="{0:C}" />
+                    <asp:BoundField DataField="quoteStatus" HeaderText="Status" />
+                    <asp:TemplateField HeaderText="Document">
+                        <ItemTemplate>
+                            <asp:HyperLink runat="server" NavigateUrl='<%# Eval("filePath") %>' Text="View File" Target="_blank" CssClass="btn btn-sm btn-outline-secondary" Visible='<%# Eval("filePath") != DBNull.Value && !string.IsNullOrEmpty(Eval("filePath") as string) %>' />
+                            <asp:Label runat="server" Text="N/A" CssClass="text-muted" Visible='<%# Eval("filePath") == DBNull.Value || string.IsNullOrEmpty(Eval("filePath") as string) %>' />
+                        </ItemTemplate>
+                    </asp:TemplateField>
+                    <asp:CommandField ShowSelectButton="True" SelectText="Edit" ControlStyle-CssClass="btn btn-sm btn-link text-primary p-0" />
+                </Columns>
+            </asp:GridView>
+        </div>
 
-        <!-- Management Edit Panel -->
-        <asp:Panel ID="pnlEditQuote" runat="server" Visible="false" CssClass="card p-4 shadow-sm mt-4 bg-light">
-            <h4 class="text-success mb-3">Edit Quote Details</h4>
-            <asp:HiddenField ID="hfQuoteID" runat="server" />
-            
-            <div class="mb-3">
-                <label class="form-label fw-bold">Expiry Date:</label>
-                <asp:TextBox ID="txtExpiryDate" runat="server" TextMode="Date" CssClass="form-control" />
+        <!-- Edit Quote Panel (Clean inline form) -->
+        <asp:Panel runat="server" ID="pnlEditQuote" Visible="false" class="p-4 border rounded bg-light mb-4">
+            <h5 class="text-dark mb-3">Update Selected Quotation</h5>
+            <asp:HiddenField runat="server" ID="hfQuoteID" />
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <asp:Label runat="server" AssociatedControlID="txtExpiryDate" CssClass="form-label">Expiry Date:</asp:Label>
+                    <asp:TextBox runat="server" ID="txtExpiryDate" CssClass="form-control" TextMode="Date" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <asp:Label runat="server" AssociatedControlID="txtAmount" CssClass="form-label">Amount (ZAR):</asp:Label>
+                    <asp:TextBox runat="server" ID="txtAmount" CssClass="form-control" TextMode="Number" step="0.01" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <asp:Label runat="server" AssociatedControlID="ddlQuoteStatus" CssClass="form-label">Quote Status:</asp:Label>
+                    <asp:DropDownList runat="server" ID="ddlQuoteStatus" CssClass="form-select">
+                        <asp:ListItem Text="Draft" Value="Draft" />
+                        <asp:ListItem Text="Sent" Value="Sent" />
+                        <asp:ListItem Text="Accepted" Value="Accepted" />
+                        <asp:ListItem Text="Rejected" Value="Rejected" />
+                        <asp:ListItem Text="Expired" Value="Expired" />
+                    </asp:DropDownList>
+                </div>
             </div>
-            <div class="mb-3">
-                <label class="form-label fw-bold">Amount:</label>
-                <asp:TextBox ID="txtAmount" runat="server" CssClass="form-control" />
+
+            <div class="mt-2">
+                <asp:Button runat="server" ID="btnUpdate" Text="Save Changes" CssClass="btn btn-dark" OnClick="btnUpdate_Click" />
             </div>
-            <div class="mb-3">
-                <label class="form-label fw-bold">Quote Status:</label>
-                <asp:DropDownList ID="ddlQuoteStatus" runat="server" CssClass="form-select">
-                    <asp:ListItem Text="Pending" Value="Pending" />
-                    <asp:ListItem Text="Accepted" Value="Accepted" />
-                    <asp:ListItem Text="Declined" Value="Declined" />
-                </asp:DropDownList>
-            </div>
-            
-            <asp:Button ID="btnUpdate" runat="server" Text="Update Quote" OnClick="btnUpdate_Click" CssClass="btn btn-success" />
         </asp:Panel>
-    </div>
+    </main>
 </asp:Content>

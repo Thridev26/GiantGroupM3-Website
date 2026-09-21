@@ -8,14 +8,14 @@ namespace GiantGroupM3
 {
     public partial class ViewQuote : System.Web.UI.Page
     {
-        string connString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
+        private readonly string connString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
 
         protected void Page_Load(object sender, EventArgs e)
         {
             if (!IsPostBack)
             {
                 // Verify authentication via Identity or Session
-                if (!User.Identity.IsAuthenticated && Session["UserID"] == null)
+                if (!User.Identity.IsAuthenticated && Session["UserID"] == null && Session["ClientID"] == null)
                 {
                     Response.Redirect("~/Account/Login.aspx");
                     return;
@@ -25,24 +25,41 @@ namespace GiantGroupM3
             }
         }
 
+        // Helper method to detect if the current user session belongs to a Client
+        private bool IsClient()
+        {
+            if (Session["UserRole"] != null && Session["UserRole"].ToString().Equals("Client", StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (Session["Role"] != null && Session["Role"].ToString().Equals("Client", StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (Session["UserType"] != null && Session["UserType"].ToString().Equals("Client", StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (Session["ClientID"] != null)
+                return true;
+
+            return false;
+        }
+
         private void LoadQuoteData()
         {
-            string userRole = Session["UserRole"]?.ToString() ?? "Management";
+            bool isClientUser = IsClient();
             string query = "";
 
             using (SqlConnection conn = new SqlConnection(connString))
             {
-                if (userRole == "Management" || userRole == "Admin" || User.Identity.IsAuthenticated)
+                if (!isClientUser)
                 {
-                    query = @"SELECT q.QuoteID, q.jobRequestID, c.ClientName AS Name, q.dateIssued, q.expiryDate, q.dateGenerated, q.amount, q.quoteStatus, q.filePath 
-                              FROM Quote q  
+                    // Management / Admin view: see all quotes across all clients
+                    query = @"SELECT q.QuoteID, q.jobRequestID, c.clientName AS Name, q.dateIssued, q.expiryDate, q.dateGenerated, q.amount, q.quoteStatus, q.filePath 
+                              FROM Quote q 
                               JOIN JobRequest jr ON q.jobRequestID = jr.jobRequestID
                               JOIN Client c ON jr.clientID = c.clientID";
                 }
                 else
                 {
-                    query = @"SELECT q.QuoteID, q.jobRequestID, c.ClientName AS Name, q.dateIssued, q.expiryDate, q.dateGenerated, q.amount, q.quoteStatus, q.filePath 
-                              FROM Quote q  
+                    // Client view: restrict records strictly to the logged-in client's ID
+                    query = @"SELECT q.QuoteID, q.jobRequestID, c.clientName AS Name, q.dateIssued, q.expiryDate, q.dateGenerated, q.amount, q.quoteStatus, q.filePath 
+                              FROM Quote q 
                               JOIN JobRequest jr ON q.jobRequestID = jr.jobRequestID
                               JOIN Client c ON jr.clientID = c.clientID
                               WHERE c.clientID = @clientID";
@@ -50,9 +67,11 @@ namespace GiantGroupM3
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    if (userRole != "Management" && userRole != "Admin" && !User.Identity.IsAuthenticated)
+                    if (isClientUser)
                     {
-                        cmd.Parameters.AddWithValue("@clientID", Session["UserID"] ?? (object)DBNull.Value);
+                        // Safely pull the client identifier from session variables
+                        object clientIdVal = Session["ClientID"] ?? Session["UserID"];
+                        cmd.Parameters.AddWithValue("@clientID", clientIdVal ?? (object)DBNull.Value);
                     }
 
                     using (SqlDataAdapter da = new SqlDataAdapter(cmd))
@@ -107,7 +126,6 @@ namespace GiantGroupM3
 
             using (SqlConnection conn = new SqlConnection(connString))
             {
-                // Fixed table name from 'quotes' to 'Quote' to ensure successful update
                 string query = "UPDATE Quote SET expiryDate = @expiryDate, amount = @amount, quoteStatus = @quoteStatus WHERE QuoteID = @QuoteID";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
