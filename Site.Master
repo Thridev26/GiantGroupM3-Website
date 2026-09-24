@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><%: Page.Title %> - The Giant Group</title>
-    
+
     <!-- Meta Description for SEO and Link Sharing -->
     <meta name="description" content="The Giant Group enterprise management platform. Powered by Code Crusaders for professional tree-felling operations, quoting, and asset management." />
 
@@ -225,6 +225,55 @@ footer {
     <meta name="description" content="Powering next-gen tree-felling operations. Experience seamless client quoting, real-time machine allocation, and smart staff scheduling with The Giant Group." />
 <meta name="keywords" content="tree felling, vegetation management, enterprise portal, quoting system, operations management, Code Crusaders" />
 <meta name="author" content="Code Crusaders" />
+    <!-- GIANT GROUP 3D & GLASSMORPHISM STYLES -->
+    <style>
+        :root {
+            /* Modern Brand Palette */
+            --giant-green-dark: #0f2d1e;
+            --giant-green-primary: #1b4332;
+            --giant-green-accent: #2d6a4f;
+            --giant-emerald: #52b788;
+            --giant-glow: rgba(82, 183, 136, 0.35);
+            
+            /* Neumorphic / Glassmorphism Tokens */
+            --glass-bg: rgba(255, 255, 255, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --glass-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.07);
+            --glow-shadow: 0 10px 30px -5px var(--giant-glow);
+        }
+
+        /* Glassmorphic Card Base Class */
+        .glass-card {
+            background: var(--glass-bg) !important;
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            border: 1px solid var(--glass-border) !important;
+            border-radius: 1.25rem;
+            box-shadow: var(--glass-shadow);
+            transition: all 0.35s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        /* Interactive 3D Lift & Glow Effect on Hover */
+        .glass-card-interactive {
+            cursor: pointer;
+        }
+
+        .glass-card-interactive:hover {
+            transform: translateY(-8px) scale(1.015);
+            box-shadow: 0 25px 50px -12px rgba(27, 67, 50, 0.25), var(--glow-shadow);
+            border-color: var(--giant-emerald) !important;
+        }
+
+        /* Ambient Blur Animation Effect */
+        @keyframes pulse-orb {
+            0%, 100% { transform: scale(1) translate(-50%, 0); opacity: 0.3; }
+            50% { transform: scale(1.15) translate(-50%, 10px); opacity: 0.5; }
+        }
+
+        .blur-orb {
+            animation: pulse-orb 6s ease-in-out infinite;
+        }
+    </style>
 </head>
 <body>
     <!-- Skip to Content Link (Accessibility) -->
@@ -281,29 +330,29 @@ footer {
     </div>
 </div>
     <form runat="server">
-        <asp:ScriptManager runat="server">
-            <Scripts>
-                <%--Framework Scripts--%>
-                <asp:ScriptReference Name="MsAjaxBundle" />
-                <asp:ScriptReference Name="jquery" />
-                <asp:ScriptReference Name="WebForms.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebForms.js" />
-                <asp:ScriptReference Name="WebUIValidation.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebUIValidation.js" />
-                <asp:ScriptReference Name="MenuStandards.js" Assembly="System.Web" Path="~/Scripts/WebForms/MenuStandards.js" />
-                <asp:ScriptReference Name="GridView.js" Assembly="System.Web" Path="~/Scripts/WebForms/GridView.js" />
-                <asp:ScriptReference Name="DetailsView.js" Assembly="System.Web" Path="~/Scripts/WebForms/DetailsView.js" />
-                <asp:ScriptReference Name="TreeView.js" Assembly="System.Web" Path="~/Scripts/WebForms/TreeView.js" />
-                <asp:ScriptReference Name="WebParts.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebParts.js" />
-                <asp:ScriptReference Name="Focus.js" Assembly="System.Web" Path="~/Scripts/WebForms/Focus.js" />
-                <asp:ScriptReference Name="WebFormsBundle" />
-            </Scripts>
-        </asp:ScriptManager>
+      <asp:ScriptManager runat="server" EnablePageMethods="true">
+    <Scripts>
+        <%--Framework Scripts--%>
+        <asp:ScriptReference Name="MsAjaxBundle" />
+        <asp:ScriptReference Name="jquery" />
+        <asp:ScriptReference Name="WebForms.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebForms.js" />
+        <asp:ScriptReference Name="WebUIValidation.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebUIValidation.js" />
+        <asp:ScriptReference Name="MenuStandards.js" Assembly="System.Web" Path="~/Scripts/WebForms/MenuStandards.js" />
+        <asp:ScriptReference Name="GridView.js" Assembly="System.Web" Path="~/Scripts/WebForms/GridView.js" />
+        <asp:ScriptReference Name="DetailsView.js" Assembly="System.Web" Path="~/Scripts/WebForms/DetailsView.js" />
+        <asp:ScriptReference Name="TreeView.js" Assembly="System.Web" Path="~/Scripts/WebForms/TreeView.js" />
+        <asp:ScriptReference Name="WebParts.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebParts.js" />
+        <asp:ScriptReference Name="Focus.js" Assembly="System.Web" Path="~/Scripts/WebForms/Focus.js" />
+        <asp:ScriptReference Name="WebFormsBundle" />
+    </Scripts>
+</asp:ScriptManager>
 
         <nav class="navbar navbar-expand-lg sticky-top shadow-sm" style="background-color: #40916c;" data-bs-theme="dark">
             <div class="container-fluid">
                 <!-- Brand / Home -->
-                <a class="navbar-brand p-0" runat="server" href="~/Default">
-                    <img runat="server" src="~/Content/The Giant Group Logo .png" alt="The Giant Group" style="height: 40px; width: auto;" />
-                </a>
+               <a class="navbar-brand p-0" runat="server" href="~/HomeRouter.aspx">
+    <img runat="server" src="~/Content/The Giant Group Logo .png" alt="The Giant Group" style="height: 40px; width: auto;" />
+</a>
                 
                 <!-- Mobile Toggle Button -->
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
@@ -393,9 +442,9 @@ footer {
         <div class="dropdown-menu p-2">
             <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem; letter-spacing: 0.5px;">Resources</h6>
             <% if (!IsClient()) { %>
-                <a class="dropdown-item" runat="server" href="~/Allocation/Assets.aspx"><i class="bi bi-tools me-1"></i> View Assets Allocation</a>
+                <a class="dropdown-item" runat="server" href="~/ViewAssetAllocation.aspx"><i class="bi bi-tools me-1"></i> View Assets Allocation</a>
             <% } %>
-            <a class="dropdown-item" runat="server" href="~/Allocation/Staff.aspx"><i class="bi bi-person-badge me-1"></i> View Staff Allocation</a>
+            <a class="dropdown-item" runat="server" href="~/ViewStaffAllocation.aspx"><i class="bi bi-person-badge me-1"></i> View Staff Allocation</a>
         </div>
     </li>
     <% } %>
@@ -962,5 +1011,9 @@ footer {
         });
     </script>
 
+    <!-- Vanilla-Tilt 3D Library for Interactive Cursor Tracking -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
+</body>
+</html>
 </body>
 </html>

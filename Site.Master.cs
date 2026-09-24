@@ -80,6 +80,34 @@ namespace GiantGroupM3
             }
         }
 
+        protected void lnkLogoHome_Click(object sender, EventArgs e)
+        {
+            // 1. Check if user is logged in as Staff (check integer values, string representations, or session names)
+            bool isStaff = Session["UserLevel"] != null ||
+                           Session["StaffName"] != null ||
+                           Session["Staff"] != null ||
+                           Session["UserName"] != null ||
+                           Session["User"] != null ||
+                           Session["Role"]?.ToString().ToLower() == "staff" ||
+                           Session["UserRole"]?.ToString().ToLower() == "staff";
+
+            if (isStaff)
+            {
+                // Level 1 staff or any logged-in staff member goes to Management Portal
+                Response.Redirect("~/ManagementPortal.aspx");
+                return;
+            }
+
+            // 2. Check if logged in as Client
+            if (Session["ClientID"] != null || Session["Role"]?.ToString().ToLower() == "client")
+            {
+                Response.Redirect("~/ClientPortal.aspx");
+                return;
+            }
+
+            // 3. Guest / Not logged in
+            Response.Redirect("~/Default.aspx");
+        }
         protected void BtnLogout_Click(object sender, EventArgs e)
         {
             // 1. Clear session variables and abandon session
