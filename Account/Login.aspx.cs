@@ -202,7 +202,36 @@ namespace GiantGroupM3.Account
                 Session.Remove("MfaExpiry");
 
                 FormsAuthentication.SetAuthCookie(email, rememberMe);
-                RedirectToReturnUrl();
+                // =========================================================================
+                // PLACE THE SNIPPET HERE (Replacing RedirectToReturnUrl();)
+                // =========================================================================
+
+                // Optional: Check for an explicit ReturnUrl parameter before applying role routing
+                string returnUrl = Request.QueryString["ReturnUrl"];
+                if (!string.IsNullOrEmpty(returnUrl))
+                {
+                    Response.Redirect(returnUrl);
+                }
+                else
+                {
+                    string role = Session["UserRole"]?.ToString() ?? string.Empty;
+                    int userLevel = Convert.ToInt32(Session["UserLevel"] ?? -1);
+
+                    if (role.Equals("Staff", StringComparison.OrdinalIgnoreCase) ||
+                        role.Equals("Admin", StringComparison.OrdinalIgnoreCase) ||
+                        userLevel >= 2)
+                    {
+                        Response.Redirect("~/ManagementPortal.aspx");
+                    }
+                    else if (role.Equals("Client", StringComparison.OrdinalIgnoreCase) || userLevel == 0 || userLevel == 1)
+                    {
+                        Response.Redirect("~/ClientPortal.aspx");
+                    }
+                    else
+                    {
+                        Response.Redirect("~/Default.aspx");
+                    }
+                }
             }
             else
             {

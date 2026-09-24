@@ -56,22 +56,22 @@ namespace GiantGroupM3
 
             using (SqlConnection conn = new SqlConnection(connString))
             {
+                // Added 'Rejected' to the IN clause so quotes don't disappear when rejected
                 if (!isClient)
                 {
-                    // Management can view all quote entries
                     query = @"SELECT q.QuoteID, q.jobRequestID, c.clientName AS Name, q.dateIssued, q.expiryDate, q.dateGenerated, q.amount, q.quoteStatus, q.filePath 
-                              FROM Quote q 
-                              JOIN JobRequest jr ON q.jobRequestID = jr.jobRequestID
-                              JOIN Client c ON jr.clientID = c.clientID";
+                      FROM Quote q 
+                      JOIN JobRequest jr ON q.jobRequestID = jr.jobRequestID
+                      JOIN Client c ON jr.clientID = c.clientID
+                      WHERE q.quoteStatus IN ('Sent', 'Accepted', 'Rejected')";
                 }
                 else
                 {
-                    // Customers only see quotes linked to their account via JobRequest
                     query = @"SELECT q.QuoteID, q.jobRequestID, c.clientName AS Name, q.dateIssued, q.expiryDate, q.dateGenerated, q.amount, q.quoteStatus, q.filePath 
-                              FROM Quote q 
-                              JOIN JobRequest jr ON q.jobRequestID = jr.jobRequestID
-                              JOIN Client c ON jr.clientID = c.clientID
-                              WHERE c.clientID = @clientID";
+                      FROM Quote q 
+                      JOIN JobRequest jr ON q.jobRequestID = jr.jobRequestID
+                      JOIN Client c ON jr.clientID = c.clientID
+                      WHERE q.quoteStatus IN ('Sent', 'Accepted', 'Rejected') AND c.clientID = @clientID";
                 }
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -86,8 +86,21 @@ namespace GiantGroupM3
                     {
                         DataTable dt = new DataTable();
                         da.Fill(dt);
+
                         gvQuotes.DataSource = dt;
                         gvQuotes.DataBind();
+
+                        // Handle empty state visibility
+                        if (dt.Rows.Count == 0)
+                        {
+                            gvQuotes.Visible = false;
+                            pnlEmptyState.Visible = true;
+                        }
+                        else
+                        {
+                            gvQuotes.Visible = true;
+                            pnlEmptyState.Visible = false;
+                        }
                     }
                 }
             }
@@ -180,14 +193,40 @@ namespace GiantGroupM3
 
             using (SqlConnection conn = new SqlConnection(connString))
             {
-                string query = "UPDATE Quote SET quoteStatus = @quoteStatus WHERE QuoteID = @QuoteID";
-                using (SqlCommand cmd = new SqlCommand(query, conn))
+                conn.Open();
+                using (SqlTransaction transaction = conn.BeginTransaction())
                 {
-                    cmd.Parameters.AddWithValue("@quoteStatus", newStatus);
-                    cmd.Parameters.AddWithValue("@QuoteID", quoteId);
+                    try
+                    {
+                        // 1. Update the Quote status
+                        string updateQuoteQuery = "UPDATE Quote SET quoteStatus = @quoteStatus WHERE QuoteID = @QuoteID";
+                        using (SqlCommand cmd = new SqlCommand(updateQuoteQuery, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@quoteStatus", newStatus);
+                            cmd.Parameters.AddWithValue("@QuoteID", quoteId);
+                            cmd.ExecuteNonQuery();
+                        }
 
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
+                        // 2. Automatically sync the corresponding JobRequest status
+                        string updateJobQuery = @"UPDATE JobRequest 
+                                          SET status = @jobStatus 
+                                          WHERE jobRequestID = (SELECT jobRequestID FROM Quote WHERE QuoteID = @QuoteID)";
+                        using (SqlCommand cmdJob = new SqlCommand(updateJobQuery, conn, transaction))
+                        {
+                            // If the quote is accepted, set job request to Accepted. If rejected, handle accordingly.
+                            string jobStatusToSet = (newStatus == "Accepted") ? "Accepted" : "Quote Sent";
+                            cmdJob.Parameters.AddWithValue("@jobStatus", jobStatusToSet);
+                            cmdJob.Parameters.AddWithValue("@QuoteID", quoteId);
+                            cmdJob.ExecuteNonQuery();
+                        }
+
+                        transaction.Commit();
+                    }
+                    catch (Exception)
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
                 }
             }
 

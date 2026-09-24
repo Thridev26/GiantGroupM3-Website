@@ -3,7 +3,7 @@
 <asp:Content ID="BodyContent" ContentPlaceHolderID="MainContent" runat="server">
     <div class="container my-5">
         
-        <!-- 1. HIGH-IMPACT HERO BANNER (Original Green Theme & Logo) -->
+        <!-- 1. HIGH-IMPACT HERO BANNER -->
         <div class="p-5 mb-5 rounded-4 shadow text-center text-white position-relative overflow-hidden" style="background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%); border: 1px solid rgba(255,255,255,0.1);" data-aos="zoom-in">
             <div class="py-4">
                 <div class="mb-4 bg-white p-3 rounded-3 d-inline-block shadow-sm">
@@ -25,7 +25,7 @@
                     <% } %>
                 </div>
             </div>
-        </div>
+        </div> 
 
         <!-- 2. PERFORMANCE METRICS & STATISTICS -->
         <div class="row text-center mb-5">
@@ -48,8 +48,9 @@
                 </div>
             </div>
         </div>
+      
 
-        <!-- 3. TRUSTED ORGANISATIONS / PARTNERS GRID (Original Image Restored) -->
+        <!-- 3. TRUSTED ORGANISATIONS / PARTNERS GRID -->
         <div class="my-5 py-4 bg-light rounded-4 border px-4 shadow-sm" data-aos="fade-up">
             <div class="text-center mb-4">
                 <h3 class="fw-bold text-dark">Trusted By Leading Organisations</h3>
@@ -127,7 +128,7 @@
             </div>
         </div>
 
-        <!-- 4. CORE SYSTEM MODULES GRID (Staff Levels 4, 5, 6 Only) -->
+        <!-- 4. CORE SYSTEM MODULES GRID (Staff Levels 4+ Only) -->
         <asp:Panel runat="server" ID="OperationsHubPanel" Visible="false">
             <div class="row my-5">
                 <div class="col-12 text-center mb-4" data-aos="fade-up">
@@ -167,7 +168,37 @@
             </div>
         </asp:Panel>
 
-        <!-- Guest Prompt Panel (Visible only when logged out) -->
+        <!-- 5. CLIENT QUICK ACTIONS (Logged-In Clients Only) -->
+        <asp:Panel runat="server" ID="ClientHubPanel" Visible="false">
+            <div class="row my-5">
+                <div class="col-12 text-center mb-4" data-aos="fade-up">
+                    <h2 class="fw-bold text-dark">Client Portal Quick Actions</h2>
+                    <p class="text-muted">Manage your active service requests and company account details.</p>
+                </div>
+                <div class="col-md-6 mb-4" data-aos="fade-up" data-aos-delay="100">
+                    <div class="card h-100 shadow-sm border-0 p-3">
+                        <div class="card-body">
+                            <div class="mb-3 text-success fs-2">📝</div>
+                            <h3 class="card-title h5 fw-bold">Submit New Request</h3>
+                            <p class="card-text text-secondary">Request tree felling, site clearing, or hazard assessment for your property.</p>
+                            <a runat="server" href="~/Requests/SubmitRequest.aspx" class="stretched-link text-success text-decoration-none fw-bold">New Request &rarr;</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4" data-aos="fade-up" data-aos-delay="200">
+                    <div class="card h-100 shadow-sm border-0 p-3">
+                        <div class="card-body">
+                            <div class="mb-3 text-success fs-2">📋</div>
+                            <h3 class="card-title h5 fw-bold">View Request History</h3>
+                            <p class="card-text text-secondary">Check current status updates, quotes, and job completion reports.</p>
+                            <a runat="server" href="~/Requests/ViewRequests.aspx" class="stretched-link text-success text-decoration-none fw-bold">View History &rarr;</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </asp:Panel>
+
+        <!-- 6. GUEST PROMPT PANEL (Visible only when logged out) -->
         <asp:Panel runat="server" ID="GuestPromptPanel" Visible="true">
             <div class="my-5 py-5 text-center bg-white rounded-4 border shadow-sm" data-aos="fade-up">
                 <div class="fs-1 mb-3">🌲</div>
@@ -202,5 +233,4 @@
             </div>
         </div>
     </div>
-
 </asp:Content>

@@ -21,18 +21,42 @@ namespace GiantGroupM3
         {
             if (!IsPostBack)
             {
-                if (Session["ClientID"] != null && int.TryParse(Session["ClientID"].ToString(), out int clientId))
+                // 1. Check if an Owner (6) or Admin (5) is logged in via your UserLevel session
+                if (Session["UserLevel"] != null && int.TryParse(Session["UserLevel"].ToString(), out int level) && (level == 5 || level == 6))
                 {
-                    BindExistingJobRequests(clientId);
+                    BindAllExistingJobRequestsForManagement();
                 }
+                // 2. Check if a standard Client is logged in
+                else if (Session["ClientID"] != null && int.TryParse(Session["ClientID"].ToString(), out int clientId))
+                {
+                    BindExistingJobRequestsForClient(clientId);
+                }
+                // 3. Otherwise, send them to the correct login path
                 else
                 {
-                    Response.Redirect("~/Login.aspx");
+                    Response.Redirect("~/Account/Login.aspx");
                 }
             }
         }
 
-        private void BindExistingJobRequests(int clientId)
+        // Loads all requests when management (Owner/Admin) is logged in
+        private void BindAllExistingJobRequestsForManagement()
+        {
+            string query = "SELECT jobRequestID, siteAddress, urgencyLevel, dateRecieved, status " +
+                           "FROM JobRequest " +
+                           "WHERE status NOT IN ('Cancelled', 'Quote Sent', 'Quote Accepted')";
+
+            using (SqlConnection conn = new SqlConnection(connString))
+            {
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    ExecuteJobRequestQuery(cmd);
+                }
+            }
+        }
+
+        // Loads only that specific client's requests when a client is logged in
+        private void BindExistingJobRequestsForClient(int clientId)
         {
             string query = "SELECT jobRequestID, siteAddress, urgencyLevel, dateRecieved, status " +
                            "FROM JobRequest " +
@@ -44,12 +68,66 @@ namespace GiantGroupM3
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@ClientID", clientId);
+                    ExecuteJobRequestQuery(cmd);
+                }
+            }
+        }
+
+        // Shared helper to bind data to your grid and toggle panels
+        private void ExecuteJobRequestQuery(SqlCommand cmd)
+        {
+            using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+            {
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+
+                gvJobRequests.DataSource = dt;
+                gvJobRequests.DataBind();
+
+                if (dt.Rows.Count == 0)
+                {
+                    pnlEmptyState.Visible = true;
+                    pnlFormContent.Visible = false;
+                }
+                else
+                {
+                    pnlEmptyState.Visible = false;
+                    pnlFormContent.Visible = true;
+                }
+            }
+        }
+
+        private void BindExistingJobRequests(int clientId)
+        {
+            string query = "SELECT jobRequestID, siteAddress, urgencyLevel, dateRecieved, status " +
+                    "FROM JobRequest " +
+                    "WHERE clientID = @ClientID " +
+                    "AND status NOT IN ('Cancelled', 'Quote Sent', 'Quote Accepted')";
+
+            using (SqlConnection conn = new SqlConnection(connString))
+            {
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@ClientID", clientId);
                     using (SqlDataAdapter da = new SqlDataAdapter(cmd))
                     {
                         DataTable dt = new DataTable();
                         da.Fill(dt);
+
                         gvJobRequests.DataSource = dt;
                         gvJobRequests.DataBind();
+
+                        // TOGGLE EMPTY STATE VS FORM VISIBILITY
+                        if (dt.Rows.Count == 0)
+                        {
+                            pnlEmptyState.Visible = true;
+                            pnlFormContent.Visible = false;
+                        }
+                        else
+                        {
+                            pnlEmptyState.Visible = false;
+                            pnlFormContent.Visible = true;
+                        }
                     }
                 }
             }
@@ -251,6 +329,14 @@ namespace GiantGroupM3
                     cmdInsert.Parameters.AddWithValue("@QuoteStatus", "Sent");
                     cmdInsert.Parameters.AddWithValue("@Amount", totalWithVat); // Make sure this matches @Amount in the query string!
                     cmdInsert.ExecuteNonQuery();
+                }
+
+                // 4b. Update the corresponding JobRequest status to 'Quote Sent'
+                string updateJobRequestQuery = "UPDATE JobRequest SET status = 'Quote Sent' WHERE jobRequestID = @JobRequestID";
+                using (SqlCommand cmdJobUpdate = new SqlCommand(updateJobRequestQuery, conn))
+                {
+                    cmdJobUpdate.Parameters.AddWithValue("@JobRequestID", jobRequestId);
+                    cmdJobUpdate.ExecuteNonQuery();
                 }
             }
 
