@@ -350,6 +350,35 @@ namespace GiantGroupM3
             return true; // Staff can see too, or adjust if needed
         }
 
+        public bool CanAssign()
+        {
+            if (!IsLoggedIn()) return false;
+
+            int level = 0;
+
+            // Check all potential session key variants
+            if (Session["AccessLevel"] != null)
+                int.TryParse(Session["AccessLevel"].ToString(), out level);
+            else if (Session["accessLevel"] != null)
+                int.TryParse(Session["accessLevel"].ToString(), out level);
+            else if (Session["UserLevel"] != null)
+                int.TryParse(Session["UserLevel"].ToString(), out level);
+            else if (Session["userLevel"] != null)
+                int.TryParse(Session["userLevel"].ToString(), out level);
+
+            int roleId = 0;
+            if (Session["RoleID"] != null)
+                int.TryParse(Session["RoleID"].ToString(), out roleId);
+            else if (Session["roleID"] != null)
+                int.TryParse(Session["roleID"].ToString(), out roleId);
+
+            // Allow level 5 (System Manager) or level 6 (Owner), or roleID 10 or 11
+            return level == 5 || level == 6 || roleId == 10 || roleId == 11;
+        }
+
+        // Optional wrappers if referenced individually in existing markup
+        public bool CanAssignAsset() => CanAssign();
+        public bool CanAssignStaff() => CanAssign();
         public bool CanSeeJobsTab()
         {
             if (!IsLoggedIn()) return false;

@@ -23,44 +23,44 @@
             border-radius: 2px;
         }
 
-       /* Search Control Styling */
-.search-container {
-    max-width: 420px;
-}
+        /* Search Control Styling */
+        .search-container {
+            max-width: 420px;
+        }
 
-.custom-search-group {
-    display: flex;
-    align-items: center;
-    border: 1.5px solid #dcdcd6;
-    border-radius: 8px;
-    background-color: #ffffff;
-    overflow: hidden;
-    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
+        .custom-search-group {
+            display: flex;
+            align-items: center;
+            border: 1.5px solid #dcdcd6;
+            border-radius: 8px;
+            background-color: #ffffff;
+            overflow: hidden;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
 
-.custom-search-group:focus-within {
-    border-color: #2D7A58;
-    box-shadow: 0 0 0 0.2rem rgba(45, 122, 88, 0.15);
-}
+        .custom-search-group:focus-within {
+            border-color: #2D7A58;
+            box-shadow: 0 0 0 0.2rem rgba(45, 122, 88, 0.15);
+        }
 
-.custom-search-icon {
-    padding: 10px 0 10px 14px;
-    color: #2D7A58;
-    background: transparent;
-}
+        .custom-search-icon {
+            padding: 10px 0 10px 14px;
+            color: #2D7A58;
+            background: transparent;
+        }
 
-.custom-search-input {
-    border: none !important;
-    box-shadow: none !important;
-    padding: 10px 14px 10px 10px;
-    font-size: 0.9rem;
-    background: transparent;
-    width: 100%;
-}
+        .custom-search-input {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 10px 14px 10px 10px;
+            font-size: 0.9rem;
+            background: transparent;
+            width: 100%;
+        }
 
-.custom-search-input:focus {
-    outline: none;
-}
+        .custom-search-input:focus {
+            outline: none;
+        }
 
         /* Table & Card Custom Theme matching Quotes Page */
         .custom-card {
@@ -133,6 +133,13 @@
             color: #b78103;
             border: 1px solid #ffe082;
         }
+
+        /* Return Date Badge Styling */
+        .badge-return-date {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
     </style>
 
     <div class="container mt-4">
@@ -142,16 +149,17 @@
             <div class="header-accent-bar mb-2"></div>
             <p class="text-secondary mb-0">Overview of equipment and assets assigned to active and historical jobs.</p>
         </div>
-<!-- Styled Green Search Bar -->
-<div class="search-container mb-4">
-    <div class="custom-search-group shadow-sm">
-        <div class="custom-search-icon">
-            <i class="fas fa-search"></i>
+
+        <!-- Styled Green Search Bar -->
+        <div class="search-container mb-4">
+            <div class="custom-search-group shadow-sm">
+                <div class="custom-search-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <asp:TextBox ID="txtSearch" runat="server" CssClass="custom-search-input" 
+                    ClientIDMode="Static" onkeyup="filterAssetsLive()" Placeholder="Search by asset, client, address..."></asp:TextBox>
+            </div>
         </div>
-        <asp:TextBox ID="txtSearch" runat="server" CssClass="custom-search-input" 
-            ClientIDMode="Static" onkeyup="filterAssetsLive()" Placeholder="Search by asset, client, address..."></asp:TextBox>
-    </div>
-</div>
 
         <!-- Custom Card Wrapper -->
         <div class="card custom-card shadow-sm border-0 mb-4">
@@ -167,6 +175,30 @@
                         
                         <HeaderStyle CssClass="table-custom-header text-uppercase fw-bold" />
                         
+                        <Columns>
+                            <asp:BoundField DataField="AssetName" HeaderText="Asset Name" SortExpression="AssetName" />
+                            <asp:BoundField DataField="SiteAddress" HeaderText="Site Address" SortExpression="SiteAddress" />
+                            <asp:BoundField DataField="ClientName" HeaderText="Client Name" SortExpression="ClientName" />
+                            
+                            <asp:TemplateField HeaderText="Ownership Status">
+                                <ItemTemplate>
+                                    <span class='<%# Eval("AssetSource").ToString() == "Owned Equipment" ? "badge badge-owned" : "badge badge-hired" %> px-2 py-1 rounded-pill fw-semibold'>
+                                        <%# Eval("AssetSource") %>
+                                    </span>
+                                </ItemTemplate>
+                            </asp:TemplateField>
+
+                            <asp:BoundField DataField="assignmentDate" HeaderText="Assignment Date" DataFormatString="{0:yyyy-MM-dd}" SortExpression="assignmentDate" />
+
+                            <asp:TemplateField HeaderText="Return Date">
+                                <ItemTemplate>
+                                    <%# Eval("ReturnDate") != DBNull.Value && Eval("ReturnDate") != null 
+                                        ? "<span class='badge badge-return-date px-2 py-1 rounded-pill fw-semibold'><i class='far fa-calendar-alt me-1'></i>" + Convert.ToDateTime(Eval("ReturnDate")).ToString("yyyy-MM-dd") + "</span>" 
+                                        : "<span class='text-muted small'>N/A</span>" %>
+                                </ItemTemplate>
+                            </asp:TemplateField>
+                        </Columns>
+
                         <PagerTemplate>
                             <div class="pager-wrapper">
                                 <div class="page-indicator">
@@ -185,21 +217,6 @@
                             </div>
                         </PagerTemplate>
 
-                        <Columns>
-                            <asp:BoundField DataField="AssetName" HeaderText="Asset Name" SortExpression="AssetName" />
-                            <asp:BoundField DataField="SiteAddress" HeaderText="Site Address" SortExpression="SiteAddress" />
-                            <asp:BoundField DataField="ClientName" HeaderText="Client Name" SortExpression="ClientName" />
-                            
-                            <asp:TemplateField HeaderText="Ownership Status">
-                                <ItemTemplate>
-                                    <span class='<%# Eval("AssetSource").ToString() == "Owned Equipment" ? "badge badge-owned" : "badge badge-hired" %> px-2 py-1 rounded-pill fw-semibold'>
-                                        <%# Eval("AssetSource") %>
-                                    </span>
-                                </ItemTemplate>
-                            </asp:TemplateField>
-
-                            <asp:BoundField DataField="assignmentDate" HeaderText="Assignment Date" DataFormatString="{0:yyyy-MM-dd}" SortExpression="assignmentDate" />
-                        </Columns>
                     </asp:GridView>
                 </div>
             </div>

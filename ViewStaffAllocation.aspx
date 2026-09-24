@@ -170,10 +170,14 @@
                         <HeaderStyle CssClass="table-custom-header text-uppercase fw-bold" />
 
                         <EmptyDataTemplate>
-                            <div class="text-center py-5 px-3">
-                                <i class="fas fa-info-circle text-muted mb-3" style="font-size: 2.5rem;"></i>
-                                <h5 class="fw-bold text-dark mb-1">No Staff Assigned Yet</h5>
-                                <p class="text-muted mb-0">There are currently no staff members allocated for this record.</p>
+                            <div class="text-center py-5 px-4 my-2 rounded-4" style="background-color: #fdfdfd; border: 1px solid #e2e2dc;">
+                                <div class="mb-3">
+                                    <span style="font-size: 3.5rem;">📋</span>
+                                </div>
+                                <h4 class="fw-bold text-dark mb-2">No Staff Assigned Yet</h4>
+                                <p class="text-muted mb-0 mx-auto" style="max-width: 480px;">
+                                    There are currently no staff members allocated to active jobs in the system.
+                                </p>
                             </div>
                         </EmptyDataTemplate>
                         

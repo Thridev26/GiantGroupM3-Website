@@ -179,6 +179,8 @@
     <Content Include="Account\TwoFactorAuthenticationSignIn.aspx" />
     <Content Include="Account\VerifyOtp.aspx" />
     <Content Include="Account\VerifyPhoneNumber.aspx" />
+    <Content Include="AssignAsset.aspx" />
+    <Content Include="AssignStaff.aspx" />
     <Content Include="Calendar.aspx" />
     <Content Include="ClientPortal.aspx" />
     <Content Include="Contact.aspx" />
@@ -415,6 +417,18 @@
     <Compile Include="App_Start\IdentityConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="App_Start\Startup.Auth.cs" />
+    <Compile Include="AssignAsset.aspx.cs">
+      <DependentUpon>AssignAsset.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="AssignAsset.aspx.designer.cs">
+      <DependentUpon>AssignAsset.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="AssignStaff.aspx.cs">
+      <DependentUpon>AssignStaff.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="AssignStaff.aspx.designer.cs" />
     <Compile Include="Calendar.aspx.cs">
       <DependentUpon>Calendar.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
