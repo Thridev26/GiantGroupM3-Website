@@ -435,19 +435,25 @@ footer {
 </li>
 <% } %>
 
-    <!-- Allocation Tab -->
-    <% if (CanSeeAllocationTab()) { %>
-    <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Allocation</a>
-        <div class="dropdown-menu p-2">
-            <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem; letter-spacing: 0.5px;">Resources</h6>
-            <% if (!IsClient()) { %>
-                <a class="dropdown-item" runat="server" href="~/ViewAssetAllocation.aspx"><i class="bi bi-tools me-1"></i> View Assets Allocation</a>
-            <% } %>
-            <a class="dropdown-item" runat="server" href="~/ViewStaffAllocation.aspx"><i class="bi bi-person-badge me-1"></i> View Staff Allocation</a>
-        </div>
-    </li>
-    <% } %>
+  <!-- Allocation Tab -->
+<% if (CanSeeAllocationTab()) { %>
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Allocation</a>
+    <div class="dropdown-menu p-2">
+        <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem; letter-spacing: 0.5px;">Resources</h6>
+        <% if (!IsClient()) { %>
+            <a class="dropdown-item" href="ViewAssetAllocation.aspx"><i class="bi bi-tools me-1"></i> View Assets Allocation</a>
+        <% } %>
+        <a class="dropdown-item" href="ViewStaffAllocation.aspx"><i class="bi bi-person-badge me-1"></i> View Staff Allocation</a>
+
+        <% if (CanAssign()) { %>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item" href="AssignAsset.aspx"><i class="bi bi-plus-circle me-1"></i> Assign Asset to Job</a>
+            <a class="dropdown-item" href="AssignStaff.aspx"><i class="bi bi-person-plus me-1"></i> Assign Staff to Job</a>
+        <% } %>
+    </div>
+</li>
+<% } %>
 
     <!-- Jobs Tab -->
     <% if (CanSeeJobsTab()) { %>

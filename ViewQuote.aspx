@@ -3,7 +3,6 @@
 <asp:Content ID="BodyContent" ContentPlaceHolderID="MainContent" runat="server">
     <div class="container py-4">
         
-       
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h2 class="fw-bold text-dark mb-1">Quotes Management & Archive</h2>
@@ -12,7 +11,6 @@
         </div>
 
         <asp:Label ID="lblMessage" runat="server" CssClass="fw-bold text-success mb-3 d-block" />
-        
         
         <asp:Panel ID="pnlEmptyState" runat="server" Visible="false" CssClass="text-center py-5 px-4 my-4 bg-white border rounded-4 shadow-sm">
             <div class="mb-3">
@@ -35,7 +33,6 @@
     
     <HeaderStyle CssClass="table-light text-uppercase fs-7 text-secondary border-bottom" />
     
-
     <PagerTemplate>
         <div class="d-flex justify-content-between align-items-center px-3 py-3 bg-white border-top">
             <span class="text-muted small">
@@ -65,8 +62,10 @@
             </ItemTemplate>
         </asp:TemplateField>
 
-        <asp:BoundField DataField="QuoteID" HeaderText="Quote ID" />
-        <asp:BoundField DataField="jobRequestID" HeaderText="Job Request ID" />
+        <%-- Hidden columns --%>
+        <asp:BoundField DataField="QuoteID" HeaderText="Quote ID" Visible="False" />
+        <asp:BoundField DataField="jobRequestID" HeaderText="Job Request ID" Visible="False" />
+
         <asp:BoundField DataField="Name" HeaderText="Client Name" />
         <asp:BoundField DataField="dateIssued" HeaderText="Date Issued" DataFormatString="{0:yyyy-MM-dd}" />
         <asp:BoundField DataField="expiryDate" HeaderText="Expiry Date" DataFormatString="{0:yyyy-MM-dd}" />
@@ -77,11 +76,10 @@
             </div>
         </div>
 
-        
         <asp:Panel ID="pnlEditQuote" runat="server" Visible="false" CssClass="card border-0 shadow-sm rounded-4 p-4 mt-4 bg-white">
             <asp:HiddenField ID="hfQuoteID" runat="server" />
 
-            
+            <%-- Management Edit Panel --%>
             <asp:Panel ID="pnlManagementControls" runat="server">
                 <h4 class="text-success fw-bold mb-3">Edit Quote Details</h4>
                 <div class="row">
@@ -104,10 +102,13 @@
                         </asp:DropDownList>
                     </div>
                 </div>
-                <asp:Button ID="btnUpdate" runat="server" Text="Update Quote" OnClick="btnUpdate_Click" CssClass="btn btn-success px-4 fw-bold" />
+                <div class="d-flex gap-2">
+                    <asp:Button ID="btnUpdate" runat="server" Text="Update Quote" OnClick="btnUpdate_Click" CssClass="btn btn-success px-4 fw-bold" />
+                    <asp:Button ID="btnCancel" runat="server" Text="Cancel" OnClick="btnCancel_Click" CssClass="btn btn-outline-secondary px-4 fw-bold" />
+                </div>
             </asp:Panel>
 
-            
+            <%-- Client Response Panel --%>
             <asp:Panel ID="pnlClientResponse" runat="server" Visible="false">
                 <h4 class="text-success fw-bold mb-3">Respond to Quote</h4>
                 <p class="text-muted small">Please review your selected quote details above. You may accept or reject this quotation.</p>
@@ -115,6 +116,7 @@
                 <div class="d-flex gap-3">
                     <asp:Button ID="btnAcceptQuote" runat="server" Text="Accept Quote" OnClick="btnAcceptQuote_Click" CssClass="btn btn-success px-4 fw-bold" />
                     <asp:Button ID="btnRejectQuote" runat="server" Text="Reject Quote" OnClick="btnRejectQuote_Click" CssClass="btn btn-outline-danger px-4 fw-bold" />
+                    <asp:Button ID="btnCancelResponse" runat="server" Text="Cancel" OnClick="btnCancel_Click" CssClass="btn btn-outline-secondary px-4 fw-bold" />
                 </div>
             </asp:Panel>
 

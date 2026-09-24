@@ -114,6 +114,15 @@ namespace GiantGroupM3
         protected global::System.Web.UI.WebControls.Button btnUpdate;
 
         /// <summary>
+        /// btnCancel control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnCancel;
+
+        /// <summary>
         /// pnlClientResponse control.
         /// </summary>
         /// <remarks>
@@ -139,5 +148,14 @@ namespace GiantGroupM3
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Button btnRejectQuote;
+
+        /// <summary>
+        /// btnCancelResponse control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnCancelResponse;
     }
 }
