@@ -33,22 +33,13 @@ namespace GiantGroupM3
         protected global::System.Web.UI.WebControls.Label lblMessage;
 
         /// <summary>
-        /// pnlEmptyState control.
+        /// pnlJobSelection control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Panel pnlEmptyState;
-
-        /// <summary>
-        /// pnlFormContent control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Panel pnlFormContent;
+        protected global::System.Web.UI.WebControls.Panel pnlJobSelection;
 
         /// <summary>
         /// gvJobRequests control.
@@ -60,6 +51,15 @@ namespace GiantGroupM3
         protected global::System.Web.UI.WebControls.GridView gvJobRequests;
 
         /// <summary>
+        /// pnlSelectionDetails control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel pnlSelectionDetails;
+
+        /// <summary>
         /// txtSelectedJobId control.
         /// </summary>
         /// <remarks>
@@ -69,22 +69,49 @@ namespace GiantGroupM3
         protected global::System.Web.UI.WebControls.TextBox txtSelectedJobId;
 
         /// <summary>
-        /// txtLongitude control.
+        /// txtSiteAddress control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtLongitude;
+        protected global::System.Web.UI.WebControls.TextBox txtSiteAddress;
 
         /// <summary>
-        /// txtLatitude control.
+        /// pnlSelectionPrompt control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtLatitude;
+        protected global::System.Web.UI.WebControls.Panel pnlSelectionPrompt;
+
+        /// <summary>
+        /// hfLongitude control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hfLongitude;
+
+        /// <summary>
+        /// hfLatitude control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hfLatitude;
+
+        /// <summary>
+        /// pnlFormContent control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel pnlFormContent;
 
         /// <summary>
         /// gvRequestItems control.
@@ -96,13 +123,22 @@ namespace GiantGroupM3
         protected global::System.Web.UI.WebControls.GridView gvRequestItems;
 
         /// <summary>
-        /// lblSubtotal control.
+        /// lblOneWayDistance control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblSubtotal;
+        protected global::System.Web.UI.WebControls.Label lblOneWayDistance;
+
+        /// <summary>
+        /// lblDisplaySiteAddress control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblDisplaySiteAddress;
 
         /// <summary>
         /// lblTravelFee control.
@@ -112,6 +148,33 @@ namespace GiantGroupM3
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Label lblTravelFee;
+
+        /// <summary>
+        /// lblTravelBreakdown control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblTravelBreakdown;
+
+        /// <summary>
+        /// lblSubtotal control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblSubtotal;
+
+        /// <summary>
+        /// lblTravelFeeSummary control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblTravelFeeSummary;
 
         /// <summary>
         /// lblSubtotalWithTravel control.
@@ -166,5 +229,14 @@ namespace GiantGroupM3
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Button btnCancel;
+
+        /// <summary>
+        /// pnlEmptyState control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel pnlEmptyState;
     }
 }
