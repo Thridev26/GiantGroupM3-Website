@@ -339,7 +339,7 @@ footer {
     
     <!-- 1. Chatbot Popup Trigger Button (Single Icon) -->
     <button type="button" class="btn shadow-lg d-flex align-items-center justify-content-center text-white rounded-circle" style="width: 55px; height: 55px; background-color: #2d6a4f !important; border: none;" title="Open Quick Chat" onclick="toggleChatbot()">
-        <i class="bi bi-chat-dots-fill fs-5"></i>
+        <img src="<%= ResolveUrl("~/Content/oak-icon.png") %>" alt="Oak" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover;" />
     </button>
 
     <!-- 2. Contact Us Page Link Button -->
@@ -584,73 +584,73 @@ footer {
 </nav>
 
        <!-- Floating Chatbot Widget Window -->
-<div id="chatbotPopup" class="card shadow-lg border-0 position-fixed bottom-0 end-0 m-4 rounded-4 overflow-hidden" style="z-index: 1070; width: 360px; max-height: 500px; display: none; margin-bottom: 90px !important;">
-    <!-- Chat Header -->
-    <div class="card-header text-white d-flex justify-content-between align-items-center py-3 px-4" style="background-color: #2d6a4f !important;">
-        <div class="d-flex align-items-center">
-            <span class="me-2">💬</span>
-            <h6 class="fw-bold mb-0">Giant Group Assistant</h6>
+<style>
+    #chatbotPopup {
+        position: fixed; right: 24px; bottom: 100px; z-index: 1070;
+        width: 360px; max-width: calc(100vw - 32px);
+        height: 520px; max-height: calc(100vh - 130px);
+        display: none;
+        border-radius: 20px; overflow: hidden;
+        background: #fff;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+    }
+    #chatbotPopup .oak-chat { display: flex; flex-direction: column; height: 100%; }
+    #chatbotPopup .oak-chat-head {
+        position: relative; flex-shrink: 0;
+        background: #2d6a4f; color: #fff; text-align: center;
+        padding: 1.5rem 1rem 1rem;
+    }
+    #chatbotPopup .oak-chat-icon {
+        display: block; margin: 0 auto .6rem;
+        width: 96px; height: 96px;
+        object-fit: contain; background: transparent;
+    }
+    #chatbotPopup .oak-chat-close {
+        position: absolute; top: 8px; right: 14px;
+        background: none; border: none; color: #fff;
+        font-size: 1.6rem; line-height: 1; cursor: pointer;
+    }
+    #chatbotPopup .oak-chat-body {
+        flex: 1 1 auto; overflow-y: auto;
+        padding: 1rem; background: #f8f9fa;
+    }
+    #chatbotPopup .oak-chat-foot {
+        flex-shrink: 0; padding: .75rem;
+        background: #fff; border-top: 1px solid #eee;
+    }
+</style>
+
+<div id="chatbotPopup">
+    <div class="oak-chat">
+
+        <!-- Header: big centred icon, name underneath -->
+        <div class="oak-chat-head">
+            <button type="button" class="oak-chat-close" aria-label="Close chat" onclick="toggleChatbot()">&times;</button>
+            <img src="<%= ResolveUrl("~/Content/oak-icon.png") %>" alt="Oak" class="oak-chat-icon" />
+            <h6 class="fw-bold mb-0">Oak</h6>
+            <small style="opacity: .85;">Giant Group Assistant</small>
         </div>
-        <button type="button" class="btn text-white p-0 shadow-none border-0 fw-bold" style="font-size: 1.2rem; line-height: 1;" onclick="toggleChatbot()">&times;</button>
-    </div>
-    
-    <!-- Chat Body / Messages Area -->
-    <div class="card-body bg-light p-3 overflow-auto" style="height: 320px;" id="chatBody">
-        <div class="d-flex mb-3">
-            <div class="p-3 bg-white rounded-3 shadow-sm text-dark small" style="max-width: 80%;">
-                👋 Hello! Welcome to Giant Tree Felling. How can we help you with your tree or garden services today?
+
+        <!-- Messages -->
+        <div class="oak-chat-body" id="chatBody">
+            <div class="d-flex mb-3">
+                <div class="p-3 bg-white rounded-3 shadow-sm text-dark small" style="max-width: 90%;">
+                    👋 Hi, I'm <strong>Oak</strong>, The Giant Group's virtual assistant. If you need anything, such as prices, opening hours, our services or how to reach us, just ask me.
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Chat Footer / Input Form -->
-    <div class="card-footer bg-white border-0 p-3">
-        <div class="input-group">
-            <input type="text" id="chatInput" class="form-control form-control-sm bg-light border-0 py-2 px-3" placeholder="Type your message..." />
-            <button class="btn btn-success px-3" type="button" style="background-color: #2d6a4f !important; border: none;" onclick="sendChatMessage()">
-                ➤
-            </button>
+        <!-- Input -->
+        <div class="oak-chat-foot">
+            <div class="input-group">
+                <input type="text" id="chatInput" class="form-control form-control-sm bg-light border-0 py-2 px-3" placeholder="Type your message..." />
+                <button class="btn btn-success px-3" type="button" style="background-color: #2d6a4f !important; border: none;" onclick="sendChatMessage()">➤</button>
+            </div>
         </div>
+
     </div>
 </div>
 
-<script>
-    function toggleChatbot() {
-        var chatPopup = document.getElementById("chatbotPopup");
-        if (chatPopup) {
-            if (chatPopup.style.display === "none" || chatPopup.style.display === "") {
-                chatPopup.style.display = "block";
-                document.getElementById("chatInput").focus();
-            } else {
-                chatPopup.style.display = "none";
-            }
-        }
-    }
-
-    function sendChatMessage() {
-        var input = document.getElementById("chatInput");
-        var chatBody = document.getElementById("chatBody");
-
-        if (input.value.trim() !== "") {
-            var userMsgDiv = document.createElement("div");
-            userMsgDiv.className = "d-flex justify-content-end mb-3";
-            userMsgDiv.innerHTML = '<div class="p-3 text-white rounded-3 shadow-sm small" style="max-width: 80%; background-color: #2d6a4f;">' + input.value + '</div>';
-            chatBody.appendChild(userMsgDiv);
-
-            var userText = input.value;
-            input.value = "";
-            chatBody.scrollTop = chatBody.scrollHeight;
-
-            setTimeout(function () {
-                var botMsgDiv = document.createElement("div");
-                botMsgDiv.className = "d-flex mb-3";
-                botMsgDiv.innerHTML = '<div class="p-3 bg-white rounded-3 shadow-sm text-dark small" style="max-width: 80%;">Thanks for reaching out! One of our team members will review your message regarding "' + userText + '" shortly. You can also call us directly at 0848 331 373.</div>';
-                chatBody.appendChild(botMsgDiv);
-                chatBody.scrollTop = chatBody.scrollHeight;
-            }, 1000);
-        }
-    }
-</script>
 
         <!-- Main Content Area -->
         <div id="main-content" class="container body-content mt-4">
@@ -665,22 +665,24 @@ footer {
      </div>
 
      <script>
-         // Check session storage on load so it stays closed if dismissed earlier
-         document.addEventListener("DOMContentLoaded", function () {
-             if (!sessionStorage.getItem("guestCardDismissed")) {
-                 var card = document.getElementById("guestNoticeCard");
-                 if (card) {
-                     card.style.display = "block";
-                 }
-             }
-         });
+         document.addEventListener("DOMContentLoaded", function() {
+            // On the home page, the hero slideshow decides when the card appears
+          if (document.getElementById("hero")) return;
 
-         // Function triggered when the X button is clicked
-         function dismissGuestCard() {
-             var card = document.getElementById("guestNoticeCard");
-             if (card) {
-                 card.style.display = "none";
-                 sessionStorage.setItem("guestCardDismissed", "true");
+              if (!sessionStorage.getItem("guestCardDismissed")) {
+                 var card = document.getElementById("guestNoticeCard");
+                  if (card) {
+                   card.style.display = "block";
+                         }
+                         }
+            });
+
+             // Function triggered when the X button is clicked
+                function dismissGuestCard() {
+                         var card = document.getElementById("guestNoticeCard");
+                     if (card) {
+                       card.style.display = "none";
+                         sessionStorage.setItem("guestCardDismissed", "true");
              }
          }
      </script>
@@ -981,6 +983,14 @@ footer {
                 } else {
                     chatPopup.style.display = "none";
                 }
+    }
+}
+                    function openChatbot() {
+              var notice = document.getElementById("guestNoticeCard");
+                if (notice) notice.style.display = "none";   // keep the guest card out of the way
+              var chatPopup = document.getElementById("chatbotPopup");
+               if (chatPopup && (chatPopup.style.display === "none" || chatPopup.style.display === "")) {
+                   chatPopup.style.display = "block";
             }
         }
 

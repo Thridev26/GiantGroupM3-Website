@@ -205,8 +205,12 @@
     <Content Include="Content\Companies Worked With.png" />
     <Content Include="Content\logo.png" />
     <Content Include="Content\New Giant Tree Icon %281%29.ico" />
+    <Content Include="Content\oak-icon.png" />
     <Content Include="Content\sandstone.css" />
     <Content Include="Content\Site.css" />
+    <Content Include="Content\Slideshow\site-clearing.png" />
+    <Content Include="Content\Slideshow\team-crew.png" />
+    <Content Include="Content\Slideshow\tree-felling.png" />
     <Content Include="Content\The Giant Group Logo .png" />
     <Content Include="Default.aspx" />
     <Content Include="favicon.ico" />
