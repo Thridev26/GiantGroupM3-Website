@@ -40,42 +40,21 @@
         #loader-wrapper p {
             color: #ffffff;
             font-family: sans-serif;
-            margin-top: 30px;
+            margin-top: 0;
             letter-spacing: 1px;
             font-weight: 500;
         }
 
-        /* 3D Rotating Cube Loader */
-        .cube-loader {
-            perspective: 800px;
+        /* 3D Oak Tree Loader */
+        #tree-canvas-container {
+            width: 300px; height: 300px;
+            max-width: 70vw; max-height: 70vw;
+            display: flex; justify-content: center; align-items: center;
         }
-
-        .cube {
-            width: 60px;
-            height: 60px;
-            position: relative;
-            transform-style: preserve-3d;
-            animation: spinCube 2s infinite linear;
-        }
-
-        .face {
-            position: absolute;
-            width: 60px;
-            height: 60px;
-            background: rgba(255, 255, 255, 0.15);
-            border: 2px solid #ffffff;
-        }
-
-        .front  { transform: translateZ(30px); }
-        .back   { transform: rotateY(180deg) translateZ(30px); }
-        .left   { transform: rotateY(-90deg) translateZ(30px); }
-        .right  { transform: rotateY(90deg) translateZ(30px); }
-        .top    { transform: rotateX(90deg) translateZ(30px); }
-        .bottom { transform: rotateX(-90deg) translateZ(30px); }
-
-        @keyframes spinCube {
-            0% { transform: rotateX(0deg) rotateY(0deg); }
-            100% { transform: rotateX(360deg) rotateY(360deg); }
+        #tree-canvas-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+            outline: none;
         }
 
         /* Universal 3D Tilt Card Class */
@@ -111,6 +90,25 @@
         }
         body.dark-mode footer {
             color: #adb5bd !important;
+        }
+          /* Dark mode: headings and subtext in green */
+        body.dark-mode .text-dark {
+            color: #52b788 !important;      /* headings */
+        }
+        body.dark-mode .text-muted {
+            color: #95d5b2 !important;      /* subtext */
+        }
+
+        /* Boxes that stay white in dark mode keep their normal dark text */
+        body.dark-mode .bg-white .text-dark,
+        body.dark-mode .bg-light .text-dark,
+        body.dark-mode .modal-content .text-dark {
+            color: #212529 !important;
+        }
+        body.dark-mode .bg-white .text-muted,
+        body.dark-mode .bg-light .text-muted,
+        body.dark-mode .modal-content .text-muted {
+            color: #6c757d !important;
         }
 
         /* Print Stylesheet */
@@ -317,19 +315,107 @@ footer {
     <div id="scroll-progress" style="position: fixed; top: 0; left: 0; height: 4px; background-color: #52b788; width: 0%; z-index: 1095; transition: width 0.1s ease;"></div>
 
     <!-- 3D Loader Overlay -->
-    <div id="loader-wrapper">
-        <div class="cube-loader">
-            <div class="cube">
-                <div class="face front"></div>
-                <div class="face back"></div>
-                <div class="face left"></div>
-                <div class="face right"></div>
-                <div class="face top"></div>
-                <div class="face bottom"></div>
-            </div>
-        </div>
-        <p>Loading The Giant Group...</p>
-    </div>
+   <div id="loader-wrapper">
+    <div id="tree-canvas-container"></div>
+    <p>Loading The Giant Group...</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+    (function () {
+        var loader = document.getElementById('loader-wrapper');
+        var container = document.getElementById('tree-canvas-container');
+        if (!loader || !container || typeof THREE === 'undefined') return;
+
+        // If the browser can't do WebGL, just show the text
+        var renderer;
+        try {
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        } catch (e) {
+            container.style.display = 'none';
+            return;
+        }
+        renderer.setSize(300, 300);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        var scene = new THREE.Scene();
+        var camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+        camera.position.set(0, 3.5, 8);
+        camera.lookAt(0, 2, 0);
+
+        var treeGroup = new THREE.Group();
+        scene.add(treeGroup);
+
+        var wireframeMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff, wireframe: true, transparent: true, opacity: 0.9
+        });
+        var fillMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff, wireframe: false, transparent: true, opacity: 0.08
+        });
+
+        // Trunk
+        var trunkGeo = new THREE.CylinderGeometry(0.12, 0.35, 2.5, 6);
+        trunkGeo.translate(0, 1.25, 0);
+        treeGroup.add(new THREE.Mesh(trunkGeo, wireframeMaterial));
+
+        // Branches
+        var branch1Geo = new THREE.CylinderGeometry(0.06, 0.12, 1.4, 5);
+        branch1Geo.translate(0, 0.7, 0);
+        var branch1 = new THREE.Mesh(branch1Geo, wireframeMaterial);
+        branch1.position.set(0, 1.8, 0);
+        branch1.rotation.z = Math.PI / 5;
+        branch1.rotation.y = Math.PI / 4;
+        treeGroup.add(branch1);
+
+        var branch2Geo = new THREE.CylinderGeometry(0.06, 0.12, 1.3, 5);
+        branch2Geo.translate(0, 0.65, 0);
+        var branch2 = new THREE.Mesh(branch2Geo, wireframeMaterial);
+        branch2.position.set(0, 1.7, 0);
+        branch2.rotation.z = -Math.PI / 4;
+        branch2.rotation.y = -Math.PI / 3;
+        treeGroup.add(branch2);
+
+        // Canopy
+        var crown1Geo = new THREE.IcosahedronGeometry(1.6, 1);
+        crown1Geo.translate(0, 3.3, 0);
+        treeGroup.add(new THREE.Mesh(crown1Geo, wireframeMaterial));
+        treeGroup.add(new THREE.Mesh(crown1Geo, fillMaterial));
+
+        var crown2Geo = new THREE.IcosahedronGeometry(1.1, 1);
+        crown2Geo.translate(-1.2, 2.7, 0.4);
+        treeGroup.add(new THREE.Mesh(crown2Geo, wireframeMaterial));
+        treeGroup.add(new THREE.Mesh(crown2Geo, fillMaterial));
+
+        var crown3Geo = new THREE.IcosahedronGeometry(1.15, 1);
+        crown3Geo.translate(1.2, 2.8, -0.3);
+        treeGroup.add(new THREE.Mesh(crown3Geo, wireframeMaterial));
+        treeGroup.add(new THREE.Mesh(crown3Geo, fillMaterial));
+
+        // Growth + spin. The site's own code decides when the loader hides.
+        var GROW_MS = 1200;
+        var startTime = performance.now();
+        var wasHidden = false;
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Loader hidden: do nothing (saves battery/CPU)
+            if (loader.style.display === 'none') { wasHidden = true; return; }
+
+            // Loader shown again (e.g. clicking a link): regrow the tree
+            if (wasHidden) { wasHidden = false; startTime = performance.now(); }
+
+            var t = Math.min((performance.now() - startTime) / GROW_MS, 1);
+            var s = Math.max(0.01, 1 - Math.pow(1 - t, 3));   // ease-out growth
+            treeGroup.scale.set(s, s, s);
+            treeGroup.rotation.y += 0.018;
+
+            renderer.render(scene, camera);
+        }
+        animate();
+    })();
+</script>
 
     <!-- Back to Top Button -->
 <button id="backToTopBtn" class="btn btn-success position-fixed bottom-0 start-0 m-4 shadow-lg" style="display: none; z-index: 1060; border-radius: 50%; width: 45px; height: 45px; margin-bottom: 75px !important;" title="Back to Top">↑</button>
@@ -539,6 +625,7 @@ footer {
             <ul class="navbar-nav ms-auto align-items-center gap-2">
                 
                 <!-- Refined Minimalist Search Bar -->
+                <% if (IsLoggedIn()) { %>
                 <li class="nav-item" style="width: 200px;">
                     <div class="input-group input-group-sm rounded-pill overflow-hidden border border-light border-opacity-25" style="background: rgba(255,255,255,0.08);">
                         <input type="text" id="siteSearchInput" class="form-control form-control-sm bg-transparent text-white border-0 shadow-none px-3" placeholder="Search..." aria-label="Search" style="color: #fff !important;">
@@ -547,6 +634,7 @@ footer {
                         </button>
                     </div>
                 </li>
+                <% } %>
 
                 <li class="nav-item"><a class="nav-link text-white-50 px-2" runat="server" href="~/About.aspx">About</a></li>
                 <li class="nav-item"><a class="nav-link text-white-50 px-2" runat="server" href="~/Contact.aspx">Contact</a></li>
@@ -618,6 +706,70 @@ footer {
         flex-shrink: 0; padding: .75rem;
         background: #fff; border-top: 1px solid #eee;
     }
+      /* Oak "thinking" dots */
+.oak-dots span {
+    display: inline-block; width: 7px; height: 7px; margin: 0 2px;
+    border-radius: 50%; background: #2d6a4f;
+    animation: oakBounce 1.2s infinite ease-in-out;
+}
+.oak-dots span:nth-child(2) { animation-delay: .2s; }
+.oak-dots span:nth-child(3) { animation-delay: .4s; }
+@keyframes oakBounce {
+    0%, 80%, 100% { opacity: .25; transform: translateY(0); }
+    40% { opacity: 1; transform: translateY(-4px); }
+}
+        /* Chat window: dark mode */
+body.dark-mode #chatbotPopup {
+    background: #1e1e1e;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+}
+body.dark-mode #chatbotPopup .oak-chat-head {
+    background: #1b4332;                 /* deeper green so it suits the dark page */
+}
+body.dark-mode #chatbotPopup .oak-chat-body {
+    background: #151515;
+}
+body.dark-mode #chatbotPopup .oak-chat-foot {
+    background: #1e1e1e;
+    border-top-color: #333;
+}
+
+/* Oak's message bubbles */
+body.dark-mode #chatbotPopup .bg-white {
+    background-color: #2a2a2a !important;
+    color: #e0e0e0 !important;
+}
+body.dark-mode #chatbotPopup .text-dark {
+    color: #e0e0e0 !important;
+}
+
+/* The text box */
+body.dark-mode #chatbotPopup .form-control {
+    background-color: #2a2a2a !important;
+    color: #e0e0e0 !important;
+}
+body.dark-mode #chatbotPopup .form-control::placeholder {
+    color: #9a9a9a;
+}
+
+/* Links and buttons inside the chat: lighter green so they stay readable */
+body.dark-mode #chatbotPopup a.text-success,
+body.dark-mode #chatbotPopup .text-success {
+    color: #52b788 !important;
+}
+body.dark-mode #chatbotPopup .btn-outline-success {
+    color: #52b788 !important;
+    border-color: #52b788 !important;
+}
+body.dark-mode #chatbotPopup .btn-outline-success:hover {
+    background-color: #2d6a4f !important;
+    color: #fff !important;
+}
+
+/* Thinking dots */
+body.dark-mode #chatbotPopup .oak-dots span {
+    background: #52b788;
+}
 </style>
 
 <div id="chatbotPopup">
@@ -638,6 +790,17 @@ footer {
                     👋 Hi, I'm <strong>Oak</strong>, The Giant Group's virtual assistant. If you need anything, such as prices, opening hours, our services or how to reach us, just ask me.
                 </div>
             </div>
+            <% if (!IsLoggedIn()) { %>
+<div class="d-flex mb-3">
+    <div class="p-3 bg-white rounded-3 shadow-sm text-dark small" style="max-width: 90%;">
+        🔒 You're browsing as a guest. <strong>Log in or create an account</strong> to submit job requests, view quotes and access the rest of the website's features.
+        <div class="d-flex gap-2 mt-3">
+            <a href="<%= ResolveUrl("~/Account/Login.aspx") %>" class="btn btn-success btn-sm px-3" style="background-color: #2d6a4f !important; border: none;">Log In</a>
+            <a href="<%= ResolveUrl("~/Account/Register.aspx") %>" class="btn btn-outline-success btn-sm px-3">Create Account</a>
+        </div>
+    </div>
+</div>
+<% } %>
         </div>
 
         <!-- Input -->
@@ -750,7 +913,7 @@ footer {
     <script>
         // Record exact load time
         const loaderStartTime = Date.now();
-        const MINIMUM_SHOW_TIME = 900;
+        const MINIMUM_SHOW_TIME = 1400;
 
         AOS.init({
             duration: 800,
@@ -973,82 +1136,104 @@ footer {
         });
     </script>
 
-    <script>
-        function toggleChatbot() {
-            var chatPopup = document.getElementById("chatbotPopup");
-            if (chatPopup) {
-                if (chatPopup.style.display === "none" || chatPopup.style.display === "") {
-                    chatPopup.style.display = "block";
-                    document.getElementById("chatInput").focus();
-                } else {
-                    chatPopup.style.display = "none";
-                }
-    }
-}
-                    function openChatbot() {
-              var notice = document.getElementById("guestNoticeCard");
-                if (notice) notice.style.display = "none";   // keep the guest card out of the way
-              var chatPopup = document.getElementById("chatbotPopup");
-               if (chatPopup && (chatPopup.style.display === "none" || chatPopup.style.display === "")) {
-                   chatPopup.style.display = "block";
-            }
-        }
+  <script>
+      var OAK_ICONS = {
+          happy:    '<%= ResolveUrl("~/Content/oak-icon.png") %>',
+        thinking: '<%= ResolveUrl("~/Content/oak-thinking.png") %>',
+        confused: '<%= ResolveUrl("~/Content/oak-undecided.png") %>'
+      };
+      var CONTACT_URL = '<%= ResolveUrl("~/Contact.aspx") %>';
+    var LOGIN_URL    = '<%= ResolveUrl("~/Account/Login.aspx") %>';
+var REGISTER_URL = '<%= ResolveUrl("~/Account/Register.aspx") %>';
+      var OAK_IS_GUEST = ('<%= IsLoggedIn() ? "false" : "true" %>' === 'true');
 
-        function sendChatMessage() {
-            var input = document.getElementById("chatInput");
-            var chatBody = document.getElementById("chatBody");
-            var userText = input.value.trim();
+      function toggleChatbot() {
+          var chatPopup = document.getElementById("chatbotPopup");
+          if (!chatPopup) return;
+          if (chatPopup.style.display === "none" || chatPopup.style.display === "") {
+              chatPopup.style.display = "block";
+              var inp = document.getElementById("chatInput");
+              if (inp) inp.focus();
+          } else {
+              chatPopup.style.display = "none";
+          }
+      }
 
-            if (userText !== "") {
-                // 1. Append user message
-                var userMsgDiv = document.createElement("div");
-                userMsgDiv.className = "d-flex justify-content-end mb-3";
-                userMsgDiv.innerHTML = '<div class="p-3 bg-success text-white rounded-3 shadow-sm small" style="max-width: 80%;">' + escapeHtml(userText) + '</div>';
-                chatBody.appendChild(userMsgDiv);
+      function openChatbot() {
+          var notice = document.getElementById("guestNoticeCard");
+          if (notice) notice.style.display = "none";
+          var chatPopup = document.getElementById("chatbotPopup");
+          if (chatPopup && (chatPopup.style.display === "none" || chatPopup.style.display === "")) {
+              chatPopup.style.display = "block";
+          }
+      }
 
-                input.value = "";
-                chatBody.scrollTop = chatBody.scrollHeight;
+      function escapeHtml(text) {
+          var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+          return text.replace(/[&<>"']/g, function (m) { return map[m]; });
+      }
 
-                // 2. Simulated automated response with keyword matching after a brief delay
-                setTimeout(function () {
-                    var botReply = getSmartFAQResponse(userText);
+      function addOakMessage(html, mood) {
+          var chatBody = document.getElementById("chatBody");
+          var row = document.createElement("div");
+          row.className = "d-flex align-items-start mb-3";
+          row.innerHTML =
+              '<img src="' + OAK_ICONS[mood] + '" alt="" class="me-2 flex-shrink-0" style="width: 36px; height: 36px; object-fit: contain;" />' +
+              '<div class="p-3 bg-white rounded-3 shadow-sm text-dark small" style="max-width: 80%;">' + html + '</div>';
+          chatBody.appendChild(row);
+          chatBody.scrollTop = chatBody.scrollHeight;
+          return row;
+      }
 
-                    var botMsgDiv = document.createElement("div");
-                    botMsgDiv.className = "d-flex mb-3";
-                    botMsgDiv.innerHTML = '<div class="p-3 bg-white rounded-3 shadow-sm text-dark small" style="max-width: 80%;">' + botReply + '</div>';
-                    chatBody.appendChild(botMsgDiv);
-                    chatBody.scrollTop = chatBody.scrollHeight;
-                }, 600);
-            }
-        }
+      function sendChatMessage() {
+          var input = document.getElementById("chatInput");
+          var chatBody = document.getElementById("chatBody");
+          var userText = input.value.trim();
+          if (userText === "") return;
 
-        function getSmartFAQResponse(input) {
-            const text = input.toLowerCase();
+          var userMsgDiv = document.createElement("div");
+          userMsgDiv.className = "d-flex justify-content-end mb-3";
+          userMsgDiv.innerHTML = '<div class="p-3 bg-success text-white rounded-3 shadow-sm small" style="max-width: 80%;">' + escapeHtml(userText) + '</div>';
+          chatBody.appendChild(userMsgDiv);
+          input.value = "";
+          chatBody.scrollTop = chatBody.scrollHeight;
 
-            if (text.includes('Price') || text.includes('cost') || text.includes('rate') || text.includes('price')) {
-                return "Our pricing depends on the size and complexity of the tree-felling job. Contact us for a free on-site quote!";
-            }
-            else if (text.includes('hours') || text.includes('open') || text.includes('time') || text.includes('working')) {
-                return "We operate Monday to Saturday, from 7:00 AM to 5:00 PM.";
-            }
-            else if (text.includes('contact') || text.includes('phone') || text.includes('call') || text.includes('email')) {
-                return "You can reach us directly via our Contact page or call our support line at 0848 331 373.";
-            }
-            else if (text.includes('service') || text.includes('tree') || text.includes('felling') || text.includes('garden')) {
-                return "We specialize in professional tree-felling, stump removal, site clearance, and general garden maintenance.";
-            }
-            else {
-                return "Thanks for reaching out! One of our team members will review your message shortly. You can also call us directly at 0848 331 373.";
-            }
-        }
+          var thinkingRow = addOakMessage('<span class="oak-dots"><span></span><span></span><span></span></span>', 'thinking');
 
-        // Helper to prevent basic HTML injection
-        function escapeHtml(text) {
-            var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-            return text.replace(/[&<>"']/g, function (m) { return map[m]; });
-        }
-    </script>
+          setTimeout(function () {
+              thinkingRow.remove();
+              var reply = getSmartFAQResponse(userText);
+              if (reply) {
+                  addOakMessage(reply, 'happy');
+              } else if (OAK_IS_GUEST) {
+                  addOakMessage(
+                      "Sorry, to access me fully, please " +
+                      '<a href="' + LOGIN_URL + '" class="fw-bold text-success">log in</a> or ' +
+                      '<a href="' + REGISTER_URL + '" class="fw-bold text-success">create an account</a>.',
+                      'confused');
+              } else {
+                  addOakMessage(
+                      "Sorry, I'm not sure about that one. You can call our team on <strong>0848 331 373</strong> or " +
+                      '<a href="' + CONTACT_URL + '" class="fw-bold text-success">send us a message on our Contact page</a>, and we will help you.',
+                      'confused');
+              }
+          }, 1200);
+      }
 
+      function getSmartFAQResponse(input) {
+          var text = input.toLowerCase();
+          if (text.includes('cost') || text.includes('rate') || text.includes('price') || text.includes('quote')) {
+              return "Our pricing depends on the size and complexity of the tree-felling job. Contact us for a free on-site quote!";
+          } else if (text.includes('hours') || text.includes('open') || text.includes('time') || text.includes('working')) {
+              return "We operate Monday to Saturday, from 7:00 AM to 5:00 PM.";
+          } else if (text.includes('contact') || text.includes('phone') || text.includes('call') || text.includes('email')) {
+              return "You can reach us directly via our Contact page or call our support line at 0848 331 373.";
+          } else if (text.includes('service') || text.includes('tree') || text.includes('felling') || text.includes('garden')) {
+              return "We specialise in professional tree-felling, stump removal, site clearance, and general garden maintenance.";
+          }
+          return null;
+      }
+</script>
     <script>
         window.addEventListener('pageshow', function (event) {
             // If the page was loaded from the browser cache (back/forward button), hide the loader immediately
@@ -1063,7 +1248,5 @@ footer {
 
     <!-- Vanilla-Tilt 3D Library for Interactive Cursor Tracking -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
-</body>
-</html>
 </body>
 </html>
