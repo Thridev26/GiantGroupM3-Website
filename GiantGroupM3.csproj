@@ -206,6 +206,8 @@
     <Content Include="Content\logo.png" />
     <Content Include="Content\New Giant Tree Icon %281%29.ico" />
     <Content Include="Content\oak-icon.png" />
+    <Content Include="Content\oak-thinking.png" />
+    <Content Include="Content\oak-undecided.png" />
     <Content Include="Content\sandstone.css" />
     <Content Include="Content\Site.css" />
     <Content Include="Content\Slideshow\site-clearing.png" />

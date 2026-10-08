@@ -61,6 +61,29 @@
     @media (prefers-reduced-motion: reduce) {
         .gg-slide { transition: none; }
     }
+    /* Services section */
+    .gg-service-card {
+        transition: transform .3s ease, box-shadow .3s ease;
+    }
+    .gg-service-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 14px 30px rgba(27, 67, 50, 0.18) !important;
+    }
+    .gg-service-icon {
+        width: 72px; height: 72px;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 50%;
+        background: #e9f5f0;
+        color: #2d6a4f;
+        font-size: 1.9rem;
+    }
+    body.dark-mode .gg-service-icon {
+        background: #1b4332;
+        color: #95d5b2;
+    }
+    body.dark-mode .gg-service-card .text-secondary {
+        color: #b8c2bc !important;
+    }
 </style>
     <div class="container my-5">
         <!-- 1. HERO SLIDESHOW -->
@@ -93,22 +116,7 @@
 
     <div class="gg-dots" id="heroDots"></div>
 </div>
-            <!-- Slides 2+: team and work photos (change names/captions to your own) -->
-            <div class="gg-slide gg-photo-slide">
-                <img runat="server" src="~/Content/Slideshow/team-crew.png" alt="The Giant Group crew on site" />
-                <span class="gg-caption">Our certified felling crew</span>
-            </div>
-            <div class="gg-slide gg-photo-slide">
-               <img runat="server" src="~/Content/Slideshow/tree-felling.png" alt="Hazardous tree dismantling" />
-                <span class="gg-caption">Hazardous tree dismantling</span>
-            </div>
-            <div class="gg-slide gg-photo-slide">
-               <img runat="server" src="~/Content/Slideshow/site-clearing.png" alt="Site clearing" />
-                <span class="gg-caption">Site clearing and vegetation management</span>
-            </div>
-
-            <div class="gg-dots" id="heroDots"></div>
-        </div>
+           
 
         <!-- 2. PERFORMANCE METRICS & STATISTICS -->
         <div class="row text-center mb-5">
@@ -129,6 +137,60 @@
                     <h2 class="display-4 fw-bold text-success">Fast</h2>
                     <p class="text-muted mb-0 fw-semibold">Quote & Invoicing Pipeline</p>
                 </div>
+            </div>
+        </div>
+
+        <!-- 2.1 OUR SERVICES -->
+        <div class="my-5 py-4" id="services" data-aos="fade-up">
+            <div class="text-center mb-4">
+                <h3 class="fw-bold text-dark">Our Services</h3>
+                <p class="text-muted">Professional tree and property care for estates, municipalities and homeowners.</p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="100">
+                    <div class="card gg-service-card h-100 border-0 shadow-sm rounded-4 p-3 text-center">
+                        <div class="card-body">
+                            <div class="gg-service-icon mx-auto mb-3"><i class="bi bi-tree-fill"></i></div>
+                            <h5 class="fw-bold mb-2">Tree Felling &amp; Dismantling</h5>
+                            <p class="text-secondary small mb-0">Safe removal of hazardous and unwanted trees, including sectional dismantling where space is tight.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="200">
+                    <div class="card gg-service-card h-100 border-0 shadow-sm rounded-4 p-3 text-center">
+                        <div class="card-body">
+                            <div class="gg-service-icon mx-auto mb-3"><i class="bi bi-record-circle"></i></div>
+                            <h5 class="fw-bold mb-2">Stump Removal</h5>
+                            <p class="text-secondary small mb-0">Stumps removed so your land is clear and ready to use again.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="300">
+                    <div class="card gg-service-card h-100 border-0 shadow-sm rounded-4 p-3 text-center">
+                        <div class="card-body">
+                            <div class="gg-service-icon mx-auto mb-3"><i class="bi bi-truck"></i></div>
+                            <h5 class="fw-bold mb-2">Site Clearing</h5>
+                            <p class="text-secondary small mb-0">Vegetation management and debris removal for commercial estates and development sites.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="400">
+                    <div class="card gg-service-card h-100 border-0 shadow-sm rounded-4 p-3 text-center">
+                        <div class="card-body">
+                            <div class="gg-service-icon mx-auto mb-3"><i class="bi bi-tools"></i></div>
+                            <h5 class="fw-bold mb-2">Garden &amp; Property Maintenance</h5>
+                            <p class="text-secondary small mb-0">Regular upkeep for gardens, estates and municipal grounds, so they stay safe and tidy.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <a runat="server" href="~/Contact.aspx" class="btn btn-success px-4 fw-semibold shadow-sm">Get in touch for a quote</a>
             </div>
         </div>
       
@@ -284,7 +346,7 @@
         <!-- 6. GUEST PROMPT PANEL (Visible only when logged out) -->
         <asp:Panel runat="server" ID="GuestPromptPanel" Visible="true">
             <div class="my-5 py-5 text-center bg-white rounded-4 border shadow-sm" data-aos="fade-up">
-                <div class="fs-1 mb-3">🌲</div>
+                <div class="fs-1 mb-3">🌳</div>
                 <h3 class="fw-bold text-dark mb-2">Discover The Giant Group Experience</h3>
                 <p class="text-muted col-lg-7 mx-auto mb-4">
                     Log in to submit custom tree-felling job requests, track active property maintenance schedules, or access secure corporate operations portals.
@@ -294,8 +356,7 @@
                 </button>
             </div>
         </asp:Panel>
-    </div>
-
+          </div>
     <!-- Reusable Authentication Prompt Modal -->
     <div class="modal fade" id="authPromptModal" tabindex="-1" aria-labelledby="authPromptModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -323,6 +384,7 @@
                            var slides = document.querySelectorAll('#hero .gg-slide');
                            var dotsBox = document.getElementById('heroDots');
                            var SLIDE_MS = 5000;    // time on each slide
+                           var CHAT_MS = 7000;
                            var NOTICE_MS = 7000;   // how long the guest notice stays up
                            var current = 0, timer, noticeTimer, noticeShown = false, chatOpened = false;
 
@@ -348,12 +410,25 @@
 
                            // Oak chat: open once per visit, on the last slide
                            function openChatOnce() {
-                               if (!notice) return;   // only guests (the notice card only exists for logged-out visitors)
+                               if (!notice) return;   // guests only
                                if (chatOpened || sessionStorage.getItem('oakAutoOpened')) return;
                                chatOpened = true;
                                sessionStorage.setItem('oakAutoOpened', '1');
-                               notice.style.display = 'none';   // tidy the guest card out of the way
-                               if (typeof openChatbot === 'function') openChatbot();
+                               notice.style.display = 'none';
+                               if (typeof openChatbot !== 'function') return;
+                               openChatbot();
+
+                               // Close it again after CHAT_MS, unless the visitor is using it
+                               var chatEl = document.getElementById('chatbotPopup');
+                               var engaged = false;
+                               if (chatEl) {
+                                   ['mouseenter', 'mousedown', 'touchstart', 'keydown', 'focusin'].forEach(function(ev) {
+                                       chatEl.addEventListener(ev, function() { engaged = true; });
+                                   });
+                                   setTimeout(function() {
+                                       if (!engaged) chatEl.style.display = 'none';
+                                   }, CHAT_MS);
+                               }
                            }
 
                            function show(i) {
@@ -377,5 +452,5 @@
                            hero.addEventListener('mouseenter', function () { clearInterval(timer); });
                            hero.addEventListener('mouseleave', restart);
                        })();
-</script>
+                   </script>
 </asp:Content>
