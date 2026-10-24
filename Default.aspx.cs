@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Web;
 using System.Web.UI;
 
 namespace GiantGroupM3
@@ -23,6 +24,14 @@ namespace GiantGroupM3
         protected void Page_Load(object sender, EventArgs e)
         {
             DetermineUserRole();
+
+            // Signed-in visitors see role-specific content, so stop browsers/proxies
+            // caching it (prevents the previous user's view reappearing after logout + Back).
+            if (IsLoggedIn)
+            {
+                Response.Cache.SetCacheability(HttpCacheability.NoCache);
+                Response.Cache.SetNoStore();
+            }
 
             if (!IsPostBack)
             {

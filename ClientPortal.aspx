@@ -1,319 +1,197 @@
 ﻿<%@ Page Title="Client Portal" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="ClientPortal.aspx.cs" Inherits="GiantGroupM3.ClientPortal" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="MainContent" runat="server">
-    <!-- SVG Icon Definitions -->
-    <svg style="display: none;">
-        <symbol id="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>
-        </symbol>
-        <symbol id="icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
-        </symbol>
-        <symbol id="icon-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>
-        </symbol>
-        <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>
-        </symbol>
-        <symbol id="icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-        </symbol>
-        <symbol id="icon-history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14 2 14 8 20 8"></polyline>
-            <line x1="16" y1="13" x2="8" y2="13"></line>
-            <line x1="16" y1="17" x2="8" y2="17"></line>
-            <polyline points="10 9 9 9 8 9"></polyline>
-        </symbol>
-        <symbol id="icon-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline>
-        </symbol>
-    </svg>
-
     <style>
-        .portal-wrapper {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
+        .cp-wrap { max-width: 1140px; margin: 0 auto; padding-bottom: 1rem; }
+        .cp-date { font-size: .9rem; color: #a9cdb9; margin-bottom: .5rem; font-weight: 500; }
+        .cp-banner h1 { font-size: clamp(1.8rem, 3.6vw, 2.6rem); margin-bottom: .6rem; }
+        .cp-banner p { max-width: 560px; margin: 0; line-height: 1.6; }
+
+        /* Process steps: a real sequence, so numbered */
+        .cp-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; padding: 1.5rem 0; }
+        .cp-step { position: relative; padding: 0 1.5rem; }
+        .cp-step + .cp-step { border-left: 1px solid var(--gg-border); }
+        .cp-step-n {
+            width: 30px; height: 30px; border-radius: 50%; margin-bottom: .75rem;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: .85rem;
+            background: var(--gg-accent-soft); color: var(--gg-accent);
         }
+        .cp-step strong { display: block; font-size: .95rem; color: var(--gg-text); }
+        .cp-step span { font-size: .84rem; color: var(--gg-muted); line-height: 1.5; display: block; margin-top: .2rem; }
 
-        /* Hero Header */
-        .portal-hero {
-            background: linear-gradient(135deg, #133a2b 0%, #22543d 50%, #2f855a 100%);
-            border-radius: 20px;
-            padding: 2.5rem 2rem;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 10px 30px -10px rgba(19, 58, 43, 0.3);
+        /* Action cards */
+        .cp-action { padding: 1.75rem; display: flex; gap: 1.25rem; align-items: flex-start; transition: border-color .2s ease; }
+        .cp-action:hover { border-color: var(--gg-500); }
+        .cp-action h3 { font-size: 1.1rem; font-weight: 700; margin: 0 0 .4rem; color: var(--gg-text); }
+        .cp-action p { font-size: .92rem; line-height: 1.6; color: var(--gg-muted); margin: 0 0 1.1rem; }
+
+        /* Side panels */
+        .cp-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.1rem; border-bottom: 1px solid var(--gg-border); }
+        .cp-panel-head h3 { margin: 0; font-size: 1rem; font-weight: 700; color: var(--gg-text); }
+        .cp-panel-head a { font-size: .85rem; font-weight: 600; color: var(--gg-accent); text-decoration: none; }
+        .cp-empty { padding: 1.75rem 1.25rem; text-align: center; }
+        .cp-empty p { color: var(--gg-muted); font-size: .92rem; margin-bottom: 1rem; }
+        .cp-links a { display: flex; align-items: center; gap: .75rem; padding: .8rem 1.1rem; color: var(--gg-text) !important; text-decoration: none !important; font-size: .92rem; font-weight: 500; border-bottom: 1px solid var(--gg-border); transition: background-color .15s ease; }
+        .cp-links a:last-child { border-bottom: 0; }
+        .cp-links a:hover { background: var(--gg-surface-2); }
+        .cp-links a i:first-child { color: var(--gg-accent); font-size: 1.1rem; }
+        .cp-links a i:last-child { margin-left: auto; color: var(--gg-muted); font-size: .85rem; }
+
+        @media (max-width: 991.98px) {
+            .cp-steps { grid-template-columns: repeat(2, 1fr); row-gap: 1.5rem; }
+            .cp-step:nth-child(3) { border-left: 0; }
         }
-
-        .portal-hero::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 70%);
-            border-radius: 50%;
-            pointer-events: none;
-        }
-
-        .badge-portal {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #81e6d9;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            padding: 0.4em 0.8em;
-            border-radius: 30px;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-        }
-
-        .btn-action-primary {
-            background-color: #ffffff;
-            color: #1a4d3e;
-            font-weight: 600;
-            border-radius: 12px;
-            padding: 0.65rem 1.25rem;
-            transition: all 0.25s ease;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            border: none;
-        }
-
-        .btn-action-primary:hover {
-            background-color: #f0fff4;
-            color: #133a2b;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-        }
-
-        /* Stat Cards */
-        .stat-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 1.5rem;
-            transition: all 0.25s ease;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        }
-
-        .stat-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.08);
-        }
-
-        .stat-icon-box {
-            width: 42px;
-            height: 42px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .stat-icon-box.green { background: #e6fffa; color: #0d9488; }
-        .stat-icon-box.amber { background: #fffbeb; color: #d97706; }
-        .stat-icon-box.blue { background: #eff6ff; color: #2563eb; }
-
-        /* Module Cards */
-        .action-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 2rem;
-            transition: all 0.25s ease;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .action-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.08);
-            border-color: #cbd5e1;
-        }
-
-        .action-icon-circle {
-            width: 52px;
-            height: 52px;
-            border-radius: 14px;
-            background: #f0fdf4;
-            color: #16a34a;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 1.25rem;
-        }
-
-        .btn-card-action {
-            border-radius: 10px;
-            font-weight: 600;
-            padding: 0.6rem 1.2rem;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            text-decoration: none;
-        }
-
-        .btn-card-action.btn-solid {
-            background-color: #16a34a;
-            color: #ffffff;
-            border: none;
-        }
-
-        .btn-card-action.btn-solid:hover {
-            background-color: #15803d;
-            color: #ffffff;
-        }
-
-        .btn-card-action.btn-outline {
-            background-color: transparent;
-            color: #16a34a;
-            border: 1.5px solid #16a34a;
-        }
-
-        .btn-card-action.btn-outline:hover {
-            background-color: #f0fdf4;
-            color: #15803d;
-        }
-
-        .svg-icon {
-            width: 18px;
-            height: 18px;
-        }
-
-        .svg-icon-lg {
-            width: 26px;
-            height: 26px;
+        @media (max-width: 575.98px) {
+            .cp-steps { grid-template-columns: 1fr; }
+            .cp-step + .cp-step { border-left: 0; border-top: 1px solid var(--gg-border); padding-top: 1.25rem; }
+            .cp-action { flex-direction: column; }
         }
     </style>
 
-    <div class="portal-wrapper my-4 px-3">
+    <div class="cp-wrap my-4 px-lg-2">
+
         <!-- Header Banner -->
-        <div class="portal-hero mb-4 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+        <div class="gg-banner cp-banner mb-4 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
             <div>
-                <span class="badge-portal d-inline-block mb-2">Client Portal</span>
-                <h1 class="h2 fw-bold text-white mb-2">
-                    Welcome, <asp:Literal ID="litClientName" runat="server" Text="Valued Client" />!
-                </h1>
-                <p class="mb-0 text-white-50" style="font-size: 0.95rem;">
-                    Track your property service requests, review estimates, and schedule site work seamlessly.
-                </p>
+                <div class="cp-date"><asp:Literal ID="litToday" runat="server" /></div>
+                <h1>Welcome, <asp:Literal ID="litClientName" runat="server" Text="Valued Client" Mode="Encode" />!</h1>
+                <p>Track your property service requests, review estimates, and schedule site work seamlessly.</p>
             </div>
-            <div class="mt-2 mt-md-0 flex-shrink-0">
-                <a runat="server" href="~/Requests/SubmitRequest.aspx" class="btn-action-primary">
-                    <svg class="svg-icon"><use href="#icon-plus"></use></svg>
-                    New Request
-                </a>
+            <div class="flex-shrink-0">
+                <a runat="server" href="~/Requests/SubmitRequest.aspx" class="gg-btn gg-btn-light"><i class="bi bi-plus-lg"></i>New Request</a>
             </div>
         </div>
+
+        <!-- Error notice (only shown if the database could not be reached) -->
+        <asp:Panel ID="pnlError" runat="server" Visible="false" CssClass="mb-4">
+            <div class="gg-alert" role="alert">
+                <i class="bi bi-exclamation-triangle"></i>
+                <span>We couldn't load your latest figures just now. Please refresh the page, or contact support if this keeps happening.</span>
+            </div>
+        </asp:Panel>
 
         <!-- Quick Status Overview -->
-        <div class="row g-3 mb-5">
+        <div class="row g-3 mb-4">
             <div class="col-md-4">
-                <div class="stat-card">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Active Requests</span>
-                        <div class="stat-icon-box green">
-                            <svg class="svg-icon"><use href="#icon-clock"></use></svg>
-                        </div>
+                <div class="gg-kpi gg-surface">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="gg-kpi-label">Active Requests</span>
+                        <span class="gg-tile"><i class="bi bi-hourglass-split"></i></span>
                     </div>
-                    <div>
-                        <h2 class="fw-bold text-dark display-6 mb-1">
-                            <asp:Literal ID="litActiveRequests" runat="server" Text="0" />
-                        </h2>
-                        <small class="text-muted">Currently processing</small>
-                    </div>
+                    <div class="gg-kpi-value"><asp:Literal ID="litActiveRequests" runat="server" Text="0" /></div>
+                    <div class="gg-kpi-note">Currently processing</div>
                 </div>
             </div>
 
             <div class="col-md-4">
-                <div class="stat-card">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Quotes Ready</span>
-                        <div class="stat-icon-box amber">
-                            <svg class="svg-icon"><use href="#icon-alert"></use></svg>
-                        </div>
+                <div class="gg-kpi gg-surface is-amber">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="gg-kpi-label">Quotes Ready</span>
+                        <span class="gg-tile is-amber"><i class="bi bi-file-earmark-text"></i></span>
                     </div>
-                    <div>
-                        <h2 class="fw-bold text-dark display-6 mb-1">
-                            <asp:Literal ID="litQuotesReady" runat="server" Text="0" />
-                        </h2>
-                        <small class="text-warning-emphasis fw-semibold">Awaiting your approval</small>
-                    </div>
+                    <div class="gg-kpi-value"><asp:Literal ID="litQuotesReady" runat="server" Text="0" /></div>
+                    <div class="gg-kpi-note" style="color: var(--gg-amber); font-weight: 600;">Awaiting your approval</div>
                 </div>
             </div>
 
             <div class="col-md-4">
-    <div class="stat-card">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <span class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Approved Jobs</span>
-            <div class="stat-icon-box blue">
-                <svg class="svg-icon"><use href="#icon-check"></use></svg>
+                <div class="gg-kpi gg-surface is-blue">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="gg-kpi-label">Approved Jobs</span>
+                        <span class="gg-tile is-blue"><i class="bi bi-check2-circle"></i></span>
+                    </div>
+                    <div class="gg-kpi-value"><asp:Literal ID="litCompletedJobs" runat="server" Text="0" /></div>
+                    <div class="gg-kpi-note">Quotes signed &amp; approved</div>
+                </div>
             </div>
         </div>
-        <div>
-            <h2 class="fw-bold text-dark display-6 mb-1">
-                <asp:Literal ID="litCompletedJobs" runat="server" Text="0" />
-            </h2>
-            <small class="text-muted">Quotes signed & approved</small>
-        </div>
-    </div>
-</div>
+
+        <!-- How it works -->
+        <div class="gg-surface cp-steps mb-5" aria-label="How a request moves through our process">
+            <div class="cp-step">
+                <span class="cp-step-n">1</span>
+                <strong>Submit a request</strong>
+                <span>Describe the job and attach photos of the site.</span>
+            </div>
+            <div class="cp-step">
+                <span class="cp-step-n">2</span>
+                <strong>Site evaluation</strong>
+                <span>Our team sets a date to inspect the work.</span>
+            </div>
+            <div class="cp-step">
+                <span class="cp-step-n">3</span>
+                <strong>Review your quote</strong>
+                <span>Approve the quote once it has been sent to you.</span>
+            </div>
+            <div class="cp-step">
+                <span class="cp-step-n">4</span>
+                <strong>Work is scheduled</strong>
+                <span>Crews and equipment are allocated to your site.</span>
+            </div>
         </div>
 
         <!-- Client Action Modules -->
-        <div class="d-flex align-items-center justify-content-between mb-3">
-            <h4 class="fw-bold text-dark mb-0">Service Actions</h4>
-        </div>
-        
         <div class="row g-4">
-            <div class="col-md-6">
-                <div class="action-card">
-                    <div class="action-icon-circle">
-                        <svg class="svg-icon-lg"><use href="#icon-edit"></use></svg>
+            <div class="col-lg-7">
+                <h2 class="gg-section-title mb-3">Service Actions</h2>
+
+                <div class="d-flex flex-column gap-3">
+                    <div class="cp-action gg-surface">
+                        <span class="gg-tile is-lg"><i class="bi bi-pencil-square"></i></span>
+                        <div>
+                            <h3>Submit New Job Request</h3>
+                            <p>Need tree removal, branch trimming, or site clearing? Submit photos and details directly to our field team for immediate review.</p>
+                            <a runat="server" href="~/Requests/SubmitRequest.aspx" class="gg-btn gg-btn-primary gg-btn-arrow">Request Service</a>
+                        </div>
                     </div>
-                    <h5 class="fw-bold text-dark mb-2">Submit New Job Request</h5>
-                    <p class="text-secondary small mb-4 flex-grow-1" style="line-height: 1.6;">
-                        Need tree removal, branch trimming, or site clearing? Submit photos and details directly to our field team for immediate review.
-                    </p>
-                    <div>
-                        <a runat="server" href="~/Requests/SubmitRequest.aspx" class="btn-card-action btn-solid">
-                            Request Service
-                            <svg class="svg-icon"><use href="#icon-arrow-right"></use></svg>
-                        </a>
+
+                    <div class="cp-action gg-surface">
+                        <span class="gg-tile is-lg"><i class="bi bi-clock-history"></i></span>
+                        <div>
+                            <h3>Request &amp; Job History</h3>
+                            <p>Track live status updates, review past estimates, and download completion reports for all your managed properties in one place.</p>
+                            <a runat="server" href="~/Requests/ViewRequests.aspx" class="gg-btn gg-btn-outline gg-btn-arrow">View History</a>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-6">
-                <div class="action-card">
-                    <div class="action-icon-circle">
-                        <svg class="svg-icon-lg"><use href="#icon-history"></use></svg>
-                    </div>
-                    <h5 class="fw-bold text-dark mb-2">Request & Job History</h5>
-                    <p class="text-secondary small mb-4 flex-grow-1" style="line-height: 1.6;">
-                        Track live status updates, review past estimates, and download completion reports for all your managed properties in one place.
-                    </p>
-                    <div>
-                        <a runat="server" href="~/Requests/ViewRequests.aspx" class="btn-card-action btn-outline">
-                            View History
-                            <svg class="svg-icon"><use href="#icon-arrow-right"></use></svg>
-                        </a>
-                    </div>
+            <div class="col-lg-5">
+                <h2 class="gg-section-title mb-3">Recent requests</h2>
+
+                <div class="gg-surface mb-4">
+                    <asp:Repeater ID="rptRecent" runat="server">
+                        <HeaderTemplate>
+                            <div class="cp-panel-head">
+                                <h3>Latest activity</h3>
+                                <a runat="server" href="~/Requests/ViewRequests.aspx">View all</a>
+                            </div>
+                        </HeaderTemplate>
+                        <ItemTemplate>
+                            <a runat="server" href="~/Requests/ViewRequests.aspx" class="gg-row">
+                                <div>
+                                    <div class="gg-row-title">Request #<%#: Eval("jobRequestID") %></div>
+                                    <div class="gg-row-sub">Open to see details and quotes</div>
+                                </div>
+                                <span class="gg-chip <%# StatusClass(Eval("status")) %>"><%#: Eval("status") %></span>
+                            </a>
+                        </ItemTemplate>
+                    </asp:Repeater>
+
+                    <asp:Panel ID="pnlEmpty" runat="server" Visible="false" CssClass="cp-empty">
+                        <span class="gg-tile is-lg mb-3"><i class="bi bi-inbox"></i></span>
+                        <p>You haven't submitted a request yet. Start one and we'll arrange a site evaluation.</p>
+                        <a runat="server" href="~/Requests/SubmitRequest.aspx" class="gg-btn gg-btn-primary">Submit your first request</a>
+                    </asp:Panel>
+                </div>
+
+                <div class="gg-surface cp-links">
+                    <div class="cp-panel-head"><h3>Need something else?</h3></div>
+                    <a runat="server" href="~/RequestQuote.aspx"><i class="bi bi-file-earmark-plus"></i>Request a quote<i class="bi bi-chevron-right"></i></a>
+                    <a runat="server" href="~/Clients/UpdateClient.aspx"><i class="bi bi-person-gear"></i>Update your details<i class="bi bi-chevron-right"></i></a>
+                    <a runat="server" href="~/Help.aspx"><i class="bi bi-question-circle"></i>Read the FAQ<i class="bi bi-chevron-right"></i></a>
+                    <a runat="server" href="~/Contact.aspx"><i class="bi bi-headset"></i>Contact support<i class="bi bi-chevron-right"></i></a>
                 </div>
             </div>
         </div>
