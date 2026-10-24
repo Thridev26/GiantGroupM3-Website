@@ -1,757 +1,1240 @@
-﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site.Mobile.master.cs" Inherits="GiantGroupM3.Site_Mobile" %>
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site.master.cs" Inherits="GiantGroupM3.SiteMaster" %>
 <%@ Register Src="~/ViewSwitcher.ascx" TagPrefix="friendlyUrls" TagName="ViewSwitcher" %>
 
-<!DOCTYPE html>
-<html lang="en">
-<head runat="server">
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><%: Page.Title %> - The Giant Group</title>
-    
-    <!-- Meta Description for SEO and Link Sharing -->
-    <meta name="description" content="The Giant Group enterprise management platform. Powered by Code Crusaders for professional tree-felling operations, quoting, and asset management." />
+<meta name="description" content="The Giant Group enterprise management platform. Powering professional tree-felling operations with seamless client quoting, real-time machine allocation and smart staff scheduling. Built by Code Crusaders." />
+<meta name="keywords" content="tree felling, vegetation management, enterprise portal, quoting system, operations management, Code Crusaders" />
+<meta name="author" content="Code Crusaders" />
 
-    <asp:PlaceHolder runat="server">
-        <%: Scripts.Render("~/bundles/modernizr") %>
-    </asp:PlaceHolder>
-    <webopt:bundlereference runat="server" path="~/Content/css" />
-    <link rel="shortcut icon" href="~/Content/New Giant Tree Icon (1).ico" type="image/x-icon" />
-    
-    <!-- AOS Animation CSS -->
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+<meta property="og:title" content="The Giant Group | Enterprise Tree-Felling & Vegetation Management" />
+<meta property="og:description" content="Official enterprise portal developed by Code Crusaders." />
+<meta property="og:image" content="https://ist-wst-group-1.azurewebsites.net/images/The%20Giant%20Group%20Logo%20.png" />
+<meta property="og:url" content="https://ist-wst-group-1.azurewebsites.net/" />
+<meta property="og:type" content="website" />
 
-    <!-- 3D Effects & Loader Styling -->
-    <style>
-       /* Loader Styles */
-    #loader-wrapper {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: #40916c;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-        transition: opacity 0.5s ease;
+<asp:PlaceHolder runat="server">
+    <%: Scripts.Render("~/bundles/modernizr") %>
+</asp:PlaceHolder>
+<webopt:bundlereference runat="server" path="~/Content/css" />
+<link rel="shortcut icon" href="~/Content/New Giant Tree Icon (1).ico" type="image/x-icon" />
+
+<!-- Fonts: Fraunces (display) + Inter (interface). Both have safe fallbacks. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<!-- AOS Animation CSS -->
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" />
+<!-- Bootstrap Icons CSS CDN -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+<!-- =====================================================================
+     GIANT GROUP DESIGN SYSTEM
+     Tokens, shared components, navigation, footer, chat, loader
+     ===================================================================== -->
+<style>
+    :root {
+        /* Brand greens */
+        --gg-900: #0f2d1e;
+        --gg-800: #1b4332;
+        --gg-700: #2d6a4f;
+        --gg-600: #40916c;
+        --gg-500: #52b788;
+        --gg-300: #95d5b2;
+        --gg-100: #d8f3dc;
+
+        /* Light theme surfaces */
+        --gg-bg: #f3f6f4;
+        --gg-surface: #ffffff;
+        --gg-surface-2: #eaf1ed;
+        --gg-border: #dce6e0;
+        --gg-text: #13251c;
+        --gg-muted: #5b6f64;
+        --gg-accent: #2d6a4f;
+        --gg-accent-soft: #e2f0e8;
+
+        /* Status colours */
+        --gg-amber: #a8650f;
+        --gg-amber-soft: #fbf0dc;
+        --gg-blue: #2b6cb0;
+        --gg-blue-soft: #e4eef9;
+
+        --gg-shadow-sm: 0 1px 2px rgba(15, 45, 30, .06);
+        --gg-shadow-md: 0 14px 34px -14px rgba(15, 45, 30, .28);
+
+        --gg-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+        --gg-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     }
 
-    #loader-wrapper p {
-        color: #ffffff;
-        font-family: sans-serif;
-        margin-top: 30px;
-        letter-spacing: 1px;
-        font-weight: 500;
-    }
-
-    /* 3D Rotating Cube Loader */
-    .cube-loader {
-        perspective: 800px;
-    }
-
-    .cube {
-        width: 60px;
-        height: 60px;
-        position: relative;
-        transform-style: preserve-3d;
-        animation: spinCube 2s infinite linear;
-    }
-
-    .face {
-        position: absolute;
-        width: 60px;
-        height: 60px;
-        background: rgba(255, 255, 255, 0.15);
-        border: 2px solid #ffffff;
-    }
-
-    .front  { transform: translateZ(30px); }
-    .back   { transform: rotateY(180deg) translateZ(30px); }
-    .left   { transform: rotateY(-90deg) translateZ(30px); }
-    .right  { transform: rotateY(90deg) translateZ(30px); }
-    .top    { transform: rotateX(90deg) translateZ(30px); }
-    .bottom { transform: rotateX(-90deg) translateZ(30px); }
-
-    @keyframes spinCube {
-        0% { transform: rotateX(0deg) rotateY(0deg); }
-        100% { transform: rotateX(360deg) rotateY(360deg); }
-    }
-
-    /* Universal 3D Tilt Card Class */
-    .tilt-card {
-        transform-style: preserve-3d;
-        transform: perspective(1000px);
-        cursor: pointer;
-        transition: box-shadow 0.3s ease, transform 0.3s ease;
-    }
-    .tilt-card:hover {
-        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
-    }
-
-    /* Dark Mode Theme Styles */
     body.dark-mode {
-        background-color: #121212 !important;
-        color: #e0e0e0 !important;
-    }
-    body.dark-mode .card {
-        background-color: #1e1e1e !important;
-        color: #e0e0e0 !important;
-        border-color: #333 !important;
-    }
-    body.dark-mode .dropdown-menu {
-        background-color: #242424 !important;
-    }
-    body.dark-mode .dropdown-item {
-        color: #e0e0e0 !important;
-    }
-    body.dark-mode .dropdown-item:hover {
-        background-color: #333 !important;
-        color: #ffffff !important;
-    }
-    body.dark-mode footer {
-        color: #adb5bd !important;
+        --gg-bg: #0b1410;
+        --gg-surface: #12201a;
+        --gg-surface-2: #182a22;
+        --gg-border: #233a2f;
+        --gg-text: #e5eee9;
+        --gg-muted: #9bb2a6;
+        --gg-accent: #52b788;
+        --gg-accent-soft: #173427;
+        --gg-amber: #e0a84a;
+        --gg-amber-soft: #3a2d12;
+        --gg-blue: #7fb2e8;
+        --gg-blue-soft: #15283d;
+        --gg-shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
+        --gg-shadow-md: 0 14px 34px -14px rgba(0, 0, 0, .7);
     }
 
-    /* Print Stylesheet */
-    @media print {
-        #loader-wrapper, .navbar, #guestNoticeCard, #backToTopBtn, #cookieBanner, footer, #scroll-progress, #floatingContactBtn {
-            display: none !important;
-        }
-        body {
-            background: white !important;
-            color: black !important;
-        }
-        .container {
-            width: 100% !important;
-            max-width: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
+    /* ---------- Base ---------- */
+    html, body { height: 100%; margin: 0; }
+    body {
+        display: flex; flex-direction: column; min-height: 100vh;
+        font-family: var(--gg-sans);
+        background: var(--gg-bg);
+        color: var(--gg-text);
+        -webkit-font-smoothing: antialiased;
+    }
+    form { display: flex; flex-direction: column; flex: 1 0 auto; margin: 0; }
+    .body-content { flex: 1 0 auto; }
+    footer { flex-shrink: 0; }
+    .py-2-5 { padding-top: .75rem !important; padding-bottom: .75rem !important; }
+
+    :focus-visible { outline: 3px solid var(--gg-500); outline-offset: 2px; }
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
     }
 
-    /* Compact Hover Dropdown - Deep Forest Green Theme */
-    .navbar .dropdown:hover > .dropdown-menu {
-        display: block !important;
-        margin-top: 0px !important;
-        border-radius: 6px;
-        border-top: 3px solid #52b788;
-        min-width: 200px;
+    /* ---------- Loader ---------- */
+    #loader-wrapper {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: #40916c;
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        z-index: 9999; transition: opacity .5s ease;
     }
+    #loader-wrapper p {
+        color: #fff; font-family: var(--gg-sans); margin-top: 0;
+        letter-spacing: .04em; font-weight: 500;
+    }
+    #tree-canvas-container {
+        width: 300px; height: 300px; max-width: 70vw; max-height: 70vw;
+        display: flex; justify-content: center; align-items: center;
+    }
+    #tree-canvas-container canvas { width: 100% !important; height: 100% !important; outline: none; }
+
+    /* ---------- Legacy helpers ---------- */
+    .tilt-card { transform-style: preserve-3d; transform: perspective(1000px); cursor: pointer; transition: box-shadow .3s ease, transform .3s ease; }
+    .tilt-card:hover { box-shadow: 0 10px 20px rgba(0,0,0,.15); }
+
+    .btn-success { background-color: #2d6a4f !important; border-color: #2d6a4f !important; }
+    .btn-success:hover { background-color: #1b4332 !important; border-color: #1b4332 !important; }
+    .btn-outline-success { color: #2d6a4f !important; border-color: #2d6a4f !important; }
+    .btn-outline-success:hover { background-color: #2d6a4f !important; color: #fff !important; }
+    .text-success { color: #2d6a4f !important; }
+    .border-success { border-color: #2d6a4f !important; }
+    body.dark-mode .text-success { color: #52b788 !important; }
+
+    body.dark-mode .card { background-color: #12201a !important; color: #e5eee9 !important; border-color: #233a2f !important; }
+    body.dark-mode .text-dark { color: #52b788 !important; }
+    body.dark-mode .text-muted { color: #95d5b2 !important; }
+    body.dark-mode .bg-white .text-dark, body.dark-mode .bg-light .text-dark, body.dark-mode .modal-content .text-dark { color: #212529 !important; }
+    body.dark-mode .bg-white .text-muted, body.dark-mode .bg-light .text-muted, body.dark-mode .modal-content .text-muted { color: #6c757d !important; }
+
+    /* =====================================================================
+       SHARED COMPONENTS
+       ===================================================================== */
+    .gg-display { font-family: var(--gg-display); font-weight: 600; letter-spacing: -.015em; }
+
+    .gg-label {
+        display: inline-flex; align-items: center; gap: .5rem;
+        font-size: .85rem; font-weight: 600; color: var(--gg-accent);
+    }
+    .gg-label i { font-size: 1rem; }
+
+    .gg-surface {
+        background: var(--gg-surface);
+        border: 1px solid var(--gg-border);
+        border-radius: 14px;
+        box-shadow: var(--gg-shadow-sm);
+    }
+
+    .gg-muted { color: var(--gg-muted) !important; }
+
+    /* Buttons */
+    .gg-btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+        font-family: var(--gg-sans); font-weight: 600; font-size: .92rem; line-height: 1.2;
+        padding: .7rem 1.2rem; border-radius: 10px; border: 1px solid transparent;
+        text-decoration: none !important; cursor: pointer;
+        transition: background-color .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease;
+    }
+    .gg-btn-primary { background: var(--gg-700); color: #fff !important; }
+    .gg-btn-primary:hover { background: var(--gg-800); box-shadow: 0 6px 16px -6px rgba(27,67,50,.6); }
+    .gg-btn-outline { background: transparent; color: var(--gg-text) !important; border-color: var(--gg-border); }
+    .gg-btn-outline:hover { border-color: var(--gg-accent); color: var(--gg-accent) !important; }
+    .gg-btn-light { background: #fff; color: var(--gg-800) !important; }
+    .gg-btn-light:hover { background: var(--gg-100); }
+    .gg-btn-ghost-light { background: transparent; color: #fff !important; border-color: rgba(255,255,255,.4); }
+    .gg-btn-ghost-light:hover { background: rgba(255,255,255,.12); border-color: #fff; }
+    .gg-btn-arrow::after { content: "\f138"; font-family: "bootstrap-icons"; font-size: .95rem; transition: transform .15s ease; }
+    .gg-btn-arrow:hover::after { transform: translateX(3px); }
+
+    /* Icon tile */
+    .gg-tile {
+        width: 42px; height: 42px; flex-shrink: 0; border-radius: 10px;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: var(--gg-accent-soft); color: var(--gg-accent); font-size: 1.2rem;
+    }
+    .gg-tile.is-amber { background: var(--gg-amber-soft); color: var(--gg-amber); }
+    .gg-tile.is-blue  { background: var(--gg-blue-soft);  color: var(--gg-blue); }
+    .gg-tile.is-lg { width: 52px; height: 52px; border-radius: 12px; font-size: 1.5rem; }
+
+    /* Status chips */
+    .gg-chip {
+        display: inline-flex; align-items: center; gap: .4rem;
+        font-size: .78rem; font-weight: 600; padding: .25rem .7rem; border-radius: 999px;
+        background: var(--gg-surface-2); color: var(--gg-muted); white-space: nowrap;
+    }
+    .gg-chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .gg-chip.is-pending { background: var(--gg-amber-soft); color: var(--gg-amber); }
+    .gg-chip.is-active  { background: var(--gg-blue-soft);  color: var(--gg-blue); }
+    .gg-chip.is-done    { background: var(--gg-accent-soft); color: var(--gg-accent); }
+
+    /* Portal banner */
+    .gg-banner {
+        position: relative; overflow: hidden; color: #fff;
+        border-radius: 22px; padding: 2.5rem 2.5rem;
+        background: linear-gradient(135deg, var(--gg-800) 0%, var(--gg-900) 100%);
+        box-shadow: var(--gg-shadow-md);
+    }
+    .gg-banner::before {
+        content: ""; position: absolute; inset: 0; pointer-events: none;
+        background: repeating-radial-gradient(circle at 92% 50%, rgba(149,213,178,.13) 0 1.5px, transparent 1.5px 24px);
+        -webkit-mask-image: radial-gradient(circle at 92% 50%, #000 0, transparent 60%);
+                mask-image: radial-gradient(circle at 92% 50%, #000 0, transparent 60%);
+    }
+    .gg-banner > * { position: relative; }
+    .gg-banner h1 { font-family: var(--gg-display); font-weight: 600; letter-spacing: -.02em; color: #fff; }
+    .gg-banner p { color: #cfe5d9; }
+    @media (max-width: 576px) { .gg-banner { padding: 1.75rem 1.5rem; border-radius: 18px; } }
+
+    /* KPI cards */
+    .gg-kpi { position: relative; padding: 1.25rem 1.4rem 1.25rem 1.6rem; height: 100%; overflow: hidden; }
+    .gg-kpi::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--gg-500); }
+    .gg-kpi.is-amber::before { background: var(--gg-amber); }
+    .gg-kpi.is-blue::before  { background: var(--gg-blue); }
+    .gg-kpi-label { font-size: .88rem; font-weight: 600; color: var(--gg-muted); }
+    .gg-kpi-value { font-family: var(--gg-display); font-size: 2.6rem; font-weight: 600; line-height: 1; margin: .7rem 0 .4rem; color: var(--gg-text); }
+    .gg-kpi-note { font-size: .82rem; color: var(--gg-muted); }
+
+    /* List rows */
+    .gg-row {
+        display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+        padding: .85rem 1.1rem; text-decoration: none !important; color: var(--gg-text) !important;
+        border-bottom: 1px solid var(--gg-border); transition: background-color .15s ease;
+    }
+    .gg-row:last-child { border-bottom: 0; }
+    .gg-row:hover { background: var(--gg-surface-2); }
+    .gg-row-title { font-weight: 600; font-size: .95rem; }
+    .gg-row-sub { font-size: .8rem; color: var(--gg-muted); }
+
+    .gg-section-title { font-family: var(--gg-display); font-weight: 600; font-size: 1.4rem; letter-spacing: -.01em; margin: 0; color: var(--gg-text); }
+    body.dark-mode .gg-section-title { color: var(--gg-text) !important; }
+
+    .gg-alert {
+        display: flex; gap: .75rem; align-items: flex-start; padding: .9rem 1.1rem; border-radius: 12px;
+        background: var(--gg-amber-soft); color: var(--gg-amber); font-size: .9rem; font-weight: 500;
+    }
+
+    /* =====================================================================
+       NAVIGATION
+       ===================================================================== */
+    .gg-nav {
+        background: rgba(20, 52, 38, .94) !important;
+        -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+        border-bottom: 1px solid rgba(255,255,255,.08);
+        padding-top: .5rem; padding-bottom: .5rem;
+    }
+    .gg-nav .nav-link {
+        font-size: .9rem; font-weight: 500; color: rgba(255,255,255,.8);
+        border-radius: 8px; padding: .5rem .8rem !important;
+        transition: background-color .15s ease, color .15s ease;
+    }
+    .gg-nav .nav-link:hover, .gg-nav .nav-link:focus, .gg-nav .show > .nav-link { background: rgba(255,255,255,.1); color: #fff; }
+    .gg-nav .navbar-toggler { border-color: rgba(255,255,255,.3); }
+
     .dropdown-menu {
-        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-        background-color: #1b4332 !important;
-        border: 1px solid #2d6a4f !important;
+        background-color: #12301f !important;
+        border: 1px solid rgba(255,255,255,.1) !important;
+        border-radius: 14px; padding: .5rem !important; min-width: 220px;
+        box-shadow: 0 18px 40px -10px rgba(0,0,0,.45);
     }
     .dropdown-item {
-        padding: 8px 16px;
-        transition: background-color 0.15s ease-in-out;
-        color: #e9ecef !important;
+        padding: .5rem .8rem; border-radius: 8px; font-size: .9rem;
+        color: #e3efe8 !important; transition: background-color .15s ease;
     }
-    .dropdown-item:hover {
-        background-color: #2d6a4f !important;
-        color: #ffffff !important;
+    .dropdown-item:hover { background-color: #2d6a4f !important; color: #fff !important; }
+    .dropdown-header { color: var(--gg-300) !important; font-size: .78rem; font-weight: 600; letter-spacing: .02em; padding: .4rem .8rem; }
+    .gg-nav .dropdown-header { color: var(--gg-300) !important; }
+    .dropdown-divider { border-top-color: rgba(255,255,255,.1) !important; }
+
+    @media (min-width: 992px) {
+        .navbar .dropdown:hover > .dropdown-menu { display: block !important; margin-top: 0 !important; animation: ggDrop .16s ease; }
     }
-    .dropdown-header {
-        color: #95d5b2 !important;
+    @keyframes ggDrop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+    @media (max-width: 991.98px) {
+        .gg-nav .navbar-collapse {
+            background: rgba(15, 45, 30, .98); padding: 1rem; border-radius: 14px; margin-top: .75rem;
+            border: 1px solid rgba(255,255,255,.08); box-shadow: 0 18px 40px -10px rgba(0,0,0,.4);
+        }
+        .gg-nav .dropdown-menu { box-shadow: none; background-color: rgba(255,255,255,.04) !important; }
+        .gg-search { width: 100% !important; }
     }
-    .dropdown-divider {
-        border-top-color: #2d6a4f !important;
+
+    /* ViewSwitcher specific styling for header integration */
+    .view-switcher-container { display: inline-flex; align-items: center; }
+    .view-switcher-container a { color: rgba(255, 255, 255, 0.85); font-size: 0.85rem; text-decoration: none; font-weight: 500; }
+    .view-switcher-container a:hover { color: #fff; text-decoration: underline; }
+
+    /* =====================================================================
+       FLOATING UI
+       ===================================================================== */
+    #scroll-progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #52b788, #95d5b2); width: 0; z-index: 1095; transition: width .1s ease; }
+
+    .gg-fab-wrap { position: fixed; right: 1.25rem; bottom: 5rem; z-index: 1060; display: flex; align-items: center; gap: .6rem; }
+    .gg-fab {
+        height: 52px; border: 0; border-radius: 999px; color: #fff !important; text-decoration: none !important;
+        background: var(--gg-700) !important; box-shadow: 0 10px 24px -8px rgba(15,45,30,.6);
+        display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+        transition: background-color .15s ease, transform .15s ease;
     }
+    .gg-fab:hover { background: var(--gg-800) !important; transform: translateY(-2px); }
+    .gg-fab.is-round { width: 52px; padding: 0; }
+    .gg-fab.is-pill { padding: 0 1.2rem; font-weight: 600; font-size: .92rem; }
+    .gg-fab img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; }
 
-   /* Mobile Navigation Dropdown Fixes */
-    @media (max-width: 991px) {
-        .navbar-collapse {
-            background-color: #ffffff !important;
-            padding: 1rem 1.25rem !important;
-            border-radius: 0.5rem;
-            margin-top: 0.5rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            border: 1px solid #dee2e6;
+    #backToTopBtn {
+        position: fixed; left: 1.25rem; bottom: 1.25rem; z-index: 1060; display: none;
+        width: 44px; height: 44px; border-radius: 50%; padding: 0;
+        align-items: center; justify-content: center;
+        background: var(--gg-700) !important; color: #fff; border: 0; box-shadow: 0 10px 24px -8px rgba(15,45,30,.6);
+    }
+    body.has-cookie .gg-fab-wrap, body.has-cookie #backToTopBtn { bottom: 9.5rem; }
+    @media (max-width: 767.98px) { body.has-cookie .gg-fab-wrap, body.has-cookie #backToTopBtn { bottom: 13.5rem; } }
+
+    /* Cookie banner */
+    .gg-cookie {
+        position: fixed; z-index: 1040; bottom: 1rem; left: 50%; transform: translateX(-50%);
+        width: min(960px, calc(100% - 2rem));
+        background: rgba(15,45,30,.97); color: #e3efe8; border: 1px solid rgba(255,255,255,.1);
+        border-radius: 16px; padding: 1rem 1.25rem; box-shadow: 0 24px 50px -12px rgba(0,0,0,.5);
+    }
+    .gg-cookie-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
+    .gg-cookie-text { display: flex; gap: .75rem; align-items: flex-start; font-size: .88rem; flex: 1 1 380px; }
+    .gg-cookie-text > i { font-size: 1.3rem; color: var(--gg-500); }
+    .gg-cookie a { color: var(--gg-300); }
+    .gg-cookie-actions { display: flex; gap: .5rem; flex-shrink: 0; }
+
+    /* Guest notice */
+    .gg-notice {
+        z-index: 1050; bottom: 7rem; max-width: 400px; display: none;
+        background: var(--gg-surface); color: var(--gg-text);
+        border: 1px solid var(--gg-border) !important; border-left: 5px solid var(--gg-600) !important;
+        border-radius: 14px; box-shadow: var(--gg-shadow-md);
+    }
+    .gg-notice h5 { font-family: var(--gg-display); font-weight: 600; }
+    .gg-notice-close { background: none; border: 0; color: var(--gg-muted); font-size: 1.4rem; line-height: 1; padding: 0; }
+
+    /* =====================================================================
+       OAK CHAT
+       ===================================================================== */
+    #chatbotPopup {
+        position: fixed; right: 1.25rem; bottom: 10rem; z-index: 1070;
+        width: 370px; max-width: calc(100vw - 2rem); height: 540px; max-height: calc(100vh - 8rem);
+        display: none; border-radius: 22px; overflow: hidden;
+        background: var(--gg-surface); border: 1px solid var(--gg-border);
+        box-shadow: 0 24px 60px -14px rgba(0,0,0,.45);
+    }
+    #chatbotPopup .oak-chat { display: flex; flex-direction: column; height: 100%; }
+    #chatbotPopup .oak-chat-head {
+        position: relative; flex-shrink: 0; color: #fff; text-align: center; padding: 1.25rem 1rem .9rem;
+        background: linear-gradient(135deg, #2d6a4f, #1b4332);
+    }
+    #chatbotPopup .oak-chat-icon { display: block; margin: 0 auto .5rem; width: 84px; height: 84px; object-fit: contain; background: transparent; }
+    #chatbotPopup .oak-chat-close {
+        position: absolute; top: 8px; right: 12px; width: 32px; height: 32px; border-radius: 50%;
+        background: rgba(255,255,255,.12); border: none; color: #fff; font-size: 1.3rem; line-height: 1; cursor: pointer;
+    }
+    #chatbotPopup .oak-chat-close:hover { background: rgba(255,255,255,.25); }
+    #chatbotPopup .oak-chat-body { flex: 1 1 auto; overflow-y: auto; padding: 1rem; background: var(--gg-bg); }
+    #chatbotPopup .oak-chat-foot { flex-shrink: 0; padding: .75rem; background: var(--gg-surface); border-top: 1px solid var(--gg-border); }
+    #chatbotPopup .gg-bubble { border-radius: 14px !important; line-height: 1.5; }
+    #chatbotPopup .bg-success { background-color: var(--gg-700) !important; }
+    #chatbotPopup .form-control { background: var(--gg-surface-2) !important; color: var(--gg-text); border-radius: 10px 0 0 10px; }
+    #chatbotPopup .form-control::placeholder { color: var(--gg-muted); }
+    #chatbotPopup .btn-success { border-radius: 0 10px 10px 0; }
+
+    .oak-dots span { display: inline-block; width: 7px; height: 7px; margin: 0 2px; border-radius: 50%; background: #2d6a4f; animation: oakBounce 1.2s infinite ease-in-out; }
+    .oak-dots span:nth-child(2) { animation-delay: .2s; }
+    .oak-dots span:nth-child(3) { animation-delay: .4s; }
+    @keyframes oakBounce { 0%, 80%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-4px); } }
+
+    body.dark-mode #chatbotPopup .oak-chat-head { background: linear-gradient(135deg, #1b4332, #0f2d1e); }
+    body.dark-mode #chatbotPopup .bg-white { background-color: #1d2f27 !important; color: #e5eee9 !important; }
+    body.dark-mode #chatbotPopup .text-dark { color: #e5eee9 !important; }
+    body.dark-mode #chatbotPopup .text-success, body.dark-mode #chatbotPopup a.text-success { color: #52b788 !important; }
+    body.dark-mode #chatbotPopup .btn-outline-success { color: #52b788 !important; border-color: #52b788 !important; }
+    body.dark-mode #chatbotPopup .btn-outline-success:hover { background-color: #2d6a4f !important; color: #fff !important; }
+    body.dark-mode #chatbotPopup .oak-dots span { background: #52b788; }
+
+    /* =====================================================================
+       FOOTER
+       ===================================================================== */
+    .gg-footer { background: var(--gg-900); color: #a9c1b3; border-top: 1px solid rgba(255,255,255,.06); padding: 2rem 0; margin-top: 2rem; }
+    .gg-footer strong, .gg-footer .gg-footer-brand { color: #fff; }
+    .gg-footer a { color: #a9c1b3; text-decoration: none; transition: color .15s ease; }
+    .gg-footer a:hover { color: #fff; }
+    .gg-footer .gg-footer-accent { color: var(--gg-500) !important; font-weight: 600; }
+    .gg-footer .gg-footer-sep { opacity: .35; }
+    .gg-footer .gg-social { width: 34px; height: 34px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: rgba(255,255,255,.07); font-size: 1rem; }
+    .gg-footer .gg-social:hover { background: var(--gg-700); }
+
+    /* =====================================================================
+       PRINT
+       ===================================================================== */
+    @media print {
+        #loader-wrapper, .navbar, #guestNoticeCard, #backToTopBtn, #cookieBanner, #cookieConsentBanner, footer, #scroll-progress, #floatingContactBtn, .gg-fab-wrap, #chatbotPopup { display: none !important; }
+        body { background: #fff !important; color: #000 !important; }
+        .container { width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
+    }
+</style>
+<asp:ContentPlaceHolder runat="server" ID="HeadContent" />
+
+
+<!-- Skip to Content Link (Accessibility) -->
+<a class="visually-hidden-focusable btn btn-light position-absolute top-0 start-0 m-2 shadow" href="#main-content" style="z-index: 1100;">Skip to content</a>
+
+<!-- Scroll Progress Bar -->
+<div id="scroll-progress"></div>
+
+<!-- 3D Loader Overlay -->
+<div id="loader-wrapper">
+    <div id="tree-canvas-container"></div>
+    <p>Loading The Giant Group...</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+    (function () {
+        var loader = document.getElementById('loader-wrapper');
+        var container = document.getElementById('tree-canvas-container');
+        if (!loader || !container || typeof THREE === 'undefined') return;
+
+        var renderer;
+        try {
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        } catch (e) {
+            container.style.display = 'none';
+            return;
         }
+        renderer.setSize(300, 300);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
 
-        /* Ensure all navigation links inside the mobile menu are clearly visible */
-        .navbar-collapse .navbar-nav .nav-link,
-        .navbar-collapse .dropdown-item,
-        .navbar-collapse span,
-        .navbar-collapse a {
-            color: #1b4332 !important;
-            font-weight: 500;
-            padding: 8px 12px;
+        var scene = new THREE.Scene();
+        var camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+        camera.position.set(0, 3.5, 8);
+        camera.lookAt(0, 2, 0);
+
+        var treeGroup = new THREE.Group();
+        scene.add(treeGroup);
+
+        var wireframeMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff, wireframe: true, transparent: true, opacity: 0.9
+        });
+        var fillMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff, wireframe: false, transparent: true, opacity: 0.08
+        });
+
+        // Trunk
+        var trunkGeo = new THREE.CylinderGeometry(0.12, 0.35, 2.5, 6);
+        trunkGeo.translate(0, 1.25, 0);
+        treeGroup.add(new THREE.Mesh(trunkGeo, wireframeMaterial));
+
+        // Branches
+        var branch1Geo = new THREE.CylinderGeometry(0.06, 0.12, 1.4, 5);
+        branch1Geo.translate(0, 0.7, 0);
+        var branch1 = new THREE.Mesh(branch1Geo, wireframeMaterial);
+        branch1.position.set(0, 1.8, 0);
+        branch1.rotation.z = Math.PI / 5;
+        branch1.rotation.y = Math.PI / 4;
+        treeGroup.add(branch1);
+
+        var branch2Geo = new THREE.CylinderGeometry(0.06, 0.12, 1.3, 5);
+        branch2Geo.translate(0, 0.65, 0);
+        var branch2 = new THREE.Mesh(branch2Geo, wireframeMaterial);
+        branch2.position.set(0, 1.7, 0);
+        branch2.rotation.z = -Math.PI / 4;
+        branch2.rotation.y = -Math.PI / 3;
+        treeGroup.add(branch2);
+
+        // Canopy
+        var crown1Geo = new THREE.IcosahedronGeometry(1.6, 1);
+        crown1Geo.translate(0, 3.3, 0);
+        treeGroup.add(new THREE.Mesh(crown1Geo, wireframeMaterial));
+        treeGroup.add(new THREE.Mesh(crown1Geo, fillMaterial));
+
+        var crown2Geo = new THREE.IcosahedronGeometry(1.1, 1);
+        crown2Geo.translate(-1.2, 2.7, 0.4);
+        treeGroup.add(new THREE.Mesh(crown2Geo, wireframeMaterial));
+        treeGroup.add(new THREE.Mesh(crown2Geo, fillMaterial));
+
+        var crown3Geo = new THREE.IcosahedronGeometry(1.15, 1);
+        crown3Geo.translate(1.2, 2.8, -0.3);
+        treeGroup.add(new THREE.Mesh(crown3Geo, wireframeMaterial));
+        treeGroup.add(new THREE.Mesh(crown3Geo, fillMaterial));
+
+        var GROW_MS = 1200;
+        var startTime = performance.now();
+        var wasHidden = false;
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (loader.style.display === 'none') { wasHidden = true; return; }
+            if (wasHidden) { wasHidden = false; startTime = performance.now(); }
+
+            var t = Math.min((performance.now() - startTime) / GROW_MS, 1);
+            var s = Math.max(0.01, 1 - Math.pow(1 - t, 3));
+            treeGroup.scale.set(s, s, s);
+            treeGroup.rotation.y += 0.018;
+
+            renderer.render(scene, camera);
         }
+        animate();
+    })();
+</script>
 
-        .navbar-collapse .nav-link:hover,
-        .navbar-collapse .dropdown-item:hover {
-            background-color: #e9ecef !important;
-            color: #2d6a4f !important;
-            border-radius: 4px;
-        }
+<!-- Back to Top Button -->
+<button id="backToTopBtn" class="btn btn-success" type="button" title="Back to top" aria-label="Back to top"><i class="bi bi-arrow-up"></i></button>
 
-        /* Make dropdown menus inside mobile view look nested nicely instead of hidden */
-        .navbar-collapse .dropdown-menu {
-            background-color: #f8f9fa !important;
-            border: none !important;
-            box-shadow: none !important;
-            padding-left: 15px;
-        }
-    }    
-    </style>
-    <!-- Bootstrap Icons CSS CDN -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <asp:ContentPlaceHolder runat="server" ID="HeadContent" />
-</head>
-<body>
-    <!-- Skip to Content Link (Accessibility) -->
-    <a class="visually-hidden-focusable btn btn-light position-absolute top-0 start-0 m-2 shadow" href="#main-content" style="z-index: 1100;">Skip to content ↓</a>
+<!-- Bottom-right floating buttons -->
+<div class="gg-fab-wrap">
+    <!-- 1. Chatbot trigger -->
+    <button type="button" class="gg-fab is-round" title="Open quick chat with Oak" aria-label="Open quick chat with Oak" onclick="toggleChatbot()">
+        <img src="<%= ResolveUrl("~/Content/oak-icon.png") %>" alt="Oak" />
+    </button>
 
-    <!-- Scroll Progress Bar -->
-    <div id="scroll-progress" style="position: fixed; top: 0; left: 0; height: 4px; background-color: #52b788; width: 0%; z-index: 1095; transition: width 0.1s ease;"></div>
+    <!-- 2. Contact page link -->
+    <a id="floatingContactBtn" runat="server" href="~/Contact.aspx" class="gg-fab is-pill" title="Contact Us">
+        <i class="bi bi-chat-dots"></i><span>Contact Us</span>
+    </a>
+</div>
 
-    <!-- 3D Loader Overlay -->
-    <div id="loader-wrapper">
-        <div class="cube-loader">
-            <div class="cube">
-                <div class="face front"></div>
-                <div class="face back"></div>
-                <div class="face left"></div>
-                <div class="face right"></div>
-                <div class="face top"></div>
-                <div class="face bottom"></div>
+<!-- Cookie Consent Banner -->
+<div id="cookieConsentBanner" class="gg-cookie" role="dialog" aria-label="Cookie notice" style="display: none;">
+    <div class="gg-cookie-inner">
+        <div class="gg-cookie-text">
+            <i class="bi bi-shield-check"></i>
+            <div>
+                <strong>Cookie notice.</strong> We use cookies to enhance your navigation experience, manage secure login sessions, and analyze site traffic. You can accept all cookies or reject non-essential ones.
+                <a href="~/Privacy.aspx" runat="server">Learn more</a>
             </div>
         </div>
-        <p>Loading The Giant Group...</p>
-    </div>
-
-    <!-- Back to Top Button -->
-    <button id="backToTopBtn" class="btn btn-success position-fixed bottom-0 start-0 m-4 shadow-lg" style="display: none; z-index: 1060; border-radius: 50%; width: 45px; height: 45px; margin-bottom: 75px !important;" title="Back to Top">↑</button>
-
-    <!-- Container for Bottom-Right Floating Buttons -->
-    <div class="position-fixed bottom-0 end-0 mb-5 pb-3 me-4 d-flex align-items-center gap-2" style="z-index: 1060;">
-        <button type="button" class="btn shadow-lg d-flex align-items-center justify-content-center text-white rounded-circle" style="width: 55px; height: 55px; background-color: #2d6a4f !important; border: none;" title="Open Quick Chat" onclick="toggleChatbot()">
-            <i class="bi bi-chat-dots-fill fs-5"></i>
-        </button>
-        <a id="floatingContactBtn" runat="server" href="~/Contact.aspx" class="btn shadow-lg d-flex align-items-center justify-content-center text-white" style="border-radius: 50px; padding: 12px 22px; background-color: #2d6a4f !important; border: none; text-decoration: none;" title="Contact Us">
-            💬 <span class="ms-2 fw-bold">Contact Us</span>
-        </a>
-    </div>
-
-    <!-- Cookie Consent Banner -->
-    <div id="cookieConsentBanner" class="position-fixed bottom-0 start-0 end-0 bg-dark text-white p-3 shadow-lg border-top border-success border-3" style="z-index: 1040; display: none;">
-        <div class="container d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
-            <div class="text-center text-md-start">
-                <span class="fs-5 me-2">🍪</span>
-                <strong>Cookie Notice:</strong> We use cookies to enhance your navigation experience, manage secure login sessions, and analyze site traffic. 
-                <a href="~/Privacy.aspx" runat="server" class="text-success text-decoration-underline ms-1">Learn more</a>
-            </div>
-            <div class="d-flex gap-2 flex-shrink-0">
-                <button type="button" id="btnRejectCookies" class="btn btn-outline-light btn-sm px-3">Reject Non-Essential</button>
-                <button type="button" id="btnAcceptCookies" class="btn btn-success btn-sm px-4 fw-bold">Accept All</button>
-            </div>
+        <div class="gg-cookie-actions">
+            <button type="button" id="btnRejectCookies" class="btn btn-outline-light btn-sm px-3">Reject non-essential</button>
+            <button type="button" id="btnAcceptCookies" class="btn btn-success btn-sm px-4 fw-bold">Accept all</button>
         </div>
     </div>
+</div>
 
-    <form runat="server">
-        <asp:ScriptManager runat="server">
-            <Scripts>
-                <asp:ScriptReference Name="MsAjaxBundle" />
-                <asp:ScriptReference Name="jquery" />
-                <asp:ScriptReference Name="WebForms.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebForms.js" />
-                <asp:ScriptReference Name="WebUIValidation.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebUIValidation.js" />
-                <asp:ScriptReference Name="MenuStandards.js" Assembly="System.Web" Path="~/Scripts/WebForms/MenuStandards.js" />
-                <asp:ScriptReference Name="GridView.js" Assembly="System.Web" Path="~/Scripts/WebForms/GridView.js" />
-                <asp:ScriptReference Name="DetailsView.js" Assembly="System.Web" Path="~/Scripts/WebForms/DetailsView.js" />
-                <asp:ScriptReference Name="TreeView.js" Assembly="System.Web" Path="~/Scripts/WebForms/TreeView.js" />
-                <asp:ScriptReference Name="WebParts.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebParts.js" />
-                <asp:ScriptReference Name="Focus.js" Assembly="System.Web" Path="~/Scripts/WebForms/Focus.js" />
-                <asp:ScriptReference Name="WebFormsBundle" />
-            </Scripts>
-        </asp:ScriptManager>
+<form runat="server">
+    <asp:ScriptManager runat="server" EnablePageMethods="true">
+        <Scripts>
+            <%--Framework Scripts--%>
+            <asp:ScriptReference Name="MsAjaxBundle" />
+            <asp:ScriptReference Name="jquery" />
+            <asp:ScriptReference Name="WebForms.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebForms.js" />
+            <asp:ScriptReference Name="WebUIValidation.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebUIValidation.js" />
+            <asp:ScriptReference Name="MenuStandards.js" Assembly="System.Web" Path="~/Scripts/WebForms/MenuStandards.js" />
+            <asp:ScriptReference Name="GridView.js" Assembly="System.Web" Path="~/Scripts/WebForms/GridView.js" />
+            <asp:ScriptReference Name="DetailsView.js" Assembly="System.Web" Path="~/Scripts/WebForms/DetailsView.js" />
+            <asp:ScriptReference Name="TreeView.js" Assembly="System.Web" Path="~/Scripts/WebForms/TreeView.js" />
+            <asp:ScriptReference Name="WebParts.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebParts.js" />
+            <asp:ScriptReference Name="Focus.js" Assembly="System.Web" Path="~/Scripts/WebForms/Focus.js" />
+            <asp:ScriptReference Name="WebFormsBundle" />
+        </Scripts>
+    </asp:ScriptManager>
 
-        <!-- Navbar matching exact desktop code -->
-        <nav class="navbar navbar-expand-lg sticky-top shadow-sm" style="background-color: #40916c;" data-bs-theme="dark">
-            <div class="container-fluid">
-                <a class="navbar-brand p-0" runat="server" href="~/Default">
-                    <img runat="server" src="~/Content/The Giant Group Logo .png" alt="The Giant Group" style="height: 40px; width: auto;" />
-                </a>
-                
-                <div class="d-flex align-items-center gap-2">
+    <nav class="navbar navbar-expand-lg sticky-top shadow-sm gg-nav" data-bs-theme="dark">
+        <div class="container-fluid">
+            <!-- Brand / Home -->
+            <a class="navbar-brand p-0 d-flex align-items-center gap-2" runat="server" href="~/HomeRouter.aspx">
+                <img runat="server" src="~/Content/The Giant Group Logo .png" alt="The Giant Group" style="height: 40px; width: auto;" />
+            </a>
+
+            <!-- Mobile View Switcher & Toggle Button Container -->
+            <div class="d-flex align-items-center gap-2">
+                <div class="view-switcher-container">
                     <friendlyUrls:ViewSwitcher runat="server" />
-                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
                 </div>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
 
-                <div class="collapse navbar-collapse" id="navbarColor01">
-                    <ul class="navbar-nav me-auto">
-                        <% if (CanSeeCalendar()) { %>
-                        <li class="nav-item"><a class="nav-link" runat="server" href="~/Calendar.aspx">Calendar</a></li>
-                        <% } %>
+            <!-- Navbar Links -->
+            <div class="collapse navbar-collapse" id="navbarColor01">
+                <!-- Left-Hand Side: Dynamic Menu Navigation -->
+                <ul class="navbar-nav me-auto">
+                    <% if (CanSeeCalendar()) { %>
+                    <li class="nav-item">
+                        <a class="nav-link" runat="server" href="~/Calendar.aspx">Calendar</a>
+                    </li>
+                    <% } %>
 
-                        <% if (CanSeeClientsTab()) { %>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Clients</a>
-                            <div class="dropdown-menu p-2">
-                                <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem;">Actions</h6>
-                                <% if (!IsClient()) { %>
-                                    <a class="dropdown-item" runat="server" href="~/Clients/AddClient.aspx"><i class="bi bi-person-plus me-1"></i> Add New Client</a>
-                                <% } %>
-                                <a class="dropdown-item" runat="server" href="~/Clients/UpdateClient.aspx"><i class="bi bi-person-gear me-1"></i> Update Client Info</a>
-                                <% if (!IsClient()) { %>
-                                    <div class="dropdown-divider my-1"></div>
-                                    <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem;">Records</h6>
-                                    <a class="dropdown-item" runat="server" href="~/Clients/ViewClients.aspx"><i class="bi bi-people me-1"></i> View All Clients</a>
-                                <% } %>
-                            </div>
-                        </li>
-                        <% } %>
+                    <!-- Clients Tab -->
+                    <% if (CanSeeClientsTab()) { %>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Clients</a>
+                        <div class="dropdown-menu">
+                            <h6 class="dropdown-header">Actions</h6>
+                            <% if (!IsClient()) { %>
+                            <a class="dropdown-item" runat="server" href="~/Clients/AddClient.aspx"><i class="bi bi-person-plus me-2"></i>Add New Client</a>
+                            <% } %>
+                            <a class="dropdown-item" runat="server" href="~/Clients/UpdateClient.aspx"><i class="bi bi-person-gear me-2"></i>Update Client Info</a>
 
-                        <% if (CanSeeJobRequestsTab()) { %>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Job Requests</a>
-                            <div class="dropdown-menu p-2">
-                                <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem;">Actions</h6>
-                                <a class="dropdown-item" runat="server" href="~/Requests/SubmitRequest.aspx"><i class="bi bi-file-earmark-plus me-1"></i> Submit Job Request</a>
-                                <a class="dropdown-item" runat="server" href="~/Requests/UpdateRequest.aspx"><i class="bi bi-file-earmark-text me-1"></i> Update Job Request</a>
-                                <div class="dropdown-divider my-1"></div>
-                                <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem;">Media</h6>
-                                <a class="dropdown-item" runat="server" href="~/Requests/SitePhotos.aspx"><i class="bi bi-camera me-1"></i> Add Site Photos</a>
-                            </div>
-                        </li>
-                        <% } %>
+                            <% if (!IsClient()) { %>
+                            <div class="dropdown-divider my-1"></div>
+                            <h6 class="dropdown-header">Records</h6>
+                            <a class="dropdown-item" runat="server" href="~/Clients/ViewClients.aspx"><i class="bi bi-people me-2"></i>View All Clients</a>
+                            <% } %>
+                        </div>
+                    </li>
+                    <% } %>
 
-                        <% if (CanSeeQuotationsTab()) { %>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Quotations</a>
-                            <div class="dropdown-menu p-2">
-                                <% if (CanSeeCreateEditQuote()) { %>
-                                    <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem;">Actions</h6>
-                                    <a class="dropdown-item" runat="server" href="~/Quotes/CreateQuote.aspx"><i class="bi bi-plus-circle me-1"></i> Create Quote</a>
-                                    <a class="dropdown-item" runat="server" href="~/Quotes/EditQuote.aspx"><i class="bi bi-pencil me-1"></i> Edit Quote</a>
-                                    <div class="dropdown-divider my-1"></div>
-                                <% } %>
-                                <% if (CanSeeViewQuoteOnly()) { %>
-                                    <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem;">Records</h6>
-                                    <a class="dropdown-item" runat="server" href="~/Quotes/ViewQuote.aspx"><i class="bi bi-eye me-1"></i> View Quote</a>
-                                <% } %>
-                            </div>
-                        </li>
-                        <% } %>
+                    <!-- Job Requests Tab -->
+                    <% if (CanSeeJobRequestsTab()) { %>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Job Requests</a>
+                        <div class="dropdown-menu">
+                            <h6 class="dropdown-header">Actions</h6>
+                            <a class="dropdown-item" runat="server" href="~/Requests/SubmitRequest.aspx"><i class="bi bi-file-earmark-plus me-2"></i>Submit Job Request</a>
+                            <a class="dropdown-item" runat="server" href="~/Requests/UpdateRequest.aspx"><i class="bi bi-file-earmark-text me-2"></i>Update Job Request</a>
+                            <div class="dropdown-divider my-1"></div>
+                            <h6 class="dropdown-header">Media</h6>
+                            <a class="dropdown-item" runat="server" href="~/Requests/SitePhotos.aspx"><i class="bi bi-camera me-2"></i>Add Site Photos</a>
+                        </div>
+                    </li>
+                    <% } %>
 
-                        <% if (CanSeeAllocationTab()) { %>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Allocation</a>
-                            <div class="dropdown-menu p-2">
-                                <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem;">Resources</h6>
-                                <% if (!IsClient()) { %>
-                                    <a class="dropdown-item" runat="server" href="~/Allocation/Assets.aspx"><i class="bi bi-tools me-1"></i> View Assets Allocation</a>
-                                <% } %>
-                                <a class="dropdown-item" runat="server" href="~/Allocation/Staff.aspx"><i class="bi bi-person-badge me-1"></i> View Staff Allocation</a>
-                            </div>
-                        </li>
-                        <% } %>
+                    <!-- Quotations Tab -->
+                    <% if (CanSeeQuotationsTab()) { %>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Quotations</a>
+                        <div class="dropdown-menu">
 
-                        <% if (CanSeeJobsTab()) { %>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Jobs</a>
-                            <div class="dropdown-menu p-2">
-                                <% if (CanSeeAddEditJobDetails()) { %>
-                                    <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem;">Actions</h6>
-                                    <a class="dropdown-item" runat="server" href="~/Jobs/ManageJob.aspx"><i class="bi bi-gear me-1"></i> Add/Edit Job Details</a>
-                                    <div class="dropdown-divider my-1"></div>
-                                <% } %>
-                                <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem;">Progress</h6>
-                                <a class="dropdown-item" runat="server" href="~/Jobs/Progress.aspx"><i class="bi bi-graph-up-arrow me-1"></i> View Job Progress</a>
-                                <% if (CanSeeEditJobProgress()) { %>
-                                    <a class="dropdown-item" runat="server" href="~/Jobs/EditProgress.aspx"><i class="bi bi-pencil-square me-1"></i> Edit Job Progress</a>
-                                <% } %>
-                            </div>
-                        </li>
-                        <% } %>
+                            <!-- Actions Section -->
+                            <h6 class="dropdown-header">Actions</h6>
 
-                        <% if (CanSeeInvoicingTab()) { %>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Invoicing</a>
-                            <div class="dropdown-menu p-2">
-                                <h6 class="dropdown-header text-uppercase fw-bold text-success" style="font-size: 0.75rem;">Actions</h6>
-                                <% if (CanSeeCreateInvoice()) { %>
-                                    <a class="dropdown-item" runat="server" href="~/Invoicing/CreateInvoice.aspx"><i class="bi bi-receipt me-1"></i> Create Invoice</a>
-                                <% } %>
-                                <a class="dropdown-item" runat="server" href="~/Invoicing/Payments.aspx"><i class="bi bi-credit-card me-1"></i> Manage Payments</a>
-                            </div>
-                        </li>
-                        <% } %>
+                            <!-- Request Quote -->
+                            <% if (CanSeeRequestQuote()) { %>
+                            <a class="dropdown-item" runat="server" href="~/RequestQuote.aspx"><i class="bi bi-file-earmark-plus me-2"></i>Request Quote</a>
+                            <% } %>
 
-                        <% if (CanSeeReports()) { %>
-                        <li class="nav-item"><a class="nav-link" runat="server" href="~/Reports.aspx">Reports</a></li>
-                        <% } %>
+                            <!-- Staff Create/Edit Quote -->
+                            <% if (CanSeeCreateEditQuote()) { %>
+                            <a class="dropdown-item" runat="server" href="~/ViewQuote.aspx"><i class="bi bi-pencil me-2"></i>Edit Quote</a>
+                            <% } %>
 
-                        <li class="nav-item"><a runat="server" href="~/Help.aspx" class="nav-link">FAQ</a></li>
-                    </ul>
+                            <div class="dropdown-divider my-1"></div>
 
-                    <ul class="navbar-nav ms-auto align-items-center gap-2">
-                        <li class="nav-item"><a class="nav-link text-white-50 px-2" runat="server" href="~/About.aspx">About</a></li>
-                        <li class="nav-item"><a class="nav-link text-white-50 px-2" runat="server" href="~/Contact.aspx">Contact</a></li>
-                        
-                        <li class="nav-item">
-                            <button id="darkModeToggle" class="btn btn-sm text-white rounded-circle d-flex align-items-center justify-content-center border-0" type="button" title="Toggle Theme" style="width: 32px; height: 32px; background: rgba(255,255,255,0.1);">
-                                <i id="darkModeIcon" class="bi bi-moon-fill small"></i>
+                            <!-- Records Section -->
+                            <% if (CanSeeViewQuoteOnly()) { %>
+                            <h6 class="dropdown-header">Records</h6>
+                            <a class="dropdown-item" runat="server" href="~/ViewQuote.aspx"><i class="bi bi-eye me-2"></i>View Quote</a>
+                            <% } %>
+                        </div>
+                    </li>
+                    <% } %>
+
+                    <!-- Allocation Tab -->
+                    <% if (CanSeeAllocationTab()) { %>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Allocation</a>
+                        <div class="dropdown-menu">
+                            <h6 class="dropdown-header">Resources</h6>
+                            <% if (!IsClient()) { %>
+                            <a class="dropdown-item" runat="server" href="~/ViewAssetAllocation.aspx"><i class="bi bi-tools me-2"></i>View Assets Allocation</a>
+                            <% } %>
+                            <a class="dropdown-item" runat="server" href="~/ViewStaffAllocation.aspx"><i class="bi bi-person-badge me-2"></i>View Staff Allocation</a>
+
+                            <% if (CanAssign()) { %>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" runat="server" href="~/AssignAsset.aspx"><i class="bi bi-plus-circle me-2"></i>Assign Asset to Job</a>
+                            <a class="dropdown-item" runat="server" href="~/AssignStaff.aspx"><i class="bi bi-person-plus me-2"></i>Assign Staff to Job</a>
+                            <% } %>
+                        </div>
+                    </li>
+                    <% } %>
+
+                    <!-- Jobs Tab -->
+                    <% if (CanSeeJobsTab()) { %>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Jobs</a>
+                        <div class="dropdown-menu">
+                            <% if (CanSeeAddEditJobDetails()) { %>
+                            <h6 class="dropdown-header">Actions</h6>
+                            <a class="dropdown-item" runat="server" href="~/Jobs/ManageJob.aspx"><i class="bi bi-gear me-2"></i>Add/Edit Job Details</a>
+                            <div class="dropdown-divider my-1"></div>
+                            <% } %>
+
+                            <h6 class="dropdown-header">Progress</h6>
+                            <a class="dropdown-item" runat="server" href="~/Jobs/Progress.aspx"><i class="bi bi-graph-up-arrow me-2"></i>View Job Progress</a>
+                            <% if (CanSeeEditJobProgress()) { %>
+                            <a class="dropdown-item" runat="server" href="~/Jobs/EditProgress.aspx"><i class="bi bi-pencil-square me-2"></i>Edit Job Progress</a>
+                            <% } %>
+                        </div>
+                    </li>
+                    <% } %>
+
+                    <!-- Invoicing Tab -->
+                    <% if (CanSeeInvoicingTab()) { %>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Invoicing</a>
+                        <div class="dropdown-menu">
+                            <h6 class="dropdown-header">Actions</h6>
+                            <% if (CanSeeCreateInvoice()) { %>
+                            <a class="dropdown-item" runat="server" href="~/Invoicing/CreateInvoice.aspx"><i class="bi bi-receipt me-2"></i>Create Invoice</a>
+                            <% } %>
+                            <a class="dropdown-item" runat="server" href="~/Invoicing/Payments.aspx"><i class="bi bi-credit-card me-2"></i>Manage &amp; Make Payments</a>
+                        </div>
+                    </li>
+                    <% } %>
+
+                    <!-- Reports Tab -->
+                    <% if (CanSeeReports()) { %>
+                    <li class="nav-item">
+                        <a class="nav-link" runat="server" href="~/Reports.aspx">Reports</a>
+                    </li>
+                    <% } %>
+
+                    <li class="nav-item">
+                        <a runat="server" href="~/Help.aspx" class="nav-link text-decoration-none">FAQ</a>
+                    </li>
+                </ul>
+
+                <!-- Right-Hand Side: Search, Navigation, and Authentication -->
+                <ul class="navbar-nav ms-auto align-items-lg-center gap-1 gap-lg-2 mt-3 mt-lg-0">
+
+                    <!-- Minimalist Search Bar -->
+                    <% if (IsLoggedIn()) { %>
+                    <li class="nav-item gg-search" style="width: 200px;">
+                        <div class="input-group input-group-sm rounded-pill overflow-hidden border border-light border-opacity-25" style="background: rgba(255,255,255,0.08);">
+                            <input type="text" id="siteSearchInput" class="form-control form-control-sm bg-transparent text-white border-0 shadow-none px-3" placeholder="Search this page..." aria-label="Search this page" style="color: #fff !important;" />
+                            <button class="btn btn-sm text-white border-0 px-2" type="button" id="siteSearchBtn" aria-label="Search" style="background: rgba(255,255,255,0.15);">
+                                <i class="bi bi-search small"></i>
                             </button>
-                        </li>
+                        </div>
+                    </li>
+                    <% } %>
 
-                        <asp:LoginView runat="server" ViewStateMode="Disabled">
-                            <AnonymousTemplate>
-                                <li class="nav-item ms-1"><a class="nav-link text-white px-2" runat="server" href="~/Account/Register">Register</a></li>
-                                <li class="nav-item"><a class="btn btn-sm text-white px-3 py-1 rounded-pill ms-1 fw-semibold" runat="server" href="~/Account/Login" style="background-color: rgba(255,255,255,0.2);">Log In</a></li>
-                            </AnonymousTemplate>
-                            <LoggedInTemplate>
-                                <li class="nav-item ms-2 d-flex align-items-center">
-                                    <span class="nav-link text-white small px-2 lh-sm text-end">
-                                        <span class="d-block text-white-50" style="font-size: 0.7rem;">Welcome back,</span> 
-                                        <span class="fw-bold"><%: Session["StaffName"] ?? Session["Username"] %></span>
-                                    </span>
-                                </li>
-                                <li class="nav-item ms-1">
-                                    <asp:LinkButton runat="server" ID="BtnLogout" OnClick="BtnLogout_Click" CssClass="btn btn-sm btn-outline-light rounded-pill px-3 py-2 small fw-semibold text-white text-nowrap" CausesValidation="false">
-                                        Log Out
-                                    </asp:LinkButton>
-                                </li>
-                            </LoggedInTemplate>
-                        </asp:LoginView>
-                    </ul>
-                </div>
-            </div>
-        </nav>
+                    <li class="nav-item"><a class="nav-link" runat="server" href="~/About.aspx">About</a></li>
+                    <li class="nav-item"><a class="nav-link" runat="server" href="~/Contact.aspx">Contact</a></li>
 
-        <!-- Floating Chatbot Widget Window -->
-        <div id="chatbotPopup" class="card shadow-lg border-0 position-fixed bottom-0 end-0 m-4 rounded-4 overflow-hidden" style="z-index: 1070; width: 340px; max-height: 450px; display: none; margin-bottom: 90px !important;">
-            <div class="card-header text-white d-flex justify-content-between align-items-center py-3 px-4" style="background-color: #2d6a4f !important;">
-                <div class="d-flex align-items-center">
-                    <span class="me-2">💬</span>
-                    <h6 class="fw-bold mb-0">Giant Group Assistant</h6>
-                </div>
-                <button type="button" class="btn text-white p-0 shadow-none border-0 fw-bold" style="font-size: 1.2rem;" onclick="toggleChatbot()">&times;</button>
+                    <!-- Dark Mode Toggle Button -->
+                    <li class="nav-item">
+                        <button id="darkModeToggle" class="btn btn-sm text-white rounded-circle d-flex align-items-center justify-content-center border-0" type="button" title="Toggle theme" aria-label="Toggle dark mode" style="width: 34px; height: 34px; background: rgba(255,255,255,0.1);">
+                            <i id="darkModeIcon" class="bi bi-moon-fill small"></i>
+                        </button>
+                    </li>
+
+                    <!-- Authentication -->
+                    <asp:LoginView runat="server" ViewStateMode="Disabled">
+                        <AnonymousTemplate>
+                            <li class="nav-item ms-lg-1"><a class="nav-link text-white" runat="server" href="~/Account/Register">Register</a></li>
+                            <li class="nav-item"><a class="btn btn-sm text-white px-3 py-2 rounded-pill fw-semibold" runat="server" href="~/Account/Login" style="background-color: rgba(255,255,255,0.18);">Log In</a></li>
+                        </AnonymousTemplate>
+                        <LoggedInTemplate>
+                            <li class="nav-item ms-lg-2 d-flex align-items-center">
+                                <span class="nav-link text-white small px-2 lh-sm text-lg-end">
+                                    <span class="d-block text-white-50" style="font-size: 0.7rem;">Welcome back,</span>
+                                    <span class="fw-bold"><%: Session["StaffName"] ?? Session["Username"] %></span>
+                                </span>
+                            </li>
+                            <li class="nav-item ms-lg-1">
+                                <asp:LinkButton runat="server" ID="BtnLogout" OnClick="BtnLogout_Click" CssClass="btn btn-sm btn-outline-light rounded-pill px-3 py-2 small fw-semibold text-white text-nowrap" CausesValidation="false">
+                                    Log Out
+                                </asp:LinkButton>
+                            </li>
+                        </LoggedInTemplate>
+                    </asp:LoginView>
+                </ul>
             </div>
-            <div class="card-body bg-light p-3 overflow-auto" style="height: 280px;" id="chatBody">
+        </div>
+    </nav>
+
+    <!-- Floating Chatbot Widget Window -->
+    <div id="chatbotPopup" role="dialog" aria-label="Chat with Oak">
+        <div class="oak-chat">
+
+            <!-- Header -->
+            <div class="oak-chat-head">
+                <button type="button" class="oak-chat-close" aria-label="Close chat" onclick="toggleChatbot()">&times;</button>
+                <img src="<%= ResolveUrl("~/Content/oak-icon.png") %>" alt="Oak" class="oak-chat-icon" />
+                <h6 class="fw-bold mb-0">Oak</h6>
+                <small style="opacity: .85;">Giant Group Assistant</small>
+            </div>
+
+            <!-- Messages -->
+            <div class="oak-chat-body" id="chatBody" aria-live="polite">
                 <div class="d-flex mb-3">
-                    <div class="p-3 bg-white rounded-3 shadow-sm text-dark small" style="max-width: 80%;">
-                        👋 Hello! Welcome to Giant Tree Felling. How can we help you today?
+                    <div class="p-3 bg-white rounded-3 shadow-sm text-dark small gg-bubble" style="max-width: 90%;">
+                        Hi, I'm <strong>Oak</strong>, The Giant Group's virtual assistant. If you need anything, such as prices, opening hours, our services or how to reach us, just ask me.
                     </div>
                 </div>
-            </div>
-            <div class="card-footer bg-white border-0 p-3">
-                <div class="input-group">
-                    <input type="text" id="chatInput" class="form-control form-control-sm bg-light border-0 py-2 px-3" placeholder="Type your message..." onkeypress="if(event.key === 'Enter') { event.preventDefault(); sendChatMessage(); }" />
-                    <button class="btn btn-success px-3" type="button" style="background-color: #2d6a4f !important;" onclick="sendChatMessage()">➤</button>
+                <% if (!IsLoggedIn()) { %>
+                <div class="d-flex mb-3">
+                    <div class="p-3 bg-white rounded-3 shadow-sm text-dark small gg-bubble" style="max-width: 90%;">
+                        <i class="bi bi-lock me-1"></i>You're browsing as a guest. <strong>Log in or create an account</strong> to submit job requests, view quotes and access the rest of the website's features.
+                        <div class="d-flex gap-2 mt-3">
+                            <a href="<%= ResolveUrl("~/Account/Login.aspx") %>" class="btn btn-success btn-sm px-3" style="background-color: #2d6a4f !important; border: none;">Log In</a>
+                            <a href="<%= ResolveUrl("~/Account/Register.aspx") %>" class="btn btn-outline-success btn-sm px-3">Create Account</a>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Main Content Area -->
-        <div id="main-content" class="container body-content mt-4">
-            <asp:ContentPlaceHolder ID="MainContent" runat="server">
-            </asp:ContentPlaceHolder>
-            <hr />
-        </div>
-
-       <!-- Footer -->
-<footer class="border-top bg-light text-muted py-4 mt-auto shadow-sm w-100">
-    <div class="container">
-        <div class="row align-items-center gy-3">
-            
-            <!-- Left: Company & Team Branding -->
-            <div class="col-md-6 text-center text-md-start">
-                <p class="mb-1 fw-semibold text-dark small">
-                    &copy; <%: DateTime.Now.Year %> The Giant Group &bull; Engineered by <span class="text-success fw-bold">Code Crusaders</span>
-                </p>
-                <p class="mb-0 text-muted" style="font-size: 0.8rem;">
-                    Enterprise Operations & Asset Management System &bull; Last Updated: <span id="lastUpdatedDate" class="fw-medium text-dark"></span>
-                </p>
+                <% } %>
             </div>
 
-            <!-- Right: Quick Navigation, Legal Links & Socials -->
-            <div class="col-md-6 text-center text-md-end">
-                <div class="d-flex justify-content-center justify-content-md-end align-items-center gap-3 small flex-wrap">
-                    <a runat="server" href="~/Default.aspx" class="text-decoration-none text-muted hover-success">Home</a>
-                    <span class="text-muted opacity-50">/</span>
-                    <a runat="server" href="~/Help.aspx" class="text-decoration-none text-muted hover-success">Help Guide</a>
-                    <span class="text-muted opacity-50">/</span>
-                    <a runat="server" href="~/Contact.aspx" class="text-decoration-none text-muted hover-success">Support</a>
-                    <span class="text-muted opacity-50">/</span>
-                    <a runat="server" href="~/Privacy.aspx" class="text-decoration-none text-success fw-bold">Privacy Policy</a>
-                    <span class="text-muted opacity-50">/</span>
-                    <a href="https://wa.me/27848331373?text=Hello%20The%20Giant%20Group,%20I%20would%20like%20to%20inquire%20about%20your%20services." target="_blank" rel="noopener" class="text-decoration-none text-success fs-6" title="WhatsApp">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-whatsapp" viewBox="0 0 16 16">
-                            <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.193-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.342l-.381-.005c-.133 0-.348.05-.53.248-.183.199-.7-.683-1.485-.017-1.304 1.352-1.005 2.506-.114 2.852.098.034.685 1.05 1.659 1.932.974.882 1.731 1.153 1.982 1.284.25.132.535.111.737-.015.225-.143 1.17-.478 1.334-.943.164-.464.164-.862.114-.943-.05-.084-.184-.133-.382-.232"/>
-                        </svg>
-                    </a>
-                    <span class="text-muted opacity-50">/</span>
-                    <a href="https://www.instagram.com/thegiantgroup_/" target="_blank" rel="noopener" class="text-decoration-none text-danger fs-6" title="Instagram">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-instagram" viewBox="0 0 16 16">
-                            <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.198-.509.333-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.282.11-.705.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.668 2.668 0 1 1 0 5.335 2.668 2.668 0 0 1 0-5.335"/>
-                        </svg>
-                    </a>
+            <!-- Input -->
+            <div class="oak-chat-foot">
+                <div class="input-group">
+                    <input type="text" id="chatInput" class="form-control form-control-sm border-0 py-2 px-3" placeholder="Type your message..." aria-label="Message to Oak" autocomplete="off" />
+                    <button class="btn btn-success px-3" type="button" style="background-color: #2d6a4f !important; border: none;" onclick="sendChatMessage()" aria-label="Send message"><i class="bi bi-send-fill"></i></button>
                 </div>
             </div>
 
         </div>
     </div>
-</footer>
-    </form>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script>
-        AOS.init({ duration: 800, once: true });
-        window.addEventListener('load', function () {
+    <!-- Main Content Area -->
+    <div id="main-content" class="container body-content mt-4">
+        <!-- Floating Guest Prompt Card -->
+        <% if (!IsLoggedIn()) { %>
+        <div id="guestNoticeCard" class="card shadow-lg border-0 position-fixed end-0 m-4 p-4 gg-notice">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h5 class="mb-0">Welcome to The Giant Group</h5>
+                <button type="button" class="gg-notice-close" aria-label="Close" onclick="dismissGuestCard()">&times;</button>
+            </div>
+            <p class="mb-0 small">You are currently browsing as a guest. To access management tools, view records, or perform actions, please <a href="~/Account/Login.aspx" runat="server" class="fw-bold text-success">Log In</a> or <a href="~/Account/Register.aspx" runat="server" class="fw-bold text-success">Register</a>.</p>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                if (document.getElementById("hero")) return;
+
+                var dismissed = false;
+                try { dismissed = !!sessionStorage.getItem("guestCardDismissed"); } catch (e) { }
+                if (!dismissed) {
+                    var card = document.getElementById("guestNoticeCard");
+                    if (card) card.style.display = "block";
+                }
+            });
+
+            function dismissGuestCard() {
+                var card = document.getElementById("guestNoticeCard");
+                if (card) {
+                    card.style.display = "none";
+                    try { sessionStorage.setItem("guestCardDismissed", "true"); } catch (e) { }
+                }
+            }
+        </script>
+        <% } %>
+
+        <asp:ContentPlaceHolder ID="MainContent" runat="server">
+        </asp:ContentPlaceHolder>
+    </div>
+
+    <!-- Footer: full width, outside the container -->
+    <footer class="gg-footer w-100">
+        <div class="container">
+            <div class="row align-items-center gy-3">
+
+                <!-- Left: Company & Team Branding -->
+                <div class="col-md-6 text-center text-md-start">
+                    <p class="mb-1 fw-semibold small gg-footer-brand">
+                        &copy; <%: DateTime.Now.Year %> The Giant Group &bull; Engineered by <span class="gg-footer-accent">Code Crusaders</span>
+                    </p>
+                    <p class="mb-0" style="font-size: 0.8rem;">
+                        Enterprise Operations &amp; Asset Management System &bull; Last Updated: <span id="lastUpdatedDate" class="fw-medium text-white"></span>
+                    </p>
+                </div>
+
+                <!-- Right: Quick Navigation, Legal Links & Socials -->
+                <div class="col-md-6 text-center text-md-end">
+                    <div class="d-flex justify-content-center justify-content-md-end align-items-center gap-3 small flex-wrap">
+                        <a runat="server" href="~/Default.aspx">Home</a>
+                        <span class="gg-footer-sep">/</span>
+                        <a runat="server" href="~/Help.aspx">Help Guide</a>
+                        <span class="gg-footer-sep">/</span>
+                        <a runat="server" href="~/Contact.aspx">Support</a>
+                        <span class="gg-footer-sep">/</span>
+                        <a runat="server" href="~/Privacy.aspx" class="fw-bold text-white">Privacy Policy</a>
+                        <span class="gg-footer-sep">/</span>
+                        <a href="https://wa.me/27848331373?text=Hello%20The%20Giant%20Group,%20I%20would%20like%20to%20inquire%20about%20your%20services." target="_blank" rel="noopener noreferrer" class="gg-social" title="WhatsApp" aria-label="WhatsApp">
+                            <i class="bi bi-whatsapp"></i>
+                        </a>
+                        <a href="https://www.instagram.com/thegiantgroup_/" target="_blank" rel="noopener noreferrer" class="gg-social" title="Instagram" aria-label="Instagram">
+                            <i class="bi bi-instagram"></i>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </footer>
+</form>
+
+<asp:PlaceHolder runat="server">
+    <%: Scripts.Render("~/bundles/bootstrap.js") %>
+</asp:PlaceHolder>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- AOS Animation JS -->
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+<script>
+    const loaderStartTime = Date.now();
+    const MINIMUM_SHOW_TIME = 1400;
+
+    AOS.init({
+        duration: 700,
+        once: true,
+        disable: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    });
+
+    // Hide 3D Loader
+    window.addEventListener('load', function () {
+        const loader = document.getElementById('loader-wrapper');
+        if (loader) {
+            const elapsedTime = Date.now() - loaderStartTime;
+            const remainingTime = Math.max(0, MINIMUM_SHOW_TIME - elapsedTime);
+
+            setTimeout(() => {
+                loader.style.opacity = '0';
+                loader.style.pointerEvents = 'none';
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                }, 500);
+            }, remainingTime);
+        }
+    });
+
+    // Show loader on navigation
+    document.addEventListener('click', function (e) {
+        const target = e.target.closest('a');
+        if (!target) return;
+        const rawHref = target.getAttribute('href');
+        if (!rawHref || rawHref === '#' || rawHref.startsWith('#') || rawHref.startsWith('javascript') ||
+            rawHref.startsWith('mailto:') || rawHref.startsWith('tel:')) return;
+        if (target.classList.contains('dropdown-toggle')) return;
+        if (target.target === '_blank' || target.hasAttribute('download')) return;
+        if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
+        if (target.hostname && target.hostname !== window.location.hostname) return;
+        if (target.href && !target.href.includes('#')) {
             const loader = document.getElementById('loader-wrapper');
             if (loader) {
-                loader.style.opacity = '0';
-                setTimeout(() => loader.style.display = 'none', 500);
+                loader.style.display = 'flex';
+                loader.style.opacity = '1';
+                loader.style.pointerEvents = 'auto';
             }
+        }
+    });
+
+    // Global 3D Tilt Effect
+    document.querySelectorAll('.tilt-card').forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+
+            const rotateX = -((y - centerY) / centerY) * 12;
+            const rotateY = ((x - centerX) / centerX) * 12;
+
+            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
         });
 
-        // Global 3D Tilt Effect
-        document.querySelectorAll('.tilt-card').forEach(card => {
-            card.addEventListener('mousemove', (e) => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-
-                const rotateX = -((y - centerY) / centerY) * 12;
-                const rotateY = ((x - centerX) / centerX) * 12;
-
-                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
-            });
-
-            card.addEventListener('mouseleave', () => {
-                card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
-                card.style.transition = 'transform 0.5s ease';
-            });
-
-            card.addEventListener('mouseenter', () => {
-                card.style.transition = 'none';
-            });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+            card.style.transition = 'transform 0.5s ease';
         });
 
-        // --- UX FEATURES INTEGRATION ---
+        card.addEventListener('mouseenter', () => {
+            card.style.transition = 'none';
+        });
+    });
 
-        // 1. Dark Mode Toggle
-        const darkModeToggle = document.getElementById('darkModeToggle');
-        const darkModeIcon = document.getElementById('darkModeIcon');
-        const currentTheme = localStorage.getItem('theme');
+    // --- UX FEATURES ---
 
-        if (currentTheme === 'dark') {
-            document.body.classList.add('dark-mode');
-            if (darkModeIcon) darkModeIcon.className = 'bi bi-sun-fill small';
-        }
+    // 1. Dark Mode Toggle
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const darkModeIcon = document.getElementById('darkModeIcon');
+    let currentTheme = null;
+    try { currentTheme = localStorage.getItem('theme'); } catch (e) { }
 
-        if (darkModeToggle) {
-            darkModeToggle.addEventListener('click', () => {
-                document.body.classList.toggle('dark-mode');
-                let theme = 'light';
+    if (currentTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        if (darkModeIcon) darkModeIcon.className = 'bi bi-sun-fill small';
+    }
 
-                if (document.body.classList.contains('dark-mode')) {
-                    theme = 'dark';
-                    if (darkModeIcon) darkModeIcon.className = 'bi bi-sun-fill small';
-                } else {
-                    if (darkModeIcon) darkModeIcon.className = 'bi bi-moon-fill small';
-                }
+    if (darkModeToggle) {
+        darkModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            let theme = 'light';
 
-                localStorage.setItem('theme', theme);
-            });
-        }
-
-        // 2. Scroll Progress Bar & Back to Top Button
-        const scrollProgress = document.getElementById('scroll-progress');
-        const backToTopBtn = document.getElementById('backToTopBtn');
-
-        window.addEventListener('scroll', () => {
-            const totalHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            const progress = (window.scrollY / totalHeight) * 100;
-            if (scrollProgress) scrollProgress.style.width = progress + '%';
-
-            if (backToTopBtn) {
-                if (window.scrollY > 300) {
-                    backToTopBtn.style.display = 'block';
-                } else {
-                    backToTopBtn.style.display = 'none';
-                }
+            if (document.body.classList.contains('dark-mode')) {
+                theme = 'dark';
+                if (darkModeIcon) darkModeIcon.className = 'bi bi-sun-fill small';
+            } else {
+                if (darkModeIcon) darkModeIcon.className = 'bi bi-moon-fill small';
             }
+
+            try { localStorage.setItem('theme', theme); } catch (e) { }
         });
+    }
+
+    // 2. Scroll Progress Bar & Back to Top Button
+    const scrollProgress = document.getElementById('scroll-progress');
+    const backToTopBtn = document.getElementById('backToTopBtn');
+
+    window.addEventListener('scroll', () => {
+        const totalHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const progress = totalHeight > 0 ? (window.scrollY / totalHeight) * 100 : 0;
+        if (scrollProgress) scrollProgress.style.width = progress + '%';
 
         if (backToTopBtn) {
-            backToTopBtn.addEventListener('click', () => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
+            backToTopBtn.style.display = window.scrollY > 300 ? 'inline-flex' : 'none';
         }
+    }, { passive: true });
 
-        // 3. Cookie Consent Banner Logic (Accept All / Reject Non-Essential)
-        const cookieBanner = document.getElementById('cookieConsentBanner');
-        const btnAccept = document.getElementById('btnAcceptCookies');
-        const btnReject = document.getElementById('btnRejectCookies');
+    if (backToTopBtn) {
+        backToTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
 
-        function getCookie(name) {
-            let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-            if (match) return match[2];
-            return null;
-        }
+    // 3. Cookie Consent Banner Logic
+    const cookieBanner = document.getElementById('cookieConsentBanner');
+    const btnAccept = document.getElementById('btnAcceptCookies');
+    const btnReject = document.getElementById('btnRejectCookies');
 
-        if (!getCookie("GiantGroupCookieConsent") && cookieBanner) {
-            cookieBanner.style.display = 'block';
-        }
+    function getCookie(name) {
+        let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+        if (match) return match[2];
+        return null;
+    }
 
-        if (btnAccept && cookieBanner) {
-            btnAccept.addEventListener('click', () => {
-                document.cookie = "GiantGroupCookieConsent=Accepted; path=/; max-age=" + (60 * 60 * 24 * 365) + "; SameSite=Lax";
-                cookieBanner.style.display = 'none';
-            });
-        }
+    function setConsent(value) {
+        var secure = window.location.protocol === 'https:' ? '; Secure' : '';
+        document.cookie = "GiantGroupCookieConsent=" + value + "; path=/; max-age=" + (60 * 60 * 24 * 365) + "; SameSite=Lax" + secure;
+        if (cookieBanner) cookieBanner.style.display = 'none';
+        document.body.classList.remove('has-cookie');
+    }
 
-        if (btnReject && cookieBanner) {
-            btnReject.addEventListener('click', () => {
-                document.cookie = "GiantGroupCookieConsent=Rejected; path=/; max-age=" + (60 * 60 * 24 * 365) + "; SameSite=Lax";
-                cookieBanner.style.display = 'none';
-            });
-        }
+    if (!getCookie("GiantGroupCookieConsent") && cookieBanner) {
+        cookieBanner.style.display = 'block';
+        document.body.classList.add('has-cookie');
+    }
+    if (btnAccept && cookieBanner) btnAccept.addEventListener('click', () => setConsent('Accepted'));
+    if (btnReject && cookieBanner) btnReject.addEventListener('click', () => setConsent('Rejected'));
 
-        // 4. Last Updated Date in Footer
-        const lastUpdatedSpan = document.getElementById('lastUpdatedDate');
-        if (lastUpdatedSpan) {
-            lastUpdatedSpan.textContent = document.lastModified;
-        }
+    // 4. Last Updated Date in Footer
+    const lastUpdatedSpan = document.getElementById('lastUpdatedDate');
+    if (lastUpdatedSpan) {
+        lastUpdatedSpan.textContent = document.lastModified;
+    }
 
-        // 5. UTM Tracking Capture
-        window.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const utmSource = urlParams.get('utm_source');
-            const utmMedium = urlParams.get('utm_medium');
-            const utmCampaign = urlParams.get('utm_campaign');
-            if (utmSource) {
+    // 5. UTM Tracking Capture
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const utmSource = urlParams.get('utm_source');
+        const utmMedium = urlParams.get('utm_medium');
+        const utmCampaign = urlParams.get('utm_campaign');
+        if (utmSource) {
+            try {
                 localStorage.setItem('utm_source', utmSource);
-                localStorage.setItem('utm_medium', utmMedium);
-                localStorage.setItem('utm_campaign', utmCampaign);
+                localStorage.setItem('utm_medium', utmMedium || '');
+                localStorage.setItem('utm_campaign', utmCampaign || '');
+            } catch (e) { }
+        }
+    });
+
+    // 6. Site Search Quick Filter
+    const searchBtn = document.getElementById('siteSearchBtn');
+    const searchInput = document.getElementById('siteSearchInput');
+    if (searchBtn && searchInput) {
+        const performSearch = () => {
+            const query = searchInput.value.trim().toLowerCase();
+            if (query) {
+                if (window.find) {
+                    window.find(query);
+                } else {
+                    alert("Search query: " + query);
+                }
+            }
+        };
+        searchBtn.addEventListener('click', performSearch);
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                performSearch();
             }
         });
+    }
 
-        // 6. Site Search Quick Filter
-        const searchBtn = document.getElementById('siteSearchBtn');
-        const searchInput = document.getElementById('siteSearchInput');
-        if (searchBtn && searchInput) {
-            const performSearch = () => {
-                const query = searchInput.value.trim().toLowerCase();
-                if (query) {
-                    if (window.find) {
-                        window.find(query);
-                    } else {
-                        alert("Search query: " + query);
-                    }
-                }
-            };
-            searchBtn.addEventListener('click', performSearch);
-            searchInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    performSearch();
+    // 7. Password Visibility Toggle
+    document.querySelectorAll('input[type="password"]').forEach(passwordField => {
+        if (!passwordField.parentNode.classList.contains('input-group')) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'input-group';
+            passwordField.parentNode.insertBefore(wrapper, passwordField);
+            wrapper.appendChild(passwordField);
+
+            const toggleBtn = document.createElement('button');
+            toggleBtn.className = 'btn btn-outline-secondary';
+            toggleBtn.type = 'button';
+            toggleBtn.innerHTML = '<i class="bi bi-eye"></i>';
+            toggleBtn.title = 'Show/Hide Password';
+            toggleBtn.setAttribute('aria-label', 'Show or hide password');
+            wrapper.appendChild(toggleBtn);
+
+            toggleBtn.addEventListener('click', () => {
+                if (passwordField.type === 'password') {
+                    passwordField.type = 'text';
+                    toggleBtn.innerHTML = '<i class="bi bi-eye-slash"></i>';
+                } else {
+                    passwordField.type = 'password';
+                    toggleBtn.innerHTML = '<i class="bi bi-eye"></i>';
                 }
             });
         }
+    });
+</script>
 
-        // 7. Password Visibility Toggle
-        document.querySelectorAll('input[type="password"]').forEach(passwordField => {
-            if (!passwordField.parentNode.classList.contains('input-group')) {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'input-group';
-                passwordField.parentNode.insertBefore(wrapper, passwordField);
-                wrapper.appendChild(passwordField);
+<script>
+    var OAK_ICONS = {
+        happy: '<%= ResolveUrl("~/Content/oak-icon.png") %>',
+        thinking: '<%= ResolveUrl("~/Content/oak-thinking.png") %>',
+        confused: '<%= ResolveUrl("~/Content/oak-undecided.png") %>'
+    };
+    var CONTACT_URL = '<%= ResolveUrl("~/Contact.aspx") %>';
+    var LOGIN_URL = '<%= ResolveUrl("~/Account/Login.aspx") %>';
+    var REGISTER_URL = '<%= ResolveUrl("~/Account/Register.aspx") %>';
+    var OAK_IS_GUEST = ('<%= IsLoggedIn() ? "false" : "true" %>' === 'true');
 
-                const toggleBtn = document.createElement('button');
-                toggleBtn.className = 'btn btn-outline-secondary';
-                toggleBtn.type = 'button';
-                toggleBtn.textContent = '👁️';
-                toggleBtn.title = 'Show/Hide Password';
-                wrapper.appendChild(toggleBtn);
-
-                toggleBtn.addEventListener('click', () => {
-                    if (passwordField.type === 'password') {
-                        passwordField.type = 'text';
-                        toggleBtn.textContent = '🔒︎';
-                    } else {
-                        passwordField.type = 'password';
-                        toggleBtn.textContent = '👁️';
-                    }
-                });
-            }
-        });
-
-        // Chatbot functionality
-        function toggleChatbot() {
-            var chatPopup = document.getElementById("chatbotPopup");
-            if (chatPopup) {
-                if (chatPopup.style.display === "none" || chatPopup.style.display === "") {
-                    chatPopup.style.display = "block";
-                    document.getElementById("chatInput").focus();
-                } else {
-                    chatPopup.style.display = "none";
-                }
-            }
+    function toggleChatbot() {
+        var chatPopup = document.getElementById("chatbotPopup");
+        if (!chatPopup) return;
+        if (chatPopup.style.display === "none" || chatPopup.style.display === "") {
+            chatPopup.style.display = "block";
+            var inp = document.getElementById("chatInput");
+            if (inp) inp.focus();
+        } else {
+            chatPopup.style.display = "none";
         }
+    }
 
-        function sendChatMessage() {
-            var input = document.getElementById("chatInput");
-            var chatBody = document.getElementById("chatBody");
-            var userText = input.value.trim();
-
-            if (userText !== "") {
-                var userMsgDiv = document.createElement("div");
-                userMsgDiv.className = "d-flex justify-content-end mb-3";
-                userMsgDiv.innerHTML = '<div class="p-3 text-white rounded-3 shadow-sm small" style="max-width: 80%; background-color: #2d6a4f;">' + escapeHtml(userText) + '</div>';
-                chatBody.appendChild(userMsgDiv);
-
-                input.value = "";
-                chatBody.scrollTop = chatBody.scrollHeight;
-
-                setTimeout(function () {
-                    var botReply = getSmartFAQResponse(userText);
-                    var botMsgDiv = document.createElement("div");
-                    botMsgDiv.className = "d-flex mb-3";
-                    botMsgDiv.innerHTML = '<div class="p-3 bg-white rounded-3 shadow-sm text-dark small" style="max-width: 80%;">' + botReply + '</div>';
-                    chatBody.appendChild(botMsgDiv);
-                    chatBody.scrollTop = chatBody.scrollHeight;
-                }, 600);
-            }
+    function openChatbot() {
+        var notice = document.getElementById("guestNoticeCard");
+        if (notice) notice.style.display = "none";
+        var chatPopup = document.getElementById("chatbotPopup");
+        if (chatPopup && (chatPopup.style.display === "none" || chatPopup.style.display === "")) {
+            chatPopup.style.display = "block";
         }
+    }
 
-        function getSmartFAQResponse(input) {
-            const text = input.toLowerCase();
-            if (text.includes('price') || text.includes('cost') || text.includes('rate')) {
-                return "Our pricing depends on the size and complexity of the tree-felling job. Contact us for a free on-site quote!";
-            } else if (text.includes('hours') || text.includes('open') || text.includes('time') || text.includes('working')) {
-                return "We operate Monday to Saturday, from 7:00 AM to 5:00 PM.";
-            } else if (text.includes('contact') || text.includes('phone') || text.includes('call') || text.includes('email')) {
-                return "You can reach us directly via our Contact page or call our support line at 0848 331 373.";
-            } else if (text.includes('service') || text.includes('tree') || text.includes('felling') || text.includes('garden')) {
-                return "We specialize in professional tree-felling, stump removal, site clearance, and general garden maintenance.";
+    function escapeHtml(text) {
+        var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return text.replace(/[&<>"']/g, function (m) { return map[m]; });
+    }
+
+    function addOakMessage(html, mood) {
+        var chatBody = document.getElementById("chatBody");
+        var row = document.createElement("div");
+        row.className = "d-flex align-items-start mb-3";
+        row.innerHTML =
+            '<img src="' + (OAK_ICONS[mood] || OAK_ICONS.happy) + '" alt="" class="me-2 flex-shrink-0" style="width: 36px; height: 36px; object-fit: contain;" />' +
+            '<div class="p-3 bg-white rounded-3 shadow-sm text-dark small gg-bubble" style="max-width: 80%;">' + html + '</div>';
+        chatBody.appendChild(row);
+        chatBody.scrollTop = chatBody.scrollHeight;
+        return row;
+    }
+
+    function sendChatMessage() {
+        var input = document.getElementById("chatInput");
+        var chatBody = document.getElementById("chatBody");
+        var userText = input.value.trim();
+        if (userText === "") return;
+
+        var userMsgDiv = document.createElement("div");
+        userMsgDiv.className = "d-flex justify-content-end mb-3";
+        userMsgDiv.innerHTML = '<div class="p-3 bg-success text-white rounded-3 shadow-sm small gg-bubble" style="max-width: 80%;">' + escapeHtml(userText) + '</div>';
+        chatBody.appendChild(userMsgDiv);
+        input.value = "";
+        chatBody.scrollTop = chatBody.scrollHeight;
+
+        var thinkingRow = addOakMessage('<span class="oak-dots"><span></span><span></span><span></span></span>', 'thinking');
+
+        setTimeout(function () {
+            thinkingRow.remove();
+            var reply = getSmartFAQResponse(userText);
+            if (reply) {
+                addOakMessage(reply, 'happy');
+            } else if (OAK_IS_GUEST) {
+                addOakMessage(
+                    "Sorry, to access me fully, please " +
+                    '<a href="' + LOGIN_URL + '" class="fw-bold text-success">log in</a> or ' +
+                    '<a href="' + REGISTER_URL + '" class="fw-bold text-success">create an account</a>.',
+                    'confused');
             } else {
-                return "Thanks for reaching out! One of our team members will review your message shortly. You can also call us directly at 0848 331 373.";
+                addOakMessage(
+                    "Sorry, I'm not sure about that one. You can call our team on <strong>0848 331 373</strong> or " +
+                    '<a href="' + CONTACT_URL + '" class="fw-bold text-success">send us a message on our Contact page</a>, and we will help you.',
+                    'confused');
             }
-        }
+        }, 1200);
+    }
 
-        function escapeHtml(text) {
-            var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-            return text.replace(/[&<>"']/g, function (m) { return map[m]; });
-        }
-
-        window.addEventListener('pageshow', function (event) {
-            if (event.persisted) {
-                var loader = document.getElementById('loader-wrapper') || document.querySelector('.loader');
-                if (loader) {
-                    loader.style.display = 'none';
-                }
-            }
+    (function () {
+        var inp = document.getElementById("chatInput");
+        if (inp) inp.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") { e.preventDefault(); sendChatMessage(); }
         });
-    </script>
-</body>
-</html>
+    })();
+
+    function getSmartFAQResponse(input) {
+        var text = input.toLowerCase();
+        if (text.includes('cost') || text.includes('rate') || text.includes('price') || text.includes('quote')) {
+            return "Our pricing depends on the size and complexity of the tree-felling job. Contact us for a free on-site quote!";
+        } else if (text.includes('hours') || text.includes('open') || text.includes('time') || text.includes('working')) {
+            return "We operate Monday to Saturday, from 7:00 AM to 5:00 PM.";
+        } else if (text.includes('contact') || text.includes('phone') || text.includes('call') || text.includes('email')) {
+            return "You can reach us directly via our Contact page or call our support line at 0848 331 373.";
+        } else if (text.includes('service') || text.includes('tree') || text.includes('felling') || text.includes('garden')) {
+            return "We specialise in professional tree-felling, stump removal, site clearance, and general garden maintenance.";
+        }
+        return null;
+    }
+</script>
+<script>
+    window.addEventListener('pageshow', function (event) {
+        if (event.persisted) {
+            var loader = document.getElementById('loader-wrapper') || document.querySelector('.loader');
+            if (loader) {
+                loader.style.display = 'none';
+            }
+        }
+    });
+</script>
+
+<!-- Vanilla-Tilt 3D Library for Interactive Cursor Tracking -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
