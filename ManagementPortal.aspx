@@ -127,11 +127,11 @@
                         <HeaderTemplate>
                             <div class="mp-panel-head">
                                 <h3>Waiting for a quote</h3>
-                                <a runat="server" href="~/Requests/UpdateRequest.aspx">Manage</a>
+                                <a runat="server" href="~/Requests/ManageRequests.aspx">Manage</a>
                             </div>
                         </HeaderTemplate>
                         <ItemTemplate>
-                            <a runat="server" href="~/Requests/UpdateRequest.aspx" class="gg-row">
+                            <a runat="server" href="~/Requests/ManageRequests.aspx" class="gg-row">
                                 <div>
                                     <div class="gg-row-title">Request #<%#: Eval("jobRequestID") %></div>
                                     <div class="gg-row-sub">Open to review and prepare a quote</div>

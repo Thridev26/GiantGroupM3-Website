@@ -223,10 +223,13 @@
     <Content Include="Help.aspx" />
     <Content Include="HomeRouter.aspx" />
     <Content Include="ManagementPortal.aspx" />
+	  
     <Content Include="NotFound.aspx" />
     <Content Include="PrintQuote.aspx" />
     <Content Include="Privacy.aspx" />
     <Content Include="RequestQuote.aspx" />
+    <Content Include="Requests\EvaluateRequest.aspx" />
+    <Content Include="Requests\ManageRequests.aspx" />
     <Content Include="Requests\SubmitRequest.aspx" />
     <Content Include="Requests\ViewRequests.aspx" />
     <Content Include="Scripts\bootstrap.bundle.js" />
@@ -508,6 +511,20 @@
     </Compile>
     <Compile Include="RequestQuote.aspx.designer.cs">
       <DependentUpon>RequestQuote.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Requests\EvaluateRequest.aspx.cs">
+      <DependentUpon>EvaluateRequest.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Requests\EvaluateRequest.aspx.designer.cs">
+      <DependentUpon>EvaluateRequest.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Requests\ManageRequests.aspx.cs">
+      <DependentUpon>ManageRequests.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Requests\ManageRequests.aspx.designer.cs">
+      <DependentUpon>ManageRequests.aspx</DependentUpon>
     </Compile>
     <Compile Include="Requests\SubmitRequest.aspx.cs">
       <DependentUpon>SubmitRequest.aspx</DependentUpon>
