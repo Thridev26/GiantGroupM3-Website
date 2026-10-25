@@ -496,13 +496,14 @@ body.dark-mode .gg-msg.is-error { background: #3a1f1c; color: #f1948a; }
 .gg-iconfield:focus-within { border-color: var(--gg-600); box-shadow: 0 0 0 4px rgba(64, 145, 108, .18); }
 .gg-iconfield > i.lead-i { display: flex; align-items: center; padding: 0 .85rem; color: var(--gg-muted); }
 .gg-iconfield .gg-input { border: 0; border-radius: 0; box-shadow: none !important; flex: 1; min-width: 0; }
-.gg-iconfield button.gg-eye { background: transparent; border: 0; color: var(--gg-muted); padding: 0 .9rem; }
-.gg-iconfield button.gg-eye:hover { color: var(--gg-accent); }
+.gg-iconfield { position: relative !important; display: flex; align-items: stretch; background: var(--gg-surface); border: 1px solid var(--gg-border); border-radius: 10px; overflow: hidden; }
+
+.gg-iconfield button.gg-eye { position: absolute !important; right: 8px !important; top: 50% !important; transform: translateY(-50%) !important; background: transparent !important; border: 0 !important; color: var(--gg-muted); padding: 0 .5rem !important; height: 28px !important; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .gg-divider { display: flex; align-items: center; gap: .75rem; color: var(--gg-muted); font-size: .8rem; margin: 1.25rem 0; }
 .gg-divider::before, .gg-divider::after { content: ""; flex: 1; height: 1px; background: var(--gg-border); }
 .gg-google { background: #fff !important; color: #3c4043 !important; border: 1px solid #dadce0 !important; width: 100%; }
 .gg-google:hover { background: #f8f9fa !important; box-shadow: 0 1px 3px rgba(60, 64, 67, .3); }
-.gg-otp { text-align: center; font-size: 1.9rem; font-weight: 700; letter-spacing: .5em; padding-left: .5em; max-width: 280px; margin: 0 auto; }
+.gg-otp { text-align: ceAnter; font-size: 1.9rem; font-weight: 700; letter-spacing: .5em; padding-left: .5em; max-width: 280px; margin: 0 auto; }
 .gg-check { display: flex; align-items: center; gap: .55rem; font-size: .88rem; color: var(--gg-muted); cursor: pointer; user-select: none; }
 .gg-check input { width: 1.05rem; height: 1.05rem; accent-color: var(--gg-700); }
 

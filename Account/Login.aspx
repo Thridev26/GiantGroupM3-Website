@@ -37,10 +37,7 @@
                         <asp:Label runat="server" AssociatedControlID="Password" CssClass="gg-field-label">Password</asp:Label>
                         <div class="gg-iconfield">
                             <i class="bi bi-lock lead-i"></i>
-                            <asp:TextBox runat="server" ID="Password" CssClass="gg-input" TextMode="Password" placeholder="Enter your password" autocomplete="current-password" />
-                            <button class="gg-eye" type="button" id="togglePassword" title="Show or hide password" aria-label="Show or hide password">
-                                <i class="bi bi-eye"></i>
-                            </button>
+                            <asp:TextBox runat="server" ID="Password" CssClass="gg-input" TextMode="Password" placeholder="Enter your password" autocomplete="current-password" />                           
                         </div>
                         <asp:RequiredFieldValidator runat="server" ID="PasswordValidator" ControlToValidate="Password" CssClass="gg-field-error" ErrorMessage="Password is required." Display="Dynamic" />
                     </div>
@@ -102,9 +99,51 @@
     </div>
 
     <style>
-        /* Hide browser-native password reveal icons so only ours shows */
-        input[type="password"]::-ms-reveal, input[type="password"]::-ms-clear { display: none !important; }
-        input[type="password"]::-webkit-contacts-auto-fill-button, input[type="password"]::-webkit-credentials-auto-fill-button { visibility: hidden; position: absolute; right: 0; }
+   /* Hide browser-native password reveal buttons */
+    input[type="password"]::-ms-reveal, 
+    input[type="password"]::-ms-clear { 
+        display: none !important; 
+    }
+    input[type="password"]::-webkit-credentials-auto-fill-button { 
+        display: none !important; 
+    }
+
+    /* Make the password's iconfield relative so we can anchor the eye inside it */
+    .gg-field .gg-iconfield {
+        position: relative !important;
+        overflow: hidden !important;
+    }
+
+    /* Fix the C# server-tag selector syntax so the password box gets its right padding */
+    input[id*="Password"] {
+        padding-right: 48px !important;
+    }
+
+    /* Position the eye button absolutely on the right edge */
+    .gg-field .gg-iconfield button.gg-eye {
+        position: absolute !important;
+        right: 10px !important;     /* <-- ADJUST THIS: change to move left/right */
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        
+        background: transparent !important;
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+        width: 32px !important;
+        height: 32px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        color: var(--gg-muted) !important;
+        border-radius: 6px !important;
+        cursor: pointer;
+    }
+
+    .gg-field .gg-iconfield button.gg-eye:hover {
+        background: var(--gg-surface-2) !important;
+        color: var(--gg-accent) !important;
+    }
     </style>
 
     <script>
