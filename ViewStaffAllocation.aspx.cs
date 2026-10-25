@@ -14,19 +14,35 @@ namespace GiantGroupM3
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            Response.Cache.SetCacheability(System.Web.HttpCacheability.NoCache);
+            Response.Cache.SetNoStore();
+
+            // Must be signed in (clients see only their own jobs, staff see their own, management sees all)
+            if (!Request.IsAuthenticated)
+            {
+                Response.Redirect("~/Account/Login.aspx");
+                return;
+            }
+
             if (!IsPostBack)
             {
                 LoadStaffAllocations();
             }
         }
 
+        private static int ToInt(object value)
+        {
+            int result;
+            return value != null && int.TryParse(value.ToString(), out result) ? result : 0;
+        }
+
         private void LoadStaffAllocations(string searchTerm = "")
         {
-            int accessLevel = Session["AccessLevel"] != null ? Convert.ToInt32(Session["AccessLevel"]) : 0;
-            int roleID = Session["RoleID"] != null ? Convert.ToInt32(Session["RoleID"]) : 0;
+            int accessLevel = ToInt(Session["AccessLevel"]);
+            int roleID = ToInt(Session["RoleID"]);
             string userRole = Session["UserRole"]?.ToString() ?? "";
-            int clientID = Session["ClientID"] != null ? Convert.ToInt32(Session["ClientID"]) : 0;
-            int staffID = Session["StaffID"] != null ? Convert.ToInt32(Session["StaffID"]) : 0;
+            int clientID = ToInt(Session["ClientID"]);
+            int staffID = ToInt(Session["StaffID"]);
 
             // FALLBACK: If AccessLevel/RoleID were not set in Session, look them up directly from database
             if (staffID > 0 && (accessLevel == 0 || roleID == 0))
@@ -41,7 +57,7 @@ namespace GiantGroupM3
 
                     using (SqlCommand cmd = new SqlCommand(lookupQuery, conn))
                     {
-                        cmd.Parameters.AddWithValue("@StaffID", staffID);
+                        cmd.Parameters.Add("@StaffID", SqlDbType.Int).Value = staffID;
                         conn.Open();
                         using (SqlDataReader reader = cmd.ExecuteReader())
                         {
@@ -61,7 +77,7 @@ namespace GiantGroupM3
                 }
             }
 
-            // Check if user is Owner, System Manager, or has AccessLevel >= 5
+            // Owner, System Manager, or AccessLevel >= 5 sees everything
             bool isManagement = accessLevel >= 5
                 || roleID == 10
                 || roleID == 11
@@ -87,7 +103,7 @@ namespace GiantGroupM3
                 LEFT JOIN [dbo].[Client] c ON jr.clientID = c.clientID
                 WHERE 1=1";
 
-            // Only filter by staffID/clientID if NOT management
+            // Only management sees everything. Everyone else is restricted to their own records.
             if (!isManagement)
             {
                 if (userRole.Equals("Client", StringComparison.OrdinalIgnoreCase) || clientID > 0)
@@ -98,9 +114,18 @@ namespace GiantGroupM3
                 {
                     query += " AND jsa.staffID = @StaffID";
                 }
+                else
+                {
+                    // Unknown identity: show nothing rather than everything
+                    query += " AND 1 = 0";
+                }
             }
 
-            if (!string.IsNullOrWhiteSpace(searchTerm))
+            // Escape LIKE wildcards in what the user typed
+            string term = string.IsNullOrWhiteSpace(searchTerm) ? "" : searchTerm.Trim()
+                .Replace("[", "[[]").Replace("%", "[%]").Replace("_", "[_]");
+
+            if (term.Length > 0)
             {
                 query += @" AND (s.firstName LIKE '%' + @Search + '%' 
                             OR s.lastName LIKE '%' + @Search + '%' 
@@ -113,13 +138,14 @@ namespace GiantGroupM3
 
             query += " ORDER BY jsa.assignmentDate DESC";
 
-            using (SqlConnection conn = new SqlConnection(connStr))
+            try
             {
+                using (SqlConnection conn = new SqlConnection(connStr))
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    cmd.Parameters.AddWithValue("@Search", searchTerm.Trim());
-                    cmd.Parameters.AddWithValue("@ClientID", clientID);
-                    cmd.Parameters.AddWithValue("@StaffID", staffID);
+                    cmd.Parameters.Add("@Search", SqlDbType.NVarChar, 200).Value = term;
+                    cmd.Parameters.Add("@ClientID", SqlDbType.Int).Value = clientID;
+                    cmd.Parameters.Add("@StaffID", SqlDbType.Int).Value = staffID;
 
                     using (SqlDataAdapter da = new SqlDataAdapter(cmd))
                     {
@@ -130,35 +156,52 @@ namespace GiantGroupM3
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("ViewStaffAllocation load failed: " + ex);
+            }
         }
 
         protected string GetStatusBadgeCss(object statusObj)
         {
             if (statusObj == null || statusObj == DBNull.Value)
-                return "badge-status status-default";
+                return "status-default";
 
-            string status = statusObj.ToString().Trim().ToLower();
-
-            switch (status)
+            switch (statusObj.ToString().Trim().ToLower())
             {
                 case "completed":
-                    return "badge-status status-completed";
+                    return "status-completed";
                 case "in progress":
                 case "inprogress":
-                    return "badge-status status-inprogress";
+                case "active":
+                case "scheduled":
+                    return "status-inprogress";
                 case "pending":
-                    return "badge-status status-pending";
+                    return "status-pending";
                 case "archived":
-                    return "badge-status status-archived";
+                    return "status-archived";
                 default:
-                    return "badge-status status-default";
+                    return "status-default";
             }
         }
 
         protected void gvStaffAssignments_PageIndexChanging(object sender, GridViewPageEventArgs e)
         {
             gvStaffAssignments.PageIndex = e.NewPageIndex;
+            LoadStaffAllocations(txtSearch.Text);   // keep the current search while paging
+        }
+
+        protected void txtSearch_TextChanged(object sender, EventArgs e)
+        {
+            gvStaffAssignments.PageIndex = 0;
             LoadStaffAllocations(txtSearch.Text);
+        }
+
+        protected void btnClear_Click(object sender, EventArgs e)
+        {
+            txtSearch.Text = string.Empty;
+            gvStaffAssignments.PageIndex = 0;
+            LoadStaffAllocations();
         }
     }
 }

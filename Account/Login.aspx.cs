@@ -1,14 +1,13 @@
-﻿using BCrypt.Net;
-using GiantGroupM3.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
 using System.IO;
 using System.Net;
-using System.Net.Mail;
+using System.Security.Cryptography;
 using System.Text;
 using System.Web;
+using System.Web.Caching;
 using System.Web.Script.Serialization;
 using System.Web.Security;
 using System.Web.UI;
@@ -17,6 +16,13 @@ namespace GiantGroupM3.Account
 {
     public partial class Login : Page
     {
+        private const int MaxLoginFailures = 5;      // per email + IP, per 15 minutes
+        private const int MaxMfaAttempts = 5;        // wrong codes before the user must sign in again
+        private const int MaxMfaResends = 3;
+
+        // ---------------------------------------------------------------
+        // Page load
+        // ---------------------------------------------------------------
         protected void Page_Load(object sender, EventArgs e)
         {
             RegisterHyperLink.NavigateUrl = "Register";
@@ -26,228 +32,287 @@ namespace GiantGroupM3.Account
                 RegisterHyperLink.NavigateUrl += "?ReturnUrl=" + returnUrl;
             }
 
-            // Check if the user just registered successfully
-            if (Request.QueryString["registered"] == "true")
+            // "Resend code" link posts back with the event target "mfaResend"
+            if (IsPostBack && Request["__EVENTTARGET"] == "mfaResend")
             {
-                // Dynamically change the alert box styling to green for success
-                alertBox.Attributes["class"] = "alert py-2 small text-center mb-3 rounded-3 border-0 bg-success bg-opacity-10 text-success";
-                alertIcon.Attributes["class"] = "bi bi-check-circle-fill me-1";
+                ResendMfaCode();
+                return;
+            }
 
-                FailureText.Text = "Registration successful! Please log in with your credentials.";
-                ErrorMessage.Visible = true;
+            if (!IsPostBack)
+            {
+                // Registration success message (only on first load, so it never hides a later error)
+                if (Request.QueryString["registered"] == "true")
+                {
+                    ShowMessage("Registration successful! Please log in with your credentials.", true);
+                }
+
+                // Google sends the user back here with ?code=...
+                CheckGoogleAuthCallback();
+            }
+        }
+
+        // ---------------------------------------------------------------
+        // Step 1: email + password
+        // ---------------------------------------------------------------
+        protected void LogIn(object sender, EventArgs e)
+        {
+            if (!IsValid) return;
+
+            string email = Email.Text.Trim();
+            string password = Password.Text.Trim();
+
+            // Brute-force protection: too many failures for this email/IP in the last 15 minutes
+            string throttleKey = "loginfail:" + Request.UserHostAddress + ":" + email.ToLowerInvariant();
+            if (IsLockedOut(throttleKey))
+            {
+                ShowMessage("Too many unsuccessful attempts. Please wait 15 minutes and try again, or reset your password.", false);
+                return;
+            }
+
+            string userType, userName;
+            int userLevel, userId;
+
+            if (ValidateStaffOrClientCredentials(email, password, out userType, out userName, out userLevel, out userId))
+            {
+                HttpRuntime.Cache.Remove(throttleKey);
+                try
+                {
+                    IssueOtpAndShowMfa(email, userType, userName, userLevel, userId, RememberMe.Checked);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Trace.TraceError("MFA dispatch failed: " + ex);
+                    ShowMessage("We couldn't send your verification code. Please try again in a moment.", false);
+                }
             }
             else
             {
-                // Ensure default red styling for standard login errors
-                alertBox.Attributes["class"] = "alert py-2 small text-center mb-3 rounded-3 border-0 bg-danger bg-opacity-10 text-danger";
-                alertIcon.Attributes["class"] = "bi bi-exclamation-circle-fill me-1";
-            }
-
-            // Check if Google returned an authorization response (Callback handling)
-            CheckGoogleAuthCallback();
-        }
-        
-
-        protected void LogIn(object sender, EventArgs e)
-        {
-            if (IsValid)
-            {
-                string email = Email.Text.Trim();
-                string password = Password.Text.Trim();
-                string connString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
-
-                string userType;
-                string userName;
-                int userLevel;
-                int userId = 0;
-
-                // 1. Validate credentials and get user info (Staff or Client) including userId
-                if (ValidateStaffOrClientCredentials(email, password, out userType, out userName, out userLevel, out userId))
-                {
-                    try
-                    {
-                        // 2. Generate 6-digit OTP and 5-minute expiry window
-                        string otp = new Random().Next(100000, 999999).ToString();
-                        DateTime expiryTime = DateTime.Now.AddMinutes(5);
-
-                        // 3. Save the OTP record into your database tracking table using SQL Server's GETDATE()
-                        using (SqlConnection conn = new SqlConnection(connString))
-                        {
-                            conn.Open();
-
-                            // Clean up expired records older than 24 hours
-                            string cleanupQuery = "DELETE FROM PasswordResets WHERE ExpiryTime < DATEADD(hour, -24, GETDATE());";
-                            using (SqlCommand cmdCleanup = new SqlCommand(cleanupQuery, conn))
-                            {
-                                cmdCleanup.ExecuteNonQuery();
-                            }
-
-                            // --- BULLETPROOF FIX: Check the database directly to confirm if this email belongs to Staff ---
-                            bool isActuallyStaff = false;
-                            string checkStaffQuery = "SELECT COUNT(1) FROM staff WHERE emailAddress = @Email";
-                            using (SqlCommand staffCheckCmd = new SqlCommand(checkStaffQuery, conn))
-                            {
-                                staffCheckCmd.Parameters.AddWithValue("@Email", email);
-                                int staffExists = Convert.ToInt32(staffCheckCmd.ExecuteScalar());
-                                if (staffExists > 0)
-                                {
-                                    isActuallyStaff = true;
-                                }
-                            }
-
-                            string insertQuery;
-
-                            // Route strictly based on real table membership, or fallback to your userType check
-                            if (isActuallyStaff || (userType != null && (userType.Equals("Staff", StringComparison.OrdinalIgnoreCase) || userType.Equals("Owner", StringComparison.OrdinalIgnoreCase) || userType.Equals("Admin", StringComparison.OrdinalIgnoreCase))))
-                            {
-                                insertQuery = "INSERT INTO PasswordResets (StaffID, OTP, ExpiryTime) VALUES (@UserId, @Otp, DATEADD(minute, 5, GETDATE()))";
-                            }
-                            else
-                            {
-                                insertQuery = "INSERT INTO PasswordResets (ClientID, OTP, ExpiryTime) VALUES (@UserId, @Otp, DATEADD(minute, 5, GETDATE()))";
-                            }
-
-                            using (SqlCommand cmd = new SqlCommand(insertQuery, conn))
-                            {
-                                cmd.Parameters.AddWithValue("@UserId", userId);
-                                cmd.Parameters.AddWithValue("@Otp", otp);
-                                cmd.ExecuteNonQuery();
-                            }
-                        }
-
-                        // 4. Dispatch via your Google Apps Script Web App (Synchronous WebClient)
-                        string webAppUrl = ConfigurationManager.AppSettings["EmailServiceUrl"];
-                        string jsonData = $"{{\"email\":\"{email}\", \"otp\":\"{otp}\", \"type\":\"login\"}}";
-
-                        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-
-                        using (WebClient client = new WebClient())
-                        {
-                            client.Encoding = Encoding.UTF8;
-                            client.Headers[HttpRequestHeader.ContentType] = "application/json";
-                            string response = client.UploadString(webAppUrl, "POST", jsonData);
-                        }
-
-                        // 5. Store session state variables temporarily for verification check
-                        Session["PendingEmail"] = email;
-                        Session["PendingUserType"] = userType;
-                        Session["PendingUserName"] = userName;
-                        Session["PendingUserLevel"] = userLevel;
-                        Session["PendingUserId"] = userId; // <-- Save the ID here!
-                        Session["PendingRememberMe"] = RememberMe.Checked;
-                        Session["MfaOtpCode"] = otp;
-                        Session["MfaExpiry"] = expiryTime;
-
-                        // 6. Switch views to your MFA Verification panel
-                        loginForm.Visible = false;
-                        MfaPanel.Visible = true;
-                    }
-                    catch (Exception ex)
-                    {
-                        FailureText.Text = "Failed to process MFA verification: " + ex.Message;
-                        ErrorMessage.Visible = true;
-                    }
-                }
-                else
-                {
-                    FailureText.Text = "Invalid email or password.";
-                    ErrorMessage.Visible = true;
-                }
+                RegisterFailure(throttleKey);
+                ShowMessage("Invalid email or password.", false);
             }
         }
 
+        // ---------------------------------------------------------------
+        // Step 2: one-time code
+        // ---------------------------------------------------------------
         protected void VerifyMfa_Click(object sender, EventArgs e)
         {
             string enteredCode = MfaCode.Text.Trim();
             string storedCode = Session["MfaOtpCode"] as string;
             DateTime? expiry = Session["MfaExpiry"] as DateTime?;
+            string email = Session["PendingEmail"] as string;
 
-            bool isDemoFallback = (enteredCode == "123456");
-            bool isValidRealCode = (storedCode != null && expiry.HasValue && DateTime.Now <= expiry.Value && enteredCode == storedCode);
-
-            if (isDemoFallback || isValidRealCode)
+            // No pending sign-in (session expired or forged postback): start again
+            if (email == null || storedCode == null)
             {
-                // MFA Success! Finalize login session
-                string email = Session["PendingEmail"] as string;
-                string userType = Session["PendingUserType"] as string; // "Staff" or "Client"
+                BackToLoginForm("Your verification session has expired. Please sign in again.");
+                return;
+            }
 
-                // --- ADD THIS LINE TO FIX THE ERROR ---
-                int pendingUserId = Convert.ToInt32(Session["PendingUserId"]);
-                // ---------------------------------------
+            int attempts = (Session["MfaAttempts"] as int?) ?? 0;
+            if (attempts >= MaxMfaAttempts)
+            {
+                ClearPendingSession();
+                BackToLoginForm("Too many incorrect codes. Please sign in again.");
+                return;
+            }
 
-                Session["StaffName"] = Session["PendingUserName"];
-                Session["UserType"] = userType;
-                Session["UserRole"] = userType; // Set UserRole so master page IsClient() works seamlessly!
-                Session["UserLevel"] = Session["PendingUserLevel"];
+            // The demo code is OFF unless <add key="AllowDemoMfaCode" value="true" /> is set in Web.config.
+            // Never enable it on the live site.
+            bool demoEnabled = string.Equals(ConfigurationManager.AppSettings["AllowDemoMfaCode"], "true", StringComparison.OrdinalIgnoreCase);
+            bool isDemoFallback = demoEnabled && enteredCode == "123456";
+            bool isValidRealCode = expiry.HasValue && DateTime.Now <= expiry.Value && ConstantTimeEquals(enteredCode, storedCode);
 
-                // Dynamically assign based on role type so your queries find it instantly
-                if (userType.Equals("Client", StringComparison.OrdinalIgnoreCase))
-                {
-                    Session["ClientID"] = pendingUserId;
-                }
-                else
-                {
-                    Session["StaffID"] = pendingUserId;
-                }
+            if (!(isDemoFallback || isValidRealCode))
+            {
+                Session["MfaAttempts"] = attempts + 1;
+                int left = MaxMfaAttempts - (attempts + 1);
+                ShowMessage(left > 0
+                    ? "Invalid or expired verification code. You have " + left + " attempt" + (left == 1 ? "" : "s") + " left."
+                    : "Invalid or expired verification code.", false);
+                return;
+            }
 
-                bool rememberMe = Session["PendingRememberMe"] != null && (bool)Session["PendingRememberMe"];
+            // MFA success: finalise the login session
+            string userType = Session["PendingUserType"] as string;      // "Staff" or "Client"
+            int pendingUserId = Convert.ToInt32(Session["PendingUserId"]);
+            string pendingName = Session["PendingUserName"] as string;
 
-                // Clear temporary MFA session items
-                Session.Remove("PendingEmail");
-                Session.Remove("PendingUserType");
-                Session.Remove("PendingUserName");
-                Session.Remove("PendingUserLevel");
-                Session.Remove("PendingRememberMe");
-                Session.Remove("MfaOtpCode");
-                Session.Remove("MfaExpiry");
+            Session["StaffName"] = pendingName;
+            Session["Username"] = pendingName;                           // used by the portals' welcome text
+            Session["UserType"] = userType;
+            Session["UserRole"] = userType;                              // lets the master page IsClient() work
+            Session["UserLevel"] = Session["PendingUserLevel"];
 
-                FormsAuthentication.SetAuthCookie(email, rememberMe);
-                // =========================================================================
-                // PLACE THE SNIPPET HERE (Replacing RedirectToReturnUrl();)
-                // =========================================================================
-
-                // Optional: Check for an explicit ReturnUrl parameter before applying role routing
-                string returnUrl = Request.QueryString["ReturnUrl"];
-                if (!string.IsNullOrEmpty(returnUrl))
-                {
-                    Response.Redirect(returnUrl);
-                }
-                else
-                {
-                    string role = Session["UserRole"]?.ToString() ?? string.Empty;
-                    int userLevel = Convert.ToInt32(Session["UserLevel"] ?? -1);
-
-                    if (role.Equals("Staff", StringComparison.OrdinalIgnoreCase) ||
-                        role.Equals("Admin", StringComparison.OrdinalIgnoreCase) ||
-                        userLevel >= 2)
-                    {
-                        Response.Redirect("~/ManagementPortal.aspx");
-                    }
-                    else if (role.Equals("Client", StringComparison.OrdinalIgnoreCase) || userLevel == 0 || userLevel == 1)
-                    {
-                        Response.Redirect("~/ClientPortal.aspx");
-                    }
-                    else
-                    {
-                        Response.Redirect("~/Default.aspx");
-                    }
-                }
+            if (userType.Equals("Client", StringComparison.OrdinalIgnoreCase))
+            {
+                Session["ClientID"] = pendingUserId;
             }
             else
             {
-                FailureText.Text = "Invalid or expired verification code. Please try again.";
-                ErrorMessage.Visible = true;
+                Session["StaffID"] = pendingUserId;
+                Session["AccessLevel"] = Session["PendingUserLevel"];    // used by the Assign / Allocation pages
+            }
+
+            bool rememberMe = Session["PendingRememberMe"] != null && (bool)Session["PendingRememberMe"];
+            ClearPendingSession();
+
+            FormsAuthentication.SetAuthCookie(email, rememberMe);
+
+            // Honour ReturnUrl only if it is a local path (blocks open-redirect phishing links)
+            string returnUrl = Request.QueryString["ReturnUrl"];
+            if (IsLocalUrl(returnUrl))
+            {
+                Response.Redirect(returnUrl);
+                return;
+            }
+
+            string role = Session["UserRole"]?.ToString() ?? string.Empty;
+            int userLevel = Convert.ToInt32(Session["UserLevel"] ?? -1);
+
+            if (role.Equals("Staff", StringComparison.OrdinalIgnoreCase) ||
+                role.Equals("Admin", StringComparison.OrdinalIgnoreCase) ||
+                userLevel >= 2)
+            {
+                Response.Redirect("~/ManagementPortal.aspx");
+            }
+            else if (role.Equals("Client", StringComparison.OrdinalIgnoreCase) || userLevel == 0 || userLevel == 1)
+            {
+                Response.Redirect("~/ClientPortal.aspx");
+            }
+            else
+            {
+                Response.Redirect("~/Default.aspx");
             }
         }
 
+        private void ResendMfaCode()
+        {
+            string email = Session["PendingEmail"] as string;
+            if (email == null)
+            {
+                BackToLoginForm("Your verification session has expired. Please sign in again.");
+                return;
+            }
+
+            int resends = (Session["MfaResends"] as int?) ?? 0;
+            DateTime? last = Session["MfaLastSent"] as DateTime?;
+            if (resends >= MaxMfaResends)
+            {
+                ShowMessage("You have requested too many codes. Please sign in again.", false);
+                return;
+            }
+            if (last.HasValue && (DateTime.Now - last.Value).TotalSeconds < 30)
+            {
+                ShowMessage("Please wait a few seconds before requesting another code.", false);
+                return;
+            }
+
+            try
+            {
+                IssueOtpAndShowMfa(email,
+                    Session["PendingUserType"] as string,
+                    Session["PendingUserName"] as string,
+                    Convert.ToInt32(Session["PendingUserLevel"]),
+                    Convert.ToInt32(Session["PendingUserId"]),
+                    Session["PendingRememberMe"] != null && (bool)Session["PendingRememberMe"]);
+                Session["MfaResends"] = resends + 1;
+                ShowMessage("A new verification code has been sent.", true);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("MFA resend failed: " + ex);
+                ShowMessage("We couldn't send a new code. Please try again shortly.", false);
+            }
+        }
+
+        /// <summary>
+        /// Creates a one-time code, stores it (database + session), emails it, and switches to the MFA panel.
+        /// Shared by password login, Google login and "Resend code".
+        /// </summary>
+        private void IssueOtpAndShowMfa(string email, string userType, string userName, int userLevel, int userId, bool rememberMe)
+        {
+            string connString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
+            string otp = GenerateOtp();
+            DateTime expiryTime = DateTime.Now.AddMinutes(5);
+
+            using (SqlConnection conn = new SqlConnection(connString))
+            {
+                conn.Open();
+
+                // Clean up expired records older than 24 hours
+                using (SqlCommand cmdCleanup = new SqlCommand("DELETE FROM PasswordResets WHERE ExpiryTime < DATEADD(hour, -24, GETDATE());", conn))
+                {
+                    cmdCleanup.ExecuteNonQuery();
+                }
+
+                // Confirm against the database whether this email belongs to Staff
+                bool isActuallyStaff;
+                using (SqlCommand staffCheckCmd = new SqlCommand("SELECT COUNT(1) FROM staff WHERE emailAddress = @Email", conn))
+                {
+                    staffCheckCmd.Parameters.AddWithValue("@Email", email);
+                    isActuallyStaff = Convert.ToInt32(staffCheckCmd.ExecuteScalar()) > 0;
+                }
+
+                bool staffRoute = isActuallyStaff || (userType != null &&
+                    (userType.Equals("Staff", StringComparison.OrdinalIgnoreCase) ||
+                     userType.Equals("Owner", StringComparison.OrdinalIgnoreCase) ||
+                     userType.Equals("Admin", StringComparison.OrdinalIgnoreCase)));
+
+                string insertQuery = staffRoute
+                    ? "INSERT INTO PasswordResets (StaffID, OTP, ExpiryTime) VALUES (@UserId, @Otp, DATEADD(minute, 5, GETDATE()))"
+                    : "INSERT INTO PasswordResets (ClientID, OTP, ExpiryTime) VALUES (@UserId, @Otp, DATEADD(minute, 5, GETDATE()))";
+
+                using (SqlCommand cmd = new SqlCommand(insertQuery, conn))
+                {
+                    cmd.Parameters.AddWithValue("@UserId", userId);
+                    cmd.Parameters.AddWithValue("@Otp", otp);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+
+            // Dispatch via the Google Apps Script web app. JSON is serialised (never string-concatenated).
+            string webAppUrl = ConfigurationManager.AppSettings["EmailServiceUrl"];
+            if (string.IsNullOrEmpty(webAppUrl)) throw new InvalidOperationException("EmailServiceUrl is not configured.");
+
+            string jsonData = new JavaScriptSerializer().Serialize(new { email = email, otp = otp, type = "login" });
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
+            using (WebClient client = new WebClient())
+            {
+                client.Encoding = Encoding.UTF8;
+                client.Headers[HttpRequestHeader.ContentType] = "application/json";
+                client.UploadString(webAppUrl, "POST", jsonData);
+            }
+
+            // Hold the pending sign-in until the code is verified
+            Session["PendingEmail"] = email;
+            Session["PendingUserType"] = userType;
+            Session["PendingUserName"] = userName;
+            Session["PendingUserLevel"] = userLevel;
+            Session["PendingUserId"] = userId;
+            Session["PendingRememberMe"] = rememberMe;
+            Session["MfaOtpCode"] = otp;
+            Session["MfaExpiry"] = expiryTime;
+            Session["MfaAttempts"] = 0;
+            Session["MfaLastSent"] = DateTime.Now;
+
+            loginForm.Visible = false;
+            MfaPanel.Visible = true;
+        }
+
+        // ---------------------------------------------------------------
+        // Google sign-in
+        // ---------------------------------------------------------------
         protected void GoogleLogin_Click(object sender, EventArgs e)
         {
             string clientId = ConfigurationManager.AppSettings["GoogleClientId"];
 
             if (string.IsNullOrEmpty(clientId))
             {
-                FailureText.Text = "Google Client ID is not configured in Web.config.";
-                ErrorMessage.Visible = true;
+                ShowMessage("Google sign-in is not available right now.", false);
+                System.Diagnostics.Trace.TraceError("GoogleClientId is not configured in Web.config.");
                 return;
             }
 
@@ -255,7 +320,11 @@ namespace GiantGroupM3.Account
             string authority = Request.Url.Authority;
             string redirectUri = $"{scheme}://{authority}/Account/Login.aspx";
 
-            string googleAuthUrl = $"https://accounts.google.com/o/oauth2/v2/auth?client_id={HttpUtility.UrlEncode(clientId)}&redirect_uri={HttpUtility.UrlEncode(redirectUri)}&response_type=code&scope=email%20profile";
+            // "state" ties the Google response to this browser session (blocks login-CSRF)
+            string state = Guid.NewGuid().ToString("N");
+            Session["GoogleOAuthState"] = state;
+
+            string googleAuthUrl = $"https://accounts.google.com/o/oauth2/v2/auth?client_id={HttpUtility.UrlEncode(clientId)}&redirect_uri={HttpUtility.UrlEncode(redirectUri)}&response_type=code&scope=email%20profile&state={state}";
 
             Response.Redirect(googleAuthUrl);
         }
@@ -263,118 +332,55 @@ namespace GiantGroupM3.Account
         private void CheckGoogleAuthCallback()
         {
             string code = Request.QueryString["code"];
-            if (!String.IsNullOrEmpty(code))
+            if (String.IsNullOrEmpty(code)) return;
+
+            string expectedState = Session["GoogleOAuthState"] as string;
+            Session.Remove("GoogleOAuthState");
+            if (string.IsNullOrEmpty(expectedState) || Request.QueryString["state"] != expectedState)
             {
-                string clientId = ConfigurationManager.AppSettings["GoogleClientId"];
-                string clientSecret = ConfigurationManager.AppSettings["GoogleClientSecret"];
-                string redirectUri = $"{Request.Url.GetLeftPart(UriPartial.Authority)}/Account/Login.aspx";
+                ShowMessage("Google sign-in could not be verified. Please try again.", false);
+                return;
+            }
 
-                try
+            string clientId = ConfigurationManager.AppSettings["GoogleClientId"];
+            string clientSecret = ConfigurationManager.AppSettings["GoogleClientSecret"];
+            string redirectUri = $"{Request.Url.GetLeftPart(UriPartial.Authority)}/Account/Login.aspx";
+
+            try
+            {
+                string tokenJson = ExchangeCodeForToken(code, clientId, clientSecret, redirectUri);
+                var tokenData = new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(tokenJson);
+
+                if (tokenData == null || !tokenData.ContainsKey("access_token")) return;
+
+                string userInfoJson = GetGoogleUserInfo(tokenData["access_token"].ToString());
+                var userInfo = new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(userInfoJson);
+
+                if (userInfo == null || !userInfo.ContainsKey("email")) return;
+
+                // Only trust addresses Google says are verified
+                if (userInfo.ContainsKey("verified_email") && userInfo["verified_email"] is bool && !(bool)userInfo["verified_email"])
                 {
-                    string tokenJson = ExchangeCodeForToken(code, clientId, clientSecret, redirectUri);
-                    var tokenData = new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(tokenJson);
-
-                    if (tokenData != null && tokenData.ContainsKey("access_token"))
-                    {
-                        string accessToken = tokenData["access_token"].ToString();
-                        string userInfoJson = GetGoogleUserInfo(accessToken);
-                        var userInfo = new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(userInfoJson);
-
-                        if (userInfo != null && userInfo.ContainsKey("email"))
-                        {
-                            string googleEmail = userInfo["email"].ToString().Trim();
-
-                            // Check database and grab user details + userId
-                            if (DoesUserExistInDatabase(googleEmail, out string userType, out string userName, out int userLevel, out int userId))
-                            {
-                                string connString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
-
-                                // 1. Generate 6-digit OTP and 5-minute expiry window (identical to standard login)
-                                string otp = new Random().Next(100000, 999999).ToString();
-                                DateTime expiryTime = DateTime.Now.AddMinutes(5);
-
-                                using (SqlConnection conn = new SqlConnection(connString))
-                                {
-                                    conn.Open();
-
-                                    // Clean up expired records older than 24 hours
-                                    string cleanupQuery = "DELETE FROM PasswordResets WHERE ExpiryTime < DATEADD(hour, -24, GETDATE());";
-                                    using (SqlCommand cmdCleanup = new SqlCommand(cleanupQuery, conn))
-                                    {
-                                        cmdCleanup.ExecuteNonQuery();
-                                    }
-
-                                    // Confirm if staff using robust check
-                                    bool isActuallyStaff = false;
-                                    string checkStaffQuery = "SELECT COUNT(1) FROM staff WHERE emailAddress = @Email";
-                                    using (SqlCommand staffCheckCmd = new SqlCommand(checkStaffQuery, conn))
-                                    {
-                                        staffCheckCmd.Parameters.AddWithValue("@Email", googleEmail);
-                                        int staffExists = Convert.ToInt32(staffCheckCmd.ExecuteScalar());
-                                        if (staffExists > 0)
-                                        {
-                                            isActuallyStaff = true;
-                                        }
-                                    }
-
-                                    string insertQuery;
-                                    if (isActuallyStaff || (userType != null && (userType.Equals("Staff", StringComparison.OrdinalIgnoreCase) || userType.Equals("Owner", StringComparison.OrdinalIgnoreCase) || userType.Equals("Admin", StringComparison.OrdinalIgnoreCase))))
-                                    {
-                                        insertQuery = "INSERT INTO PasswordResets (StaffID, OTP, ExpiryTime) VALUES (@UserId, @Otp, DATEADD(minute, 5, GETDATE()))";
-                                    }
-                                    else
-                                    {
-                                        insertQuery = "INSERT INTO PasswordResets (ClientID, OTP, ExpiryTime) VALUES (@UserId, @Otp, DATEADD(minute, 5, GETDATE()))";
-                                    }
-
-                                    using (SqlCommand cmd = new SqlCommand(insertQuery, conn))
-                                    {
-                                        cmd.Parameters.AddWithValue("@UserId", userId);
-                                        cmd.Parameters.AddWithValue("@Otp", otp);
-                                        cmd.ExecuteNonQuery();
-                                    }
-                                }
-
-                                // 2. Dispatch via Google Apps Script Web App
-                                string webAppUrl = ConfigurationManager.AppSettings["EmailServiceUrl"];
-                                string jsonData = $"{{\"email\":\"{googleEmail}\", \"otp\":\"{otp}\", \"type\":\"login\"}}";
-
-                                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-
-                                using (WebClient client = new WebClient())
-                                {
-                                    client.Encoding = Encoding.UTF8;
-                                    client.Headers[HttpRequestHeader.ContentType] = "application/json";
-                                    client.UploadString(webAppUrl, "POST", jsonData);
-                                }
-
-                                // 3. Store pending session variables for verification check
-                                Session["PendingEmail"] = googleEmail;
-                                Session["PendingUserType"] = userType;
-                                Session["PendingUserName"] = userName;
-                                Session["PendingUserLevel"] = userLevel;
-                                Session["PendingUserId"] = userId; // <-- Save the ID here!
-                                Session["PendingRememberMe"] = false; // Google login defaults to standard session cookie
-                                Session["MfaOtpCode"] = otp;
-                                Session["MfaExpiry"] = expiryTime;
-
-                                // 4. Switch views to your MFA Verification panel (reusing your existing VerifyMfa_Click logic)
-                                loginForm.Visible = false;
-                                MfaPanel.Visible = true;
-                            }
-                            else
-                            {
-                                FailureText.Text = $"The Google account ({googleEmail}) is not registered in the staff or client database.";
-                                ErrorMessage.Visible = true;
-                            }
-                        }
-                    }
+                    ShowMessage("Your Google email address is not verified.", false);
+                    return;
                 }
-                catch (Exception ex)
+
+                string googleEmail = userInfo["email"].ToString().Trim();
+
+                if (DoesUserExistInDatabase(googleEmail, out string userType, out string userName, out int userLevel, out int userId))
                 {
-                    FailureText.Text = "Google Login Error: " + ex.Message;
-                    ErrorMessage.Visible = true;
+                    // Same one-time-code step as password login
+                    IssueOtpAndShowMfa(googleEmail, userType, userName, userLevel, userId, false);
                 }
+                else
+                {
+                    ShowMessage("The Google account (" + HttpUtility.HtmlEncode(googleEmail) + ") is not registered with The Giant Group.", false);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("Google login failed: " + ex);
+                ShowMessage("Google sign-in failed. Please try again or use your email and password.", false);
             }
         }
 
@@ -393,29 +399,29 @@ namespace GiantGroupM3.Account
             }
 
             using (var response = (HttpWebResponse)request.GetResponse())
+            using (var reader = new StreamReader(response.GetResponseStream()))
             {
-                using (var reader = new StreamReader(response.GetResponseStream()))
-                {
-                    return reader.ReadToEnd();
-                }
+                return reader.ReadToEnd();
             }
         }
 
         private string GetGoogleUserInfo(string accessToken)
         {
-            string url = $"https://www.googleapis.com/oauth2/v2/userinfo?access_token={HttpUtility.UrlEncode(accessToken)}";
-            var request = (HttpWebRequest)WebRequest.Create(url);
+            // Token goes in a header, not the URL, so it can't end up in logs
+            var request = (HttpWebRequest)WebRequest.Create("https://www.googleapis.com/oauth2/v2/userinfo");
             request.Method = "GET";
+            request.Headers[HttpRequestHeader.Authorization] = "Bearer " + accessToken;
 
             using (var response = (HttpWebResponse)request.GetResponse())
+            using (var reader = new StreamReader(response.GetResponseStream()))
             {
-                using (var reader = new StreamReader(response.GetResponseStream()))
-                {
-                    return reader.ReadToEnd();
-                }
+                return reader.ReadToEnd();
             }
         }
 
+        // ---------------------------------------------------------------
+        // Credential lookups
+        // ---------------------------------------------------------------
         private bool ValidateStaffOrClientCredentials(string email, string password, out string userType, out string userName, out int userLevel, out int userId)
         {
             userType = "";
@@ -442,7 +448,7 @@ namespace GiantGroupM3.Account
                         if (reader.Read())
                         {
                             string storedHash = reader["passwordHash"].ToString();
-                            if (BCrypt.Net.BCrypt.Verify(password, storedHash))
+                            if (SafeVerify(password, storedHash))
                             {
                                 userId = Convert.ToInt32(reader["staffID"]);
                                 userName = reader["firstName"].ToString();
@@ -466,7 +472,7 @@ namespace GiantGroupM3.Account
                             object dbHash = reader["passwordHash"];
                             if (dbHash != DBNull.Value && !string.IsNullOrEmpty(dbHash.ToString()))
                             {
-                                if (BCrypt.Net.BCrypt.Verify(password, dbHash.ToString()))
+                                if (SafeVerify(password, dbHash.ToString()))
                                 {
                                     userId = Convert.ToInt32(reader["clientID"]);
                                     userName = reader["clientName"].ToString();
@@ -530,17 +536,76 @@ namespace GiantGroupM3.Account
             return false;
         }
 
-        private void RedirectToReturnUrl()
+        // ---------------------------------------------------------------
+        // Helpers
+        // ---------------------------------------------------------------
+        private void ShowMessage(string text, bool success)
         {
-            string returnUrl = Request.QueryString["ReturnUrl"];
-            if (!String.IsNullOrEmpty(returnUrl))
+            FailureText.Text = HttpUtility.HtmlEncode(text);
+            alertBox.Attributes["class"] = success ? "gg-msg is-success" : "gg-msg is-error";
+            alertIcon.Attributes["class"] = success ? "bi bi-check-circle-fill me-1" : "bi bi-exclamation-circle-fill me-1";
+            ErrorMessage.Visible = true;
+        }
+
+        private void BackToLoginForm(string message)
+        {
+            MfaPanel.Visible = false;
+            loginForm.Visible = true;
+            ShowMessage(message, false);
+        }
+
+        private void ClearPendingSession()
+        {
+            string[] keys = { "PendingEmail", "PendingUserType", "PendingUserName", "PendingUserLevel", "PendingUserId",
+                              "PendingRememberMe", "MfaOtpCode", "MfaExpiry", "MfaAttempts", "MfaResends", "MfaLastSent" };
+            foreach (string k in keys) Session.Remove(k);
+        }
+
+        private static string GenerateOtp()
+        {
+            // Cryptographically secure 6-digit code (System.Random is predictable)
+            using (var rng = new RNGCryptoServiceProvider())
             {
-                Response.Redirect(returnUrl);
+                byte[] bytes = new byte[4];
+                uint limit = uint.MaxValue - (uint.MaxValue % 900000);
+                uint value;
+                do { rng.GetBytes(bytes); value = BitConverter.ToUInt32(bytes, 0); } while (value >= limit);
+                return (100000 + (value % 900000)).ToString();
             }
-            else
-            {
-                Response.Redirect("~/Default.aspx");
-            }
+        }
+
+        private static bool ConstantTimeEquals(string a, string b)
+        {
+            if (a == null || b == null || a.Length != b.Length) return false;
+            int diff = 0;
+            for (int i = 0; i < a.Length; i++) diff |= a[i] ^ b[i];
+            return diff == 0;
+        }
+
+        private static bool SafeVerify(string password, string hash)
+        {
+            try { return !string.IsNullOrEmpty(hash) && BCrypt.Net.BCrypt.Verify(password, hash); }
+            catch (Exception) { return false; }   // malformed hash in the database = no match
+        }
+
+        private static bool IsLocalUrl(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url)) return false;
+            if (url[0] == '/') return url.Length == 1 || (url[1] != '/' && url[1] != '\\');
+            if (url[0] == '~') return url.Length == 1 || url[1] == '/';
+            return false;
+        }
+
+        private static bool IsLockedOut(string key)
+        {
+            int? count = HttpRuntime.Cache[key] as int?;
+            return count.HasValue && count.Value >= MaxLoginFailures;
+        }
+
+        private static void RegisterFailure(string key)
+        {
+            int count = (HttpRuntime.Cache[key] as int?) ?? 0;
+            HttpRuntime.Cache.Insert(key, count + 1, null, DateTime.UtcNow.AddMinutes(15), Cache.NoSlidingExpiration);
         }
     }
 }
