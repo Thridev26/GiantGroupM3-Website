@@ -467,7 +467,9 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Help.aspx.cs">
-      <SubType>ASPXCodeBehind</SubType>
+      <DependentUpon>Help.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Help.aspx.designer.cs">
       <DependentUpon>Help.aspx</DependentUpon>
     </Compile>
     <Compile Include="HomeRouter.aspx.cs">

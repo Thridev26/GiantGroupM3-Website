@@ -2,6 +2,9 @@
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics;
+using System.Globalization;
+using System.Web;
 using System.Web.UI.WebControls;
 
 namespace GiantGroupM3
@@ -10,244 +13,531 @@ namespace GiantGroupM3
     {
         private readonly string connString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
 
+        private enum AccessRole { None, Management, Client }
+        private AccessRole _role = AccessRole.None;
+        private int _clientId;
+
+        // Statuses a manager may set, and the filter options each role is offered.
+        private static readonly string[] EditableStatuses = { "Pending", "Sent", "Accepted", "Declined", "Rejected" };
+        private static readonly string[] ManagementFilters = { "All", "Pending", "Sent", "Accepted", "Declined", "Rejected" };
+        private static readonly string[] ClientFilters = { "All", "Sent", "Accepted", "Rejected" };
+
+        /// <summary>
+        /// The selected quote lives in ViewState (MAC-protected), NOT in a HiddenField.
+        /// Hidden fields are posted by the browser and can be edited by the user.
+        /// </summary>
+        private int SelectedQuoteId
+        {
+            get { return ViewState["SelectedQuoteId"] is int id ? id : 0; }
+            set { ViewState["SelectedQuoteId"] = value; }
+        }
+
+        // ------------------------------------------------------------------
+        //  Page lifecycle + access control
+        // ------------------------------------------------------------------
         protected void Page_Load(object sender, EventArgs e)
         {
+            Response.Cache.SetCacheability(HttpCacheability.NoCache);
+            Response.Cache.SetNoStore();
+
+            // Checked on EVERY request (not just first load) so postbacks can't skip it.
+            if (!ResolveAccess())
+            {
+                Response.Redirect("~/Account/Login.aspx");
+                return;
+            }
+
             if (!IsPostBack)
             {
-                // Verify authentication via Identity or Session
-                if (!User.Identity.IsAuthenticated && Session["UserID"] == null)
-                {
-                    Response.Redirect("~/Account/Login.aspx");
-                    return;
-                }
-
+                PopulateFilter();
                 LoadQuoteData();
             }
         }
 
-        // Helper mirroring access check
-        private bool IsClientUser()
+        /// <summary>
+        /// Fail closed: only Owner/Admin (UserLevel 5 or 6) get management rights, only a real ClientID gets client rights.
+        /// Previously any authenticated user without a client session was treated as management.
+        /// </summary>
+        private bool ResolveAccess()
         {
-            if (Session["UserRole"] != null && Session["UserRole"].ToString().Equals("Client", StringComparison.OrdinalIgnoreCase))
+            _role = AccessRole.None;
+            _clientId = 0;
+
+            if (Session["UserLevel"] != null
+                && int.TryParse(Session["UserLevel"].ToString(), out int level)
+                && (level == 5 || level == 6))
+            {
+                _role = AccessRole.Management;
                 return true;
-            if (Session["Role"] != null && Session["Role"].ToString().Equals("Client", StringComparison.OrdinalIgnoreCase))
+            }
+
+            if (Session["ClientID"] != null
+                && int.TryParse(Session["ClientID"].ToString(), out int clientId)
+                && clientId > 0)
+            {
+                _role = AccessRole.Client;
+                _clientId = clientId;
                 return true;
-            if (Session["UserType"] != null && Session["UserType"].ToString().Equals("Client", StringComparison.OrdinalIgnoreCase))
-                return true;
-            if (Session["ClientID"] != null)
-                return true;
+            }
 
             return false;
         }
 
+        private bool IsClientView { get { return _role == AccessRole.Client; } }
+        private bool IsManagementView { get { return _role == AccessRole.Management; } }
+
+        // ------------------------------------------------------------------
+        //  Data binding helpers used by the .aspx
+        // ------------------------------------------------------------------
+        protected string SelectButtonText()
+        {
+            return IsClientView ? "Review" : "Select/Edit";
+        }
+
+        protected string GetStatusCss(object status)
+        {
+            string s = Convert.ToString(status)?.Trim().ToLowerInvariant() ?? string.Empty;
+            switch (s)
+            {
+                case "accepted": return "badge rounded-pill bg-success";
+                case "rejected":
+                case "declined": return "badge rounded-pill bg-danger";
+                case "sent": return "badge rounded-pill bg-primary";
+                default: return "badge rounded-pill bg-secondary";
+            }
+        }
+
+        protected string GetExpiryHtml(object expiry, object status)
+        {
+            if (expiry == null || expiry == DBNull.Value) return "<span class=\"text-muted\">-</span>";
+
+            DateTime date = Convert.ToDateTime(expiry);
+            string text = Server.HtmlEncode(date.ToString("yyyy-MM-dd"));
+            bool stillOpen = string.Equals(Convert.ToString(status), "Sent", StringComparison.OrdinalIgnoreCase);
+
+            if (stillOpen && date.Date < DateTime.Today)
+                return text + " <span class=\"badge bg-danger-subtle text-danger-emphasis ms-1\">Expired</span>";
+
+            return text;
+        }
+
+        // ------------------------------------------------------------------
+        //  Listing
+        // ------------------------------------------------------------------
+        private void PopulateFilter()
+        {
+            ddlStatusFilter.Items.Clear();
+            foreach (string s in IsClientView ? ClientFilters : ManagementFilters)
+                ddlStatusFilter.Items.Add(new ListItem(s == "All" ? "All statuses" : s, s));
+        }
+
         private void LoadQuoteData()
         {
-            bool isClient = IsClientUser();
-            string query = "";
+            string query = @"SELECT q.QuoteID, q.jobRequestID, c.clientName AS Name, q.dateIssued, q.expiryDate, q.dateGenerated, q.amount, q.quoteStatus, q.filePath
+                             FROM Quote q
+                             JOIN JobRequest jr ON q.jobRequestID = jr.jobRequestID
+                             JOIN Client c ON jr.clientID = c.clientID ";
 
-            using (SqlConnection conn = new SqlConnection(connString))
+            if (IsClientView)
             {
-                if (!isClient)
+                // Clients only ever see their own quotes, and only ones that were actually sent to them.
+                query += "WHERE q.quoteStatus IN ('Sent', 'Accepted', 'Rejected') AND c.clientID = @clientID ";
+            }
+            // Management sees every status (so a quote set to Pending/Declined doesn't silently vanish).
+
+            query += "ORDER BY q.dateIssued DESC, q.QuoteID DESC";
+
+            DataTable dt = new DataTable();
+            using (SqlConnection conn = new SqlConnection(connString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                if (IsClientView)
+                    cmd.Parameters.Add("@clientID", SqlDbType.Int).Value = _clientId;
+
+                using (SqlDataAdapter da = new SqlDataAdapter(cmd))
                 {
-                    query = @"SELECT q.QuoteID, q.jobRequestID, c.clientName AS Name, q.dateIssued, q.expiryDate, q.dateGenerated, q.amount, q.quoteStatus, q.filePath 
-                              FROM Quote q 
-                              JOIN JobRequest jr ON q.jobRequestID = jr.jobRequestID
-                              JOIN Client c ON jr.clientID = c.clientID
-                              WHERE q.quoteStatus IN ('Sent', 'Accepted', 'Rejected')";
-                }
-                else
-                {
-                    query = @"SELECT q.QuoteID, q.jobRequestID, c.clientName AS Name, q.dateIssued, q.expiryDate, q.dateGenerated, q.amount, q.quoteStatus, q.filePath 
-                              FROM Quote q 
-                              JOIN JobRequest jr ON q.jobRequestID = jr.jobRequestID
-                              JOIN Client c ON jr.clientID = c.clientID
-                              WHERE q.quoteStatus IN ('Sent', 'Accepted', 'Rejected') AND c.clientID = @clientID";
-                }
-
-                using (SqlCommand cmd = new SqlCommand(query, conn))
-                {
-                    if (isClient)
-                    {
-                        object clientIdVal = Session["ClientID"] ?? Session["UserID"];
-                        cmd.Parameters.AddWithValue("@clientID", clientIdVal ?? (object)DBNull.Value);
-                    }
-
-                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                    {
-                        DataTable dt = new DataTable();
-                        da.Fill(dt);
-
-                        gvQuotes.DataSource = dt;
-                        gvQuotes.DataBind();
-
-                        // Handle empty state visibility
-                        if (dt.Rows.Count == 0)
-                        {
-                            gvQuotes.Visible = false;
-                            pnlEmptyState.Visible = true;
-                        }
-                        else
-                        {
-                            gvQuotes.Visible = true;
-                            pnlEmptyState.Visible = false;
-                        }
-                    }
+                    da.Fill(dt);
                 }
             }
+
+            BindStats(dt);
+
+            bool hasAny = dt.Rows.Count > 0;
+            pnlEmptyState.Visible = !hasAny;
+            pnlStats.Visible = hasAny;
+            divTableContainer.Visible = hasAny;
+            ddlStatusFilter.Visible = hasAny;
+            lblStatusFilter.Visible = hasAny;
+
+            if (!hasAny) return;
+
+            // In-memory filter. The value is checked against a fixed whitelist before it touches RowFilter.
+            DataView view = dt.DefaultView;
+            string filter = ddlStatusFilter.SelectedValue;
+            string[] allowed = IsClientView ? ClientFilters : ManagementFilters;
+            if (!string.IsNullOrEmpty(filter) && filter != "All" && Array.IndexOf(allowed, filter) >= 0)
+                view.RowFilter = "quoteStatus = '" + filter + "'";
+
+            gvQuotes.DataSource = view;
+            gvQuotes.DataBind();
+        }
+
+        private void BindStats(DataTable dt)
+        {
+            int awaiting = 0, accepted = 0;
+            decimal acceptedValue = 0m;
+
+            foreach (DataRow row in dt.Rows)
+            {
+                string status = Convert.ToString(row["quoteStatus"]) ?? string.Empty;
+                if (status.Equals("Sent", StringComparison.OrdinalIgnoreCase))
+                {
+                    awaiting++;
+                }
+                else if (status.Equals("Accepted", StringComparison.OrdinalIgnoreCase))
+                {
+                    accepted++;
+                    if (row["amount"] != DBNull.Value) acceptedValue += Convert.ToDecimal(row["amount"]);
+                }
+            }
+
+            lblStatTotal.Text = dt.Rows.Count.ToString();
+            lblStatAwaiting.Text = awaiting.ToString();
+            lblStatAccepted.Text = accepted.ToString();
+            lblStatValue.Text = acceptedValue.ToString("C");
+        }
+
+        protected void ddlStatusFilter_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            gvQuotes.PageIndex = 0;
+            ClearSelection();
+            LoadQuoteData();
         }
 
         protected void gvQuotes_PageIndexChanging(object sender, GridViewPageEventArgs e)
         {
             gvQuotes.PageIndex = e.NewPageIndex;
+            ClearSelection();
             LoadQuoteData();
         }
 
+        // ------------------------------------------------------------------
+        //  Selecting a quote
+        // ------------------------------------------------------------------
         protected void gvQuotes_SelectedIndexChanged(object sender, EventArgs e)
         {
-            pnlEditQuote.Visible = true;
+            if (_role == AccessRole.None) return;
+
             int quoteId = Convert.ToInt32(gvQuotes.SelectedDataKey.Value);
-            hfQuoteID.Value = quoteId.ToString();
+            ShowQuote(quoteId);
+        }
 
-            bool isClient = IsClientUser();
+        private void ShowQuote(int quoteId)
+        {
+            pnlMessage.Visible = false;
+            pnlEditError.Visible = false;
 
-            // Toggle panels depending on whether it's a manager or client view
-            pnlManagementControls.Visible = !isClient;
-            pnlClientResponse.Visible = isClient;
+            // Re-check ownership in SQL: never trust that the id is one this user is allowed to see.
+            const string query = @"SELECT q.QuoteID, q.jobRequestID, c.clientName, q.dateIssued, q.expiryDate, q.amount, q.quoteStatus
+                                   FROM Quote q
+                                   JOIN JobRequest jr ON q.jobRequestID = jr.jobRequestID
+                                   JOIN Client c ON jr.clientID = c.clientID
+                                   WHERE q.QuoteID = @QuoteID
+                                     AND (@IsStaff = 1
+                                          OR (c.clientID = @ClientID AND q.quoteStatus IN ('Sent', 'Accepted', 'Rejected')))";
 
             using (SqlConnection conn = new SqlConnection(connString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
             {
-                string query = "SELECT expiryDate, amount, quoteStatus FROM Quote WHERE QuoteID = @QuoteID";
-                using (SqlCommand cmd = new SqlCommand(query, conn))
-                {
-                    cmd.Parameters.AddWithValue("@QuoteID", quoteId);
-                    conn.Open();
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            txtExpiryDate.Text = reader["expiryDate"] != DBNull.Value ? Convert.ToDateTime(reader["expiryDate"]).ToString("yyyy-MM-dd") : "";
-                            txtAmount.Text = reader["amount"]?.ToString() ?? "";
+                cmd.Parameters.Add("@QuoteID", SqlDbType.Int).Value = quoteId;
+                cmd.Parameters.Add("@IsStaff", SqlDbType.Bit).Value = IsManagementView;
+                cmd.Parameters.Add("@ClientID", SqlDbType.Int).Value = _clientId;
+                conn.Open();
 
-                            if (ddlQuoteStatus.Items.FindByValue(reader["quoteStatus"]?.ToString()) != null)
-                            {
-                                ddlQuoteStatus.SelectedValue = reader["quoteStatus"]?.ToString();
-                            }
-                        }
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (!reader.Read())
+                    {
+                        ClearSelection();
+                        ShowMessage("That quote could not be found.", false);
+                        return;
+                    }
+
+                    SelectedQuoteId = quoteId;
+
+                    int jobId = Convert.ToInt32(reader["jobRequestID"]);
+                    string status = Convert.ToString(reader["quoteStatus"]) ?? string.Empty;
+                    decimal amount = reader["amount"] != DBNull.Value ? Convert.ToDecimal(reader["amount"]) : 0m;
+                    DateTime? expiry = reader["expiryDate"] != DBNull.Value ? Convert.ToDateTime(reader["expiryDate"]) : (DateTime?)null;
+                    DateTime? issued = reader["dateIssued"] != DBNull.Value ? Convert.ToDateTime(reader["dateIssued"]) : (DateTime?)null;
+
+                    // Read-only summary
+                    lblDetailTitle.Text = Server.HtmlEncode($"Quote GT – {jobId}");
+                    lblDetailClient.Text = Server.HtmlEncode(Convert.ToString(reader["clientName"]));
+                    lblDetailIssued.Text = issued.HasValue ? issued.Value.ToString("yyyy-MM-dd") : "-";
+                    lblDetailExpiry.Text = expiry.HasValue ? expiry.Value.ToString("yyyy-MM-dd") : "-";
+                    lblDetailAmount.Text = amount.ToString("C");
+                    lnkDetailPrint.NavigateUrl = "~/PrintQuote.aspx?jobRequestID=" + jobId;
+
+                    pnlEditQuote.Visible = true;
+                    pnlManagementControls.Visible = IsManagementView;
+
+                    if (IsManagementView)
+                    {
+                        txtExpiryDate.Text = expiry.HasValue ? expiry.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) : string.Empty;
+                        txtAmount.Text = amount.ToString("0.00", CultureInfo.InvariantCulture);
+
+                        ListItem item = ddlQuoteStatus.Items.FindByValue(status);
+                        ddlQuoteStatus.ClearSelection();
+                        if (item != null) item.Selected = true;
+                    }
+
+                    // Clients can only answer a quote that is still 'Sent' and not past its expiry date.
+                    bool isOpen = status.Equals("Sent", StringComparison.OrdinalIgnoreCase);
+                    bool expired = expiry.HasValue && expiry.Value.Date < DateTime.Today;
+
+                    pnlClientResponse.Visible = IsClientView && isOpen && !expired;
+                    pnlClientReadOnly.Visible = IsClientView && !pnlClientResponse.Visible;
+
+                    if (pnlClientReadOnly.Visible)
+                    {
+                        lblClientReadOnly.Text = !isOpen
+                            ? Server.HtmlEncode($"This quote has already been responded to (status: {status}).")
+                            : Server.HtmlEncode("This quote has expired. Please contact us if you would still like to go ahead.");
                     }
                 }
             }
         }
 
+        // ------------------------------------------------------------------
+        //  Management: edit quote
+        // ------------------------------------------------------------------
         protected void btnUpdate_Click(object sender, EventArgs e)
         {
-            int quoteId = Convert.ToInt32(hfQuoteID.Value);
-            DateTime expiryDate = Convert.ToDateTime(txtExpiryDate.Text);
-            decimal amount = Convert.ToDecimal(txtAmount.Text);
-            string status = ddlQuoteStatus.SelectedValue;
+            if (!IsManagementView) return;
 
-            using (SqlConnection conn = new SqlConnection(connString))
+            int quoteId = SelectedQuoteId;
+            if (quoteId == 0) return;
+
+            // ---- Validate input (previously Convert.* would throw on bad text) ----
+            if (!DateTime.TryParseExact(txtExpiryDate.Text, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime expiryDate))
             {
-                string query = "UPDATE Quote SET expiryDate = @expiryDate, amount = @amount, quoteStatus = @quoteStatus WHERE QuoteID = @QuoteID";
-                using (SqlCommand cmd = new SqlCommand(query, conn))
-                {
-                    cmd.Parameters.AddWithValue("@expiryDate", expiryDate);
-                    cmd.Parameters.AddWithValue("@amount", amount);
-                    cmd.Parameters.AddWithValue("@quoteStatus", status);
-                    cmd.Parameters.AddWithValue("@QuoteID", quoteId);
-
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                ShowEditError("Enter a valid expiry date.");
+                return;
             }
 
-            lblMessage.Text = "Quote updated successfully!";
-            pnlEditQuote.Visible = false;
+            if (!decimal.TryParse(txtAmount.Text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out decimal amount)
+                || amount <= 0m || amount > 100000000m)
+            {
+                ShowEditError("Enter a valid amount greater than zero.");
+                return;
+            }
+            amount = Math.Round(amount, 2, MidpointRounding.AwayFromZero);
+
+            string newStatus = ddlQuoteStatus.SelectedValue;
+            if (Array.IndexOf(EditableStatuses, newStatus) < 0)
+            {
+                ShowEditError("Choose a valid status.");
+                return;
+            }
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(connString))
+                {
+                    conn.Open();
+                    using (SqlTransaction tx = conn.BeginTransaction())
+                    {
+                        try
+                        {
+                            string oldStatus;
+                            using (SqlCommand read = new SqlCommand("SELECT quoteStatus FROM Quote WITH (UPDLOCK) WHERE QuoteID = @QuoteID", conn, tx))
+                            {
+                                read.Parameters.Add("@QuoteID", SqlDbType.Int).Value = quoteId;
+                                object o = read.ExecuteScalar();
+                                if (o == null) { tx.Rollback(); ShowEditError("That quote no longer exists."); return; }
+                                oldStatus = Convert.ToString(o);
+                            }
+
+                            using (SqlCommand cmd = new SqlCommand(
+                                "UPDATE Quote SET expiryDate = @expiryDate, amount = @amount, quoteStatus = @quoteStatus WHERE QuoteID = @QuoteID", conn, tx))
+                            {
+                                cmd.Parameters.Add("@expiryDate", SqlDbType.DateTime).Value = expiryDate;
+                                SqlParameter amt = cmd.Parameters.Add("@amount", SqlDbType.Decimal);
+                                amt.Precision = 18; amt.Scale = 2; amt.Value = amount;
+                                cmd.Parameters.Add("@quoteStatus", SqlDbType.NVarChar, 50).Value = newStatus;
+                                cmd.Parameters.Add("@QuoteID", SqlDbType.Int).Value = quoteId;
+                                cmd.ExecuteNonQuery();
+                            }
+
+                            // Keep the job in step when management changes the outcome - but only when the status
+                            // actually changed, so editing an expiry date later can't drag a job backwards.
+                            string jobStatus = MapJobStatus(newStatus);
+                            if (jobStatus != null && !string.Equals(oldStatus, newStatus, StringComparison.OrdinalIgnoreCase))
+                            {
+                                using (SqlCommand cmdJob = new SqlCommand(
+                                    @"UPDATE JobRequest SET status = @jobStatus
+                                      WHERE jobRequestID = (SELECT jobRequestID FROM Quote WHERE QuoteID = @QuoteID)", conn, tx))
+                                {
+                                    cmdJob.Parameters.Add("@jobStatus", SqlDbType.NVarChar, 50).Value = jobStatus;
+                                    cmdJob.Parameters.Add("@QuoteID", SqlDbType.Int).Value = quoteId;
+                                    cmdJob.ExecuteNonQuery();
+                                }
+                            }
+
+                            tx.Commit();
+                        }
+                        catch
+                        {
+                            tx.Rollback();
+                            throw;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("ViewQuote update error: " + ex);
+                ShowEditError("We couldn't save your changes. Please try again.");
+                return;
+            }
+
+            ClearSelection();
+            ShowMessage("Quote updated successfully!", true);
             LoadQuoteData();
         }
 
+        // ------------------------------------------------------------------
+        //  Client: accept / reject
+        // ------------------------------------------------------------------
         protected void btnAcceptQuote_Click(object sender, EventArgs e)
         {
-            UpdateQuoteStatus("Accepted", "Quote successfully accepted!");
+            UpdateQuoteStatusAsClient("Accepted", "Quote successfully accepted!");
         }
 
         protected void btnRejectQuote_Click(object sender, EventArgs e)
         {
-            UpdateQuoteStatus("Rejected", "Quote has been rejected.");
+            UpdateQuoteStatusAsClient("Rejected", "Quote has been rejected.");
         }
 
-        private void UpdateQuoteStatus(string newQuoteStatus, string successMessage)
+        private void UpdateQuoteStatusAsClient(string newQuoteStatus, string successMessage)
         {
-            if (string.IsNullOrEmpty(hfQuoteID.Value)) return;
+            // Only a signed-in client may respond, and only to their own quote.
+            if (!IsClientView) return;
 
-            int quoteId = Convert.ToInt32(hfQuoteID.Value);
+            int quoteId = SelectedQuoteId;
+            if (quoteId == 0) return;
 
-            // Map Quote status to the exact allowed JobRequest CHECK constraint value
-            string jobStatusToSet;
-            if (newQuoteStatus.Equals("Accepted", StringComparison.OrdinalIgnoreCase))
-            {
-                jobStatusToSet = "Quote Accepted";
-            }
-            else if (newQuoteStatus.Equals("Rejected", StringComparison.OrdinalIgnoreCase))
-            {
-                jobStatusToSet = "Cancelled";
-            }
-            else
-            {
-                jobStatusToSet = "Quote sent";
-            }
+            string jobStatusToSet = MapJobStatus(newQuoteStatus);
 
-            using (SqlConnection conn = new SqlConnection(connString))
+            try
             {
-                conn.Open();
-                using (SqlTransaction transaction = conn.BeginTransaction())
+                using (SqlConnection conn = new SqlConnection(connString))
                 {
-                    try
+                    conn.Open();
+                    using (SqlTransaction tx = conn.BeginTransaction())
                     {
-                        // 1. Update the Quote status
-                        string updateQuoteQuery = "UPDATE Quote SET quoteStatus = @quoteStatus WHERE QuoteID = @QuoteID";
-                        using (SqlCommand cmdQuote = new SqlCommand(updateQuoteQuery, conn, transaction))
+                        try
                         {
-                            cmdQuote.Parameters.AddWithValue("@quoteStatus", newQuoteStatus);
-                            cmdQuote.Parameters.AddWithValue("@QuoteID", quoteId);
-                            cmdQuote.ExecuteNonQuery();
-                        }
+                            // Ownership + state check in the UPDATE itself: must be this client's quote,
+                            // still 'Sent', and not past its expiry date. 0 rows = refuse.
+                            const string updateQuote = @"
+                                UPDATE q SET q.quoteStatus = @quoteStatus
+                                FROM Quote q
+                                JOIN JobRequest jr ON jr.jobRequestID = q.jobRequestID
+                                WHERE q.QuoteID = @QuoteID
+                                  AND jr.clientID = @ClientID
+                                  AND q.quoteStatus = 'Sent'
+                                  AND (q.expiryDate IS NULL OR q.expiryDate >= CAST(GETDATE() AS date))";
 
-                        // 2. Sync corresponding JobRequest status using allowed constraint value
-                        string updateJobQuery = @"UPDATE JobRequest 
-                                                  SET status = @jobStatus 
-                                                  WHERE jobRequestID = (SELECT jobRequestID FROM Quote WHERE QuoteID = @QuoteID)";
-                        using (SqlCommand cmdJob = new SqlCommand(updateJobQuery, conn, transaction))
+                            int changed;
+                            using (SqlCommand cmdQuote = new SqlCommand(updateQuote, conn, tx))
+                            {
+                                cmdQuote.Parameters.Add("@quoteStatus", SqlDbType.NVarChar, 50).Value = newQuoteStatus;
+                                cmdQuote.Parameters.Add("@QuoteID", SqlDbType.Int).Value = quoteId;
+                                cmdQuote.Parameters.Add("@ClientID", SqlDbType.Int).Value = _clientId;
+                                changed = cmdQuote.ExecuteNonQuery();
+                            }
+
+                            if (changed != 1)
+                            {
+                                tx.Rollback();
+                                ClearSelection();
+                                ShowMessage("This quote can no longer be responded to. It may have expired or already been answered.", false);
+                                LoadQuoteData();
+                                return;
+                            }
+
+                            using (SqlCommand cmdJob = new SqlCommand(
+                                @"UPDATE JobRequest SET status = @jobStatus
+                                  WHERE jobRequestID = (SELECT jobRequestID FROM Quote WHERE QuoteID = @QuoteID)", conn, tx))
+                            {
+                                cmdJob.Parameters.Add("@jobStatus", SqlDbType.NVarChar, 50).Value = jobStatusToSet;
+                                cmdJob.Parameters.Add("@QuoteID", SqlDbType.Int).Value = quoteId;
+                                cmdJob.ExecuteNonQuery();
+                            }
+
+                            tx.Commit();
+                        }
+                        catch
                         {
-                            cmdJob.Parameters.AddWithValue("@jobStatus", jobStatusToSet);
-                            cmdJob.Parameters.AddWithValue("@QuoteID", quoteId);
-                            cmdJob.ExecuteNonQuery();
+                            tx.Rollback();
+                            throw;
                         }
-
-                        transaction.Commit();
-                    }
-                    catch (Exception)
-                    {
-                        transaction.Rollback();
-                        throw;
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("ViewQuote respond error: " + ex);
+                ShowMessage("We couldn't record your response. Please try again.", false);
+                return;
+            }
 
-            lblMessage.Text = successMessage;
-            pnlEditQuote.Visible = false;
+            ClearSelection();
+            ShowMessage(successMessage, true);
             LoadQuoteData();
         }
 
+        /// <summary>Maps a quote status onto the JobRequest CHECK-constraint values already used in the system.</summary>
+        private static string MapJobStatus(string quoteStatus)
+        {
+            if (quoteStatus.Equals("Accepted", StringComparison.OrdinalIgnoreCase)) return "Quote Accepted";
+            if (quoteStatus.Equals("Rejected", StringComparison.OrdinalIgnoreCase)) return "Cancelled";
+            if (quoteStatus.Equals("Declined", StringComparison.OrdinalIgnoreCase)) return "Cancelled";
+            if (quoteStatus.Equals("Sent", StringComparison.OrdinalIgnoreCase)) return "Quote Sent";
+            return null; // Pending: leave the job alone
+        }
+
+        // ------------------------------------------------------------------
+        //  Cancel / UI helpers
+        // ------------------------------------------------------------------
         protected void btnCancel_Click(object sender, EventArgs e)
         {
-            // Hide edit/response card
-            pnlEditQuote.Visible = false;
-
-            // Reset selected index on GridView
-            gvQuotes.SelectedIndex = -1;
-
-            // Clear feedback messages if any
+            ClearSelection();
+            pnlMessage.Visible = false;
             lblMessage.Text = string.Empty;
+        }
+
+        private void ClearSelection()
+        {
+            pnlEditQuote.Visible = false;
+            pnlEditError.Visible = false;
+            gvQuotes.SelectedIndex = -1;
+            SelectedQuoteId = 0;
+        }
+
+        private void ShowMessage(string text, bool success)
+        {
+            lblMessage.Text = Server.HtmlEncode(text);
+            pnlMessage.CssClass = success ? "alert alert-success rounded-3 mb-3" : "alert alert-danger rounded-3 mb-3";
+            pnlMessage.Visible = true;
+        }
+
+        private void ShowEditError(string text)
+        {
+            lblEditError.Text = Server.HtmlEncode(text);
+            pnlEditError.Visible = true;
         }
     }
 }

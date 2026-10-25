@@ -96,6 +96,7 @@
             padding: 0.75rem 1rem;
             border-bottom: 2px solid var(--border-color);
             text-align: left;
+            white-space: nowrap;
         }
 
         .table-custom td {
@@ -103,6 +104,9 @@
             border-bottom: 1px solid var(--border-color);
             vertical-align: middle;
         }
+
+        .table-custom tbody tr:hover td { background-color: #f6fbf8; }
+        .table-custom tr.row-selected td { background-color: #e7f5ec; }
 
         /* Travel Breakdown Display */
         .travel-summary-card {
@@ -119,6 +123,7 @@
             padding-bottom: 0.75rem;
             border-bottom: 1px dashed #ced4da;
             margin-bottom: 0.75rem;
+            gap: 1rem;
         }
 
         .travel-total-label {
@@ -190,6 +195,12 @@
             color: var(--primary-dark);
         }
 
+        .estimate-note {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.75rem;
+        }
+
         /* Action Buttons */
         .btn-primary-custom {
             background-color: var(--primary-color);
@@ -207,6 +218,8 @@
             color: white;
         }
 
+        .btn-primary-custom:disabled { opacity: 0.7; cursor: wait; }
+
         .btn-secondary-custom {
             background-color: transparent;
             color: var(--text-muted);
@@ -223,9 +236,15 @@
             background-color: #e9ecef;
             color: var(--text-dark);
         }
+
+        .btn-primary-custom:focus-visible,
+        .btn-secondary-custom:focus-visible {
+            outline: 3px solid var(--accent-color);
+            outline-offset: 2px;
+        }
     </style>
 
-    <div class="quote-container">
+    <div class="quote-container px-3">
         <!-- Page Header -->
         <div class="page-header">
             <h2>Request a Quote</h2>
@@ -233,84 +252,93 @@
         </div>
 
         <!-- Alert Notification Panel -->
-        <asp:Panel ID="pnlMessage" runat="server" Visible="false" CssClass="alert alert-info rounded-3 mb-4">
+        <asp:Panel ID="pnlMessage" runat="server" Visible="false" CssClass="alert alert-info rounded-3 mb-4" role="alert">
             <asp:Label ID="lblMessage" runat="server" />
         </asp:Panel>
 
-       <!-- Section 1: Job Selection -->
-<asp:Panel ID="pnlJobSelection" runat="server">
-    <div class="card-custom">
-        <div class="card-header-custom">
-            1. Select Your Job Request
-        </div>
-        <div class="card-body-custom">
-            <asp:GridView ID="gvJobRequests" runat="server" AutoGenerateColumns="False" 
-                DataKeyNames="jobRequestID" OnSelectedIndexChanged="gvJobRequests_SelectedIndexChanged" 
-                CssClass="table-custom mb-3">
-                <Columns>
-                    <asp:BoundField DataField="jobRequestID" HeaderText="Request ID" />
-                    <asp:BoundField DataField="siteAddress" HeaderText="Site Address" />
-                    <asp:BoundField DataField="urgencyLevel" HeaderText="Urgency" />
-                    <asp:BoundField DataField="dateRecieved" HeaderText="Date Received" DataFormatString="{0:yyyy-MM-dd}" />
-                    <asp:CommandField ShowSelectButton="True" SelectText="Select Request" ButtonType="Button" ControlStyle-CssClass="btn btn-sm btn-outline-success fw-bold px-3" />
-                </Columns>
-            </asp:GridView>
-
-            <!-- Layout displaying Site Address (Only visible when a request IS selected) -->
-            <asp:Panel ID="pnlSelectionDetails" runat="server" Visible="false" CssClass="row g-3 mt-2 pt-3 border-top">
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label class="form-label-custom d-block">Selected Request ID</label>
-                        <asp:TextBox ID="txtSelectedJobId" runat="server" CssClass="form-control-custom" ReadOnly="true" />
-                    </div>
+        <!-- Section 1: Job Selection -->
+        <asp:Panel ID="pnlJobSelection" runat="server">
+            <div class="card-custom">
+                <div class="card-header-custom">
+                    1. Select Your Job Request
                 </div>
-                <div class="col-md-9">
-                    <div class="form-group">
-                        <label class="form-label-custom d-block">Site Address</label>
-                        <asp:TextBox ID="txtSiteAddress" runat="server" CssClass="form-control-custom" ReadOnly="true" />
+                <div class="card-body-custom">
+                    <div class="table-responsive">
+                        <asp:GridView ID="gvJobRequests" runat="server" AutoGenerateColumns="False"
+                            DataKeyNames="jobRequestID" OnSelectedIndexChanged="gvJobRequests_SelectedIndexChanged"
+                            CssClass="table-custom mb-3" GridLines="None">
+                            <SelectedRowStyle CssClass="row-selected" />
+                            <Columns>
+                                <asp:BoundField DataField="jobRequestID" HeaderText="Request ID" />
+                                <asp:BoundField DataField="clientName" HeaderText="Client" Visible="false" />
+                                <asp:BoundField DataField="siteAddress" HeaderText="Site Address" />
+                                <asp:TemplateField HeaderText="Urgency">
+                                    <ItemTemplate>
+                                        <span class='<%# GetUrgencyCss(Eval("urgencyLevel")) %>'><%#: Eval("urgencyLevel") %></span>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+                                <asp:BoundField DataField="dateRecieved" HeaderText="Date Received" DataFormatString="{0:yyyy-MM-dd}" />
+                                <asp:BoundField DataField="status" HeaderText="Status" />
+                                <asp:CommandField ShowSelectButton="True" SelectText="Select Request" ButtonType="Button" ControlStyle-CssClass="btn btn-sm btn-outline-success fw-bold px-3 text-nowrap" />
+                            </Columns>
+                        </asp:GridView>
                     </div>
+
+                    <!-- Layout displaying Site Address (Only visible when a request IS selected) -->
+                    <asp:Panel ID="pnlSelectionDetails" runat="server" Visible="false" CssClass="row g-3 mt-2 pt-3 border-top">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <asp:Label runat="server" AssociatedControlID="txtSelectedJobId" CssClass="form-label-custom d-block" Text="Selected Request ID" />
+                                <asp:TextBox ID="txtSelectedJobId" runat="server" CssClass="form-control-custom" ReadOnly="true" />
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-group">
+                                <asp:Label runat="server" AssociatedControlID="txtSiteAddress" CssClass="form-label-custom d-block" Text="Site Address" />
+                                <asp:TextBox ID="txtSiteAddress" runat="server" CssClass="form-control-custom" ReadOnly="true" />
+                            </div>
+                        </div>
+                    </asp:Panel>
+
+                    <!-- Prompt shown BEFORE any request is selected -->
+                    <asp:Panel ID="pnlSelectionPrompt" runat="server" CssClass="text-center py-3 text-muted bg-light rounded-3 mt-2 border">
+                        <p class="mb-0 small fw-semibold">
+                            <i class="bi bi-info-circle me-1"></i> Click <strong>"Select Request"</strong> on an item above to load the service breakdown and calculate logistics.
+                        </p>
+                    </asp:Panel>
                 </div>
-            </asp:Panel>
-
-            <!-- Prompt shown BEFORE any request is selected -->
-            <asp:Panel ID="pnlSelectionPrompt" runat="server" CssClass="text-center py-3 text-muted bg-light rounded-3 mt-2 border">
-                <p class="mb-0 small fw-semibold">
-                    <i class="bi bi-info-circle me-1"></i> Click <strong>"Select Request"</strong> on an item above to load the service breakdown and calculate logistics.
-                </p>
-            </asp:Panel>
-
-            <!-- Hidden fields for coordinates -->
-            <asp:HiddenField ID="hfLongitude" runat="server" />
-            <asp:HiddenField ID="hfLatitude" runat="server" />
-        </div>
-    </div>
-</asp:Panel>
+            </div>
+        </asp:Panel>
 
         <!-- Dynamic Form Content Panel -->
         <asp:Panel ID="pnlFormContent" runat="server">
-            
+
             <!-- Section 2: Requested Services Grid -->
             <div class="card-custom">
                 <div class="card-header-custom">
                     2. Requested Services
                 </div>
                 <div class="card-body-custom p-0">
-                    <asp:GridView ID="gvRequestItems" runat="server" AutoGenerateColumns="False" CssClass="table-custom">
-                        <Columns>
-                            <asp:BoundField DataField="JobTypeName" HeaderText="Service / Job Type" />
-                            <asp:BoundField DataField="JobRate" HeaderText="Rate (ZAR)" DataFormatString="{0:C}" />
-                            <asp:BoundField DataField="Quantity" HeaderText="Quantity / Value" />
-                            <asp:BoundField DataField="UnitOfMeasure" HeaderText="Unit" />
-                            <asp:BoundField DataField="LineTotal" HeaderText="Line Total" DataFormatString="{0:C}" />
-                        </Columns>
-                    </asp:GridView>
+                    <div class="table-responsive">
+                        <asp:GridView ID="gvRequestItems" runat="server" AutoGenerateColumns="False" CssClass="table-custom" GridLines="None"
+                            EmptyDataText="No services have been added to this request yet.">
+                            <EmptyDataRowStyle CssClass="text-center text-muted p-4" />
+                            <Columns>
+                                <asp:BoundField DataField="JobTypeName" HeaderText="Service / Job Type" />
+                                <asp:BoundField DataField="JobRate" HeaderText="Rate (ZAR)" DataFormatString="{0:C}" />
+                                <asp:BoundField DataField="Quantity" HeaderText="Quantity / Value" DataFormatString="{0:0.##}" />
+                                <asp:BoundField DataField="UnitOfMeasure" HeaderText="Unit" />
+                                <asp:BoundField DataField="LineTotal" HeaderText="Line Total" DataFormatString="{0:C}" ItemStyle-CssClass="fw-semibold" />
+                            </Columns>
+                        </asp:GridView>
+                    </div>
                 </div>
             </div>
 
             <!-- Section 3: Travel & Logistics Calculation -->
             <div class="card-custom">
                 <div class="card-header-custom">
-                    3. Travel & Logistics Calculation
+                    3. Travel &amp; Logistics Calculation
                 </div>
                 <div class="card-body-custom">
                     <!-- Address & Distance Route Banner -->
@@ -326,7 +354,7 @@
                                 </span>
                                 <small class="d-block text-muted mt-1" style="font-size: 0.75rem;">One-Way Distance</small>
                             </div>
-                            <div class="col-md-5 text-end">
+                            <div class="col-md-5 text-md-end">
                                 <span class="form-label-custom d-block text-muted">Client Site Location</span>
                                 <strong class="text-dark"><asp:Label ID="lblDisplaySiteAddress" runat="server" Text="[No Address Selected]" /></strong>
                             </div>
@@ -339,7 +367,7 @@
                             <span class="travel-total-label">Estimated Travel / Fuel Fee</span>
                             <asp:Label ID="lblTravelFee" runat="server" CssClass="travel-total-amount" Text="R 0,00" />
                         </div>
-                        
+
                         <div class="travel-metrics-grid">
                             <div class="travel-metric-item">
                                 <span class="travel-metric-label">Fee Breakdown</span>
@@ -378,16 +406,21 @@
                             <asp:Label ID="lblTotalWithVat" runat="server" Text="R 0,00" />
                         </div>
                     </div>
+                    <div class="estimate-note">
+                        The quote is saved with these figures. Travel is calculated from the site coordinates on your job request.
+                    </div>
 
                     <!-- Action Buttons -->
                     <div class="mt-4">
-                        <asp:Button ID="btnGenerateArbitraryQuote" runat="server" Text="Save & Generate Quote" 
-                            CssClass="btn-primary-custom" OnClick="btnGenerateArbitraryQuote_Click" />
-                        
-                        <asp:Button ID="btnViewPdfQuote" runat="server" Text="View Quote PDF" 
+                        <asp:Button ID="btnGenerateArbitraryQuote" runat="server" Text="Save & Generate Quote"
+                            CssClass="btn-primary-custom" OnClick="btnGenerateArbitraryQuote_Click"
+                            UseSubmitBehavior="false"
+                            OnClientClick="this.disabled = true; this.value = 'Generating quote…';" />
+
+                        <asp:Button ID="btnViewPdfQuote" runat="server" Text="View Quote PDF"
                             CssClass="btn-primary-custom mt-2" OnClick="btnViewPdfQuote_Click" Visible="false" />
 
-                        <asp:Button ID="btnCancel" runat="server" Text="Cancel" 
+                        <asp:Button ID="btnCancel" runat="server" Text="Cancel"
                             CssClass="btn-secondary-custom" OnClick="btnCancel_Click" CausesValidation="false" />
                     </div>
                 </div>
@@ -399,15 +432,18 @@
         <asp:Panel ID="pnlEmptyState" runat="server" Visible="false" CssClass="card-custom text-center p-5">
             <div class="py-3">
                 <div class="mb-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="#6c757d" class="bi bi-file-earmark-x" viewBox="0 0 16 16">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="#6c757d" class="bi bi-file-earmark-x" viewBox="0 0 16 16" aria-hidden="true">
                         <path d="M6.854 7.146a.5.5 0 1 0-.708.708L7.293 9l-1.147 1.146a.5.5 0 0 0 .708.708L8 9.707l1.146 1.147a.5.5 0 0 0 .708-.708L8.707 9l1.147-1.146a.5.5 0 0 0-.708-.708L8 8.293 6.854 7.146z"/>
                         <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
                     </svg>
                 </div>
                 <h4 class="fw-bold text-dark mb-2">No Pending Job Requests Found</h4>
-                <p class="text-muted mb-4">There are currently no job requests eligible for quote generation.</p>
-                <a href="JobRequest.aspx" class="btn btn-success px-4 py-2 fw-semibold">
+                <p class="text-muted mb-4">There are currently no job requests eligible for quote generation. Already-quoted requests can be found under your quotes.</p>
+                <a runat="server" href="~/JobRequest.aspx" class="btn btn-success px-4 py-2 fw-semibold me-2">
                     Submit New Job Request
+                </a>
+                <a runat="server" href="~/ViewQuote.aspx" class="btn btn-outline-secondary px-4 py-2 fw-semibold">
+                    View My Quotes
                 </a>
             </div>
         </asp:Panel>

@@ -87,24 +87,6 @@ namespace GiantGroupM3
         protected global::System.Web.UI.WebControls.Panel pnlSelectionPrompt;
 
         /// <summary>
-        /// hfLongitude control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.HiddenField hfLongitude;
-
-        /// <summary>
-        /// hfLatitude control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.HiddenField hfLatitude;
-
-        /// <summary>
         /// pnlFormContent control.
         /// </summary>
         /// <remarks>
