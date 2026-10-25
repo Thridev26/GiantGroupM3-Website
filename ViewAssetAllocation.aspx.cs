@@ -14,10 +14,32 @@ namespace GiantGroupM3
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            Response.Cache.SetCacheability(System.Web.HttpCacheability.NoCache);
+            Response.Cache.SetNoStore();
+
+            // This page lists every client's name and site address, so it is for signed-in staff only
+            // (the menu already hides it from clients; this enforces it on the server too).
+            if (!Request.IsAuthenticated)
+            {
+                Response.Redirect("~/Account/Login.aspx");
+                return;
+            }
+            if (IsClientUser())
+            {
+                Response.Redirect("~/Default.aspx");
+                return;
+            }
+
             if (!IsPostBack)
             {
                 LoadAssetAllocations();
             }
+        }
+
+        private bool IsClientUser()
+        {
+            string role = Session["UserRole"]?.ToString() ?? Session["Role"]?.ToString() ?? Session["UserType"]?.ToString() ?? "";
+            return role.Equals("Client", StringComparison.OrdinalIgnoreCase) || Session["ClientID"] != null;
         }
 
         private void LoadAssetAllocations(string searchTerm = "")
@@ -61,43 +83,53 @@ namespace GiantGroupM3
                OR jr.siteAddress LIKE '%' + @Search + '%')
         ORDER BY a.assignmentDate DESC";
 
+            // Escape LIKE wildcards in what the user typed
+            string term = string.IsNullOrWhiteSpace(searchTerm) ? "" : searchTerm.Trim()
+                .Replace("[", "[[]").Replace("%", "[%]").Replace("_", "[_]");
+
             try
             {
                 using (SqlConnection conn = new SqlConnection(connStr))
+                using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    cmd.Parameters.Add("@Search", SqlDbType.NVarChar, 200).Value = term;
+                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
                     {
-                        cmd.Parameters.AddWithValue("@Search", string.IsNullOrWhiteSpace(searchTerm) ? "" : searchTerm.Trim());
-                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                        {
-                            DataTable dt = new DataTable();
-                            da.Fill(dt);
-                            gvAssetAssignments.DataSource = dt;
-                            gvAssetAssignments.DataBind();
-                        }
+                        DataTable dt = new DataTable();
+                        da.Fill(dt);
+                        gvAssetAssignments.DataSource = dt;
+                        gvAssetAssignments.DataBind();
                     }
                 }
             }
             catch (Exception ex)
             {
-                // Log ex.Message here to inspect backend database errors
-                System.Diagnostics.Debug.WriteLine("Database Error: " + ex.Message);
+                System.Diagnostics.Trace.TraceError("ViewAssetAllocation load failed: " + ex);
             }
         }
+
         protected void gvAssetAssignments_PageIndexChanging(object sender, GridViewPageEventArgs e)
         {
             gvAssetAssignments.PageIndex = e.NewPageIndex;
-            LoadAssetAllocations();
+            LoadAssetAllocations(txtSearch.Text);   // keep the current search while paging
+        }
+
+        protected void txtSearch_TextChanged(object sender, EventArgs e)
+        {
+            gvAssetAssignments.PageIndex = 0;
+            LoadAssetAllocations(txtSearch.Text);
         }
 
         protected void btnSearch_Click(object sender, EventArgs e)
         {
+            gvAssetAssignments.PageIndex = 0;
             LoadAssetAllocations(txtSearch.Text);
         }
 
         protected void btnClear_Click(object sender, EventArgs e)
         {
             txtSearch.Text = string.Empty;
+            gvAssetAssignments.PageIndex = 0;
             LoadAssetAllocations();
         }
     }

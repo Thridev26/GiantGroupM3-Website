@@ -15,15 +15,6 @@ namespace GiantGroupM3.Account
     {
 
         /// <summary>
-        /// loginForm control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.HtmlControls.HtmlGenericControl loginForm;
-
-        /// <summary>
         /// ErrorMessage control.
         /// </summary>
         /// <remarks>
@@ -58,6 +49,15 @@ namespace GiantGroupM3.Account
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Literal FailureText;
+
+        /// <summary>
+        /// loginForm control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl loginForm;
 
         /// <summary>
         /// Email control.
