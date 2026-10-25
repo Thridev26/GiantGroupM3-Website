@@ -227,6 +227,8 @@
     <Content Include="PrintQuote.aspx" />
     <Content Include="Privacy.aspx" />
     <Content Include="RequestQuote.aspx" />
+    <Content Include="Requests\SubmitRequest.aspx" />
+    <Content Include="Requests\ViewRequests.aspx" />
     <Content Include="Scripts\bootstrap.bundle.js" />
     <Content Include="Scripts\bootstrap.bundle.min.js" />
     <Content Include="Scripts\bootstrap.esm.js" />
@@ -506,6 +508,20 @@
     </Compile>
     <Compile Include="RequestQuote.aspx.designer.cs">
       <DependentUpon>RequestQuote.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Requests\SubmitRequest.aspx.cs">
+      <DependentUpon>SubmitRequest.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Requests\SubmitRequest.aspx.designer.cs">
+      <DependentUpon>SubmitRequest.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Requests\ViewRequests.aspx.cs">
+      <DependentUpon>ViewRequests.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Requests\ViewRequests.aspx.designer.cs">
+      <DependentUpon>ViewRequests.aspx</DependentUpon>
     </Compile>
     <Compile Include="Site.Master.cs">
       <DependentUpon>Site.Master</DependentUpon>
