@@ -331,17 +331,380 @@
         </section>
 
        <!-- 3.2 CLIENT FEEDBACK & TESTIMONIALS -->
-        <section class="gg-section" data-aos="fade-up">
-            <div class="gg-section-head">
-                <span class="gg-label"><i class="bi bi-chat-quote"></i>Client feedback</span>
-                <h2>What Our Clients Say</h2>
-                <p>Direct feedback from property directors and municipal supervisors.</p>
+<section class="gg-section" data-aos="fade-up">
+    <style>
+        /* Widget Container Header */
+        .elf-widget-container {
+            background: #f8faf9;
+            border-radius: 16px;
+            padding: 2rem 1.5rem;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #222;
+        }
+        .elf-tab-bar {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            border-bottom: 1px solid #e2e8e4;
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .elf-tab {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #555;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding-bottom: 0.75rem;
+            margin-bottom: -0.75rem;
+        }
+        .elf-tab.active {
+            color: #111;
+            border-bottom: 2px solid #111;
+        }
+
+        /* Overall Rating Header Bar */
+        .elf-rating-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.75rem;
+        }
+        .elf-rating-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 0 0 0.25rem 0;
+            color: #111;
+        }
+        .elf-rating-score {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .elf-rating-score strong {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+        .elf-stars-gold {
+            color: #ffb400;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+        }
+        .elf-count {
+            color: #777;
+            font-size: 0.9rem;
+        }
+        .elf-btn-write {
+            background-color: #0066ff;
+            color: #fff !important;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 0.55rem 1.25rem;
+            border-radius: 99px;
+            text-decoration: none;
+            transition: background 0.2s ease;
+        }
+        .elf-btn-write:hover {
+            background-color: #0052cc;
+        }
+
+        /* Review Cards Grid & Horizontal Scroll */
+        .elf-cards-wrapper {
+            position: relative;
+        }
+        .elf-cards-row {
+            display: flex;
+            gap: 1.25rem;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            padding-bottom: 1rem;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .elf-cards-row::-webkit-scrollbar { display: none; }
+
+        .elf-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 1.25rem;
+            min-width: 280px;
+            max-width: 320px;
+            flex: 0 0 auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .elf-user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+        .elf-avatar-wrapper {
+            position: relative;
+            width: 42px;
+            height: 42px;
+            flex-shrink: 0;
+        }
+        .elf-avatar-circle {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 600;
+            font-size: 1rem;
+            text-transform: lowercase;
+        }
+        .elf-google-badge {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 18px;
+            height: 18px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .elf-author-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #111;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            line-height: 1.2;
+        }
+        .elf-verified-check {
+            color: #0066ff;
+            font-size: 0.85rem;
+        }
+        .elf-time {
+            font-size: 0.8rem;
+            color: #888;
+        }
+        .elf-card-stars {
+            color: #ffb400;
+            font-size: 0.95rem;
+            margin-bottom: 0.6rem;
+        }
+        .elf-text {
+            font-size: 0.9rem;
+            color: #333;
+            line-height: 1.45;
+            margin: 0;
+            word-break: break-word;
+        }
+        .elf-read-more {
+            color: #0066ff;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: inline-block;
+            margin-top: 0.4rem;
+            text-decoration: none;
+        }
+
+        /* Navigation Arrow Button */
+        .elf-nav-arrow {
+            position: absolute;
+            right: -15px;
+            top: 45%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 5;
+            color: #333;
+            transition: transform 0.2s ease;
+        }
+        .elf-nav-arrow:hover {
+            transform: translateY(-50%) scale(1.05);
+        }
+    </style>
+
+    <div class="elf-widget-container">
+        <!-- Tab Bar -->
+        <div class="elf-tab-bar">
+            <span class="elf-tab active">All Reviews <strong>3.9</strong></span>
+            <span class="elf-tab">
+                <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.15C3.26 21.3 7.31 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.29C.47 8.21 0 10.05 0 12s.47 3.79 1.29 5.42l3.99-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.58l3.99 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
+                Google <strong>3.9</strong>
+            </span>
+        </div>
+
+        <!-- Overall Rating Header Bar -->
+        <div class="elf-rating-header">
+            <div>
+                <h3 class="elf-rating-title">Overall Rating</h3>
+                <div class="elf-rating-score">
+                    <strong>3.9</strong>
+                    <div class="elf-stars-gold">
+                        <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star"></i>
+                    </div>
+                    <span class="elf-count">(23)</span>
+                </div>
             </div>
-            
-            <!-- Elfsight All-in-One Reviews Widget -->
-            <script src="https://elfsightcdn.com/platform.js" async></script>
-            <div class="elfsight-app-15e0cc56-65b6-42a5-8cb2-acb7c0ffdddc" data-elfsight-app-lazy></div>
-        </section>
+            <a href="https://maps.google.com" target="_blank" class="elf-btn-write">Write a Review</a>
+        </div>
+
+        <!-- Review Cards Grid -->
+        <div class="elf-cards-wrapper">
+            <div class="elf-cards-row" id="elfCardsRow">
+                
+                <!-- Review 1: margaret serra -->
+                <div class="elf-card">
+                    <div>
+                        <div class="elf-user-info">
+                            <div class="elf-avatar-wrapper">
+                                <div class="elf-avatar-circle" style="background-color: #e05638;">m</div>
+                                <div class="elf-google-badge">
+                                    <svg width="11" height="11" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.15C3.26 21.3 7.31 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.29C.47 8.21 0 10.05 0 12s.47 3.79 1.29 5.42l3.99-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.58l3.99 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="elf-author-name">
+                                    margaret serra
+                                    <i class="bi bi-patch-check-fill elf-verified-check"></i>
+                                </div>
+                                <div class="elf-time">1 year ago</div>
+                            </div>
+                        </div>
+                        <div class="elf-card-stars">
+                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                        </div>
+                        <p class="elf-text">
+                            Giant Treefelling has helped me so much. I appreciate everything they have done for me. A special thanks to Preggie for his.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Review 2: joel veeran -->
+                <div class="elf-card">
+                    <div>
+                        <div class="elf-user-info">
+                            <div class="elf-avatar-wrapper">
+                                <div class="elf-avatar-circle" style="background-color: #14a0a6;">j</div>
+                                <div class="elf-google-badge">
+                                    <svg width="11" height="11" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.15C3.26 21.3 7.31 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.29C.47 8.21 0 10.05 0 12s.47 3.79 1.29 5.42l3.99-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.58l3.99 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="elf-author-name">
+                                    joel veeran
+                                    <i class="bi bi-patch-check-fill elf-verified-check"></i>
+                                </div>
+                                <div class="elf-time">2 years ago</div>
+                            </div>
+                        </div>
+                        <div class="elf-card-stars">
+                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                        </div>
+                        <p class="elf-text">
+                            Excellent Service and Pricing. Thank you!
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Review 3: Ethan Dhavaraj -->
+                <div class="elf-card">
+                    <div>
+                        <div class="elf-user-info">
+                            <div class="elf-avatar-wrapper">
+                                <div class="elf-avatar-circle" style="background-color: #e94e77;">e</div>
+                                <div class="elf-google-badge">
+                                    <svg width="11" height="11" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.15C3.26 21.3 7.31 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.29C.47 8.21 0 10.05 0 12s.47 3.79 1.29 5.42l3.99-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.58l3.99 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="elf-author-name">
+                                    Ethan Dhavaraj
+                                    <i class="bi bi-patch-check-fill elf-verified-check"></i>
+                                </div>
+                                <div class="elf-time">2 years ago</div>
+                            </div>
+                        </div>
+                        <div class="elf-card-stars">
+                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                        </div>
+                        <p class="elf-text">
+                            <span class="elf-text-short">Excellent Service from the Giant Treefelling team. The office staff were extremely helpful when communicating...</span>
+                            <span class="elf-text-full d-none">Excellent Service from the Giant Treefelling team. The office staff were extremely helpful when communicating and arranging the quote and getting the staff on site. The ground staff worked professionally and made sure everything was done perfectly. Will definitely be calling them back for all my outdoor needs!</span>
+                            <a href="javascript:void(0)" class="elf-read-more" onclick="toggleReadMore(this)">Read more</a>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Review 4: Aran Jeewanlall -->
+                <div class="elf-card">
+                    <div>
+                        <div class="elf-user-info">
+                            <div class="elf-avatar-wrapper">
+                                <div class="elf-avatar-circle" style="background-color: #589e35;">a</div>
+                                <div class="elf-google-badge">
+                                    <svg width="11" height="11" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.15C3.26 21.3 7.31 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.29C.47 8.21 0 10.05 0 12s.47 3.79 1.29 5.42l3.99-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.58l3.99 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="elf-author-name">
+                                    Aran Jeewanlall
+                                    <i class="bi bi-patch-check-fill elf-verified-check"></i>
+                                </div>
+                                <div class="elf-time">2 years ago</div>
+                            </div>
+                        </div>
+                        <div class="elf-card-stars">
+                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                        </div>
+                        <p class="elf-text">
+                            <span class="elf-text-short">Excellent Service , Great people !!! Company that is efficient and reliable. Definitely my number 1 tree felling company</span>
+                            <span class="elf-text-full d-none">Excellent Service , Great people !!! Company that is efficient and reliable. Definitely my number 1 tree felling company</span>
+                            <a href="javascript:void(0)" class="elf-read-more" onclick="toggleReadMore(this)">Read more</a>
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+            <!-- Scroll Arrow Button -->
+            <button class="elf-nav-arrow" type="button" onclick="scrollElfRight()">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Small Script for Expandable Text and Carousel Scrolling -->
+    <script>
+        function scrollElfRight() {
+            var row = document.getElementById('elfCardsRow');
+            if (row) row.scrollBy({ left: 300, behavior: 'smooth' });
+        }
+        function toggleReadMore(btn) {
+            var parent = btn.parentElement;
+            var shortTxt = parent.querySelector('.elf-text-short');
+            var fullTxt = parent.querySelector('.elf-text-full');
+            if (shortTxt && fullTxt) {
+                shortTxt.classList.add('d-none');
+                fullTxt.classList.remove('d-none');
+                btn.style.display = 'none';
+            }
+        }
+    </script>
+</section>
 
         <!-- 4. CORE SYSTEM MODULES GRID (Staff Levels 4+ Only) -->
         <asp:Panel runat="server" ID="OperationsHubPanel" Visible="false">
