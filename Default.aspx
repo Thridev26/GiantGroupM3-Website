@@ -330,51 +330,17 @@
             </div>
         </section>
 
-        <!-- 3.2 CLIENT FEEDBACK & TESTIMONIALS -->
+       <!-- 3.2 CLIENT FEEDBACK & TESTIMONIALS -->
         <section class="gg-section" data-aos="fade-up">
             <div class="gg-section-head">
                 <span class="gg-label"><i class="bi bi-chat-quote"></i>Client feedback</span>
                 <h2>What Our Clients Say</h2>
                 <p>Direct feedback from property directors and municipal supervisors.</p>
             </div>
-            <div class="row g-3 g-lg-4">
-                <div class="col-md-4">
-                    <div class="gg-quote gg-surface">
-                        <div class="gg-stars" role="img" aria-label="4 out of 5 stars">
-                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star"></i>
-                        </div>
-                        <blockquote>"The Giant Group handled our complex hazardous tree removal seamlessly. Their asset tracking and rapid response teams are top-tier!"</blockquote>
-                        <div class="gg-quote-by">
-                            <span class="gg-avatar">MV</span>
-                            <div><strong>Marcus Vance</strong><small>Operations Director, Greenfield Estates</small></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="gg-quote gg-surface">
-                        <div class="gg-stars" role="img" aria-label="5 out of 5 stars">
-                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                        </div>
-                        <blockquote>"Professional, safety-first, and incredibly well-organized. Their digital job tracking portal gives us total peace of mind."</blockquote>
-                        <div class="gg-quote-by">
-                            <span class="gg-avatar">SJ</span>
-                            <div><strong>Sarah Jenkins</strong><small>Municipal Facilities Manager</small></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="gg-quote gg-surface">
-                        <div class="gg-stars" role="img" aria-label="4 out of 5 stars">
-                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star"></i>
-                        </div>
-                        <blockquote>"Outstanding turnaround times on quotes and site photo updates. Truly a cutting-edge team for tree-felling management."</blockquote>
-                        <div class="gg-quote-by">
-                            <span class="gg-avatar">DN</span>
-                            <div><strong>David Naidoo</strong><small>Head of Infrastructure, Titan Civil</small></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            
+            <!-- Elfsight All-in-One Reviews Widget -->
+            <script src="https://elfsightcdn.com/platform.js" async></script>
+            <div class="elfsight-app-15e0cc56-65b6-42a5-8cb2-acb7c0ffdddc" data-elfsight-app-lazy></div>
         </section>
 
         <!-- 4. CORE SYSTEM MODULES GRID (Staff Levels 4+ Only) -->
