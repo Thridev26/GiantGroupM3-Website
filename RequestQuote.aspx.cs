@@ -257,6 +257,8 @@ namespace GiantGroupM3
             btnGenerateArbitraryQuote.Visible = true;
             btnViewPdfQuote.Visible = false;
 
+            SetSteps(2);
+
             // 3. Load details and calculate totals (all server-side from the database)
             BindRequestItems(jobRequestId);
             QuoteFigures figures = CalculateQuoteFigures(jobRequestId, job);
@@ -575,7 +577,15 @@ END
                 return;
             }
 
-            ShowMessage("Quote successfully generated, saved, and marked as Sent! You can now view your quote document below.", "alert alert-success rounded-3 mb-4", true);
+            SetSteps(3);
+            ShowMessage("Quote generated, saved and marked as Sent. Use the button on the right to open it.", "alert alert-success rounded-3 mb-4", true);
+        }
+
+        /// <summary>Highlights the progress bar: 1 = choosing, 2 = reviewing, 3 = generated.</summary>
+        private void SetSteps(int step)
+        {
+            lblStepReview.CssClass = step >= 2 ? "step is-on" : "step";
+            lblStepGenerate.CssClass = step >= 3 ? "step is-on" : "step";
         }
 
         private void ShowMessage(string message, string cssClass, bool showPdfButton)
@@ -620,6 +630,8 @@ END
             btnViewPdfQuote.Visible = false;
             btnGenerateArbitraryQuote.Visible = true;
             pnlMessage.Visible = false;
+
+            SetSteps(1);
 
             // Reset visibility states back to initial landing state
             pnlFormContent.Visible = false;

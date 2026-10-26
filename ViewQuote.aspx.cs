@@ -49,6 +49,9 @@ namespace GiantGroupM3
 
             if (!IsPostBack)
             {
+                lblSubtitle.Text = IsClientView
+                    ? "Your quotations. Pick a status to see just those quotes and their totals."
+                    : "Review, manage, and track client quotations. The cards follow the status you pick.";
                 PopulateFilter();
                 LoadQuoteData();
             }
@@ -160,7 +163,7 @@ namespace GiantGroupM3
                 }
             }
 
-            BindStats(dt);
+            BindStats(dt, SelectedFilter());
 
             bool hasAny = dt.Rows.Count > 0;
             pnlEmptyState.Visible = !hasAny;
@@ -173,38 +176,75 @@ namespace GiantGroupM3
 
             // In-memory filter. The value is checked against a fixed whitelist before it touches RowFilter.
             DataView view = dt.DefaultView;
-            string filter = ddlStatusFilter.SelectedValue;
-            string[] allowed = IsClientView ? ClientFilters : ManagementFilters;
-            if (!string.IsNullOrEmpty(filter) && filter != "All" && Array.IndexOf(allowed, filter) >= 0)
+            string filter = SelectedFilter();
+            if (filter != "All")
                 view.RowFilter = "quoteStatus = '" + filter + "'";
 
             gvQuotes.DataSource = view;
             gvQuotes.DataBind();
         }
 
-        private void BindStats(DataTable dt)
+        /// <summary>The chosen status filter, checked against the fixed whitelist ("All" when invalid).</summary>
+        private string SelectedFilter()
         {
-            int awaiting = 0, accepted = 0;
-            decimal acceptedValue = 0m;
+            string filter = ddlStatusFilter.SelectedValue;
+            string[] allowed = IsClientView ? ClientFilters : ManagementFilters;
+            return (!string.IsNullOrEmpty(filter) && Array.IndexOf(allowed, filter) >= 0) ? filter : "All";
+        }
 
-            foreach (DataRow row in dt.Rows)
+        /// <summary>
+        /// Summary cards. "All" shows the overall picture (total / awaiting / accepted / accepted value).
+        /// Picking a status re-points every card at that status. dt only ever holds the signed-in
+        /// client's own quotes (or everything for management), so a client never sees anyone else's figures.
+        /// </summary>
+        private void BindStats(DataTable dt, string filter)
+        {
+            int total = dt.Rows.Count;
+
+            if (filter == "All")
             {
-                string status = Convert.ToString(row["quoteStatus"]) ?? string.Empty;
-                if (status.Equals("Sent", StringComparison.OrdinalIgnoreCase))
+                int awaiting = 0, accepted = 0;
+                decimal acceptedValue = 0m;
+                foreach (DataRow row in dt.Rows)
                 {
-                    awaiting++;
+                    string status = (Convert.ToString(row["quoteStatus"]) ?? string.Empty).Trim();
+                    if (status.Equals("Sent", StringComparison.OrdinalIgnoreCase)) awaiting++;
+                    else if (status.Equals("Accepted", StringComparison.OrdinalIgnoreCase))
+                    {
+                        accepted++;
+                        if (row["amount"] != DBNull.Value) acceptedValue += Convert.ToDecimal(row["amount"]);
+                    }
                 }
-                else if (status.Equals("Accepted", StringComparison.OrdinalIgnoreCase))
-                {
-                    accepted++;
-                    if (row["amount"] != DBNull.Value) acceptedValue += Convert.ToDecimal(row["amount"]);
-                }
+
+                lblStatTotalTitle.Text = "Total quotes";
+                lblStatAwaitingTitle.Text = "Awaiting response";
+                lblStatAcceptedTitle.Text = "Accepted";
+                lblStatValueTitle.Text = "Accepted value";
+                lblStatTotal.Text = total.ToString();
+                lblStatAwaiting.Text = awaiting.ToString();
+                lblStatAccepted.Text = accepted.ToString();
+                lblStatValue.Text = acceptedValue.ToString("C");
+                return;
             }
 
-            lblStatTotal.Text = dt.Rows.Count.ToString();
-            lblStatAwaiting.Text = awaiting.ToString();
-            lblStatAccepted.Text = accepted.ToString();
-            lblStatValue.Text = acceptedValue.ToString("C");
+            int count = 0;
+            decimal value = 0m;
+            foreach (DataRow row in dt.Rows)
+            {
+                string status = (Convert.ToString(row["quoteStatus"]) ?? string.Empty).Trim();
+                if (!status.Equals(filter, StringComparison.OrdinalIgnoreCase)) continue;
+                count++;
+                if (row["amount"] != DBNull.Value) value += Convert.ToDecimal(row["amount"]);
+            }
+
+            lblStatTotalTitle.Text = filter + " quotes";
+            lblStatAwaitingTitle.Text = filter + " value";
+            lblStatAcceptedTitle.Text = "Average value";
+            lblStatValueTitle.Text = "Share of all quotes";
+            lblStatTotal.Text = count.ToString();
+            lblStatAwaiting.Text = value.ToString("C");
+            lblStatAccepted.Text = (count > 0 ? value / count : 0m).ToString("C");
+            lblStatValue.Text = total > 0 ? ((double)count / total).ToString("P0") : "0%";
         }
 
         protected void ddlStatusFilter_SelectedIndexChanged(object sender, EventArgs e)
@@ -277,6 +317,8 @@ namespace GiantGroupM3
                     lblDetailIssued.Text = issued.HasValue ? issued.Value.ToString("yyyy-MM-dd") : "-";
                     lblDetailExpiry.Text = expiry.HasValue ? expiry.Value.ToString("yyyy-MM-dd") : "-";
                     lblDetailAmount.Text = amount.ToString("C");
+                    lblDetailStatus.Text = Server.HtmlEncode(status);
+                    lblDetailStatus.CssClass = GetStatusCss(status);
                     lnkDetailPrint.NavigateUrl = "~/PrintQuote.aspx?jobRequestID=" + jobId;
 
                     pnlEditQuote.Visible = true;

@@ -105,6 +105,51 @@ namespace GiantGroupM3
         protected global::System.Web.UI.WebControls.GridView gvJobs;
 
         /// <summary>
+        /// pnlSchedule control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel pnlSchedule;
+
+        /// <summary>
+        /// txtWorkDate control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtWorkDate;
+
+        /// <summary>
+        /// cblSlots control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RadioButtonList cblSlots;
+
+        /// <summary>
+        /// btnApplySchedule control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnApplySchedule;
+
+        /// <summary>
+        /// lblScheduleSummary control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblScheduleSummary;
+
+        /// <summary>
         /// txtSearchAssets control.
         /// </summary>
         /// <remarks>
@@ -121,6 +166,15 @@ namespace GiantGroupM3
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Button btnSearchAssets;
+
+        /// <summary>
+        /// chkHideBooked control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.CheckBox chkHideBooked;
 
         /// <summary>
         /// gvAssets control.

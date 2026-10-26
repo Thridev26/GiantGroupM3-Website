@@ -3,11 +3,18 @@
 <asp:Content ID="Content1" ContentPlaceHolderID="MainContent" runat="server">
     <link rel="stylesheet" href="<%= ResolveUrl("~/Content/giant-ui.css") %>?v=1" />
 
+    <style>
+        .gg-slotlist { list-style: none; display: flex; flex-wrap: wrap; gap: .5rem; padding: 0; margin: 0; }
+        .gg-slotlist li { display: inline-flex; align-items: center; gap: .4rem; padding: .35rem .75rem; border: 1px solid var(--gg-border); border-radius: 999px; background: var(--gg-surface); font-size: .9rem; }
+        .gg-slotlist input { accent-color: var(--gg-700); }
+        .gg-slotlist label { margin: 0; cursor: pointer; }
+    </style>
+
     <div class="gg-page">
         <header class="gg-page-head">
             <span class="gg-label"><i class="bi bi-person-plus"></i>Allocation</span>
             <h1>Assign Staff to Job</h1>
-            <p>Select a Job and then assign Staff members</p>
+            <p>Select a job, choose its date and time slots, then assign staff who are free in those slots</p>
         </header>
 
         <asp:UpdatePanel ID="upMain" runat="server" UpdateMode="Conditional">
@@ -86,18 +93,47 @@
                     </asp:Panel>
                 </div>
 
-                <!-- STEP 2: Select Staff Member -->
+                <!-- STEP 2: Date & time slots -->
+                <asp:Panel ID="pnlSchedule" runat="server" Visible="false" CssClass="gg-panel mb-4">
+                    <div class="gg-panel-body">
+                        <div class="gg-panel-head">
+                            <h2 class="gg-step-title"><span class="gg-step-n">2</span> Choose Date &amp; Time Slots</h2>
+                        </div>
+                        <p class="gg-muted small">A staff member already booked on another job in any chosen slot on that date is locked. Each booking keeps its own slots, and back-to-back slots are fine: someone booked 08:00&ndash;09:00 can still take 09:00&ndash;10:00 on another job.</p>
+                        <div class="row g-3 align-items-start">
+                            <div class="col-md-3">
+                                <asp:Label runat="server" AssociatedControlID="txtWorkDate" CssClass="gg-sub d-block mb-1" Text="Work date" />
+                                <asp:TextBox ID="txtWorkDate" runat="server" TextMode="Date" CssClass="gg-input" />
+                            </div>
+                            <div class="col-md-9">
+                                <span class="gg-sub d-block mb-1">Time slots to book (this assignment only)</span>
+                               <asp:RadioButtonList ID="cblSlots" runat="server" RepeatLayout="UnorderedList"
+    CssClass="gg-slotlist" DataTextField="Label" DataValueField="timeSlotID" />
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center flex-wrap gap-3 mt-3">
+                            <asp:Button ID="btnApplySchedule" runat="server" Text="Check availability" CssClass="gg-btn gg-btn-primary gg-btn-sm" OnClick="btnApplySchedule_Click" />
+                            <asp:Label ID="lblScheduleSummary" runat="server" CssClass="gg-muted small" />
+                        </div>
+                    </div>
+                </asp:Panel>
+
+                <!-- STEP 3: Select Staff Member -->
                 <div class="gg-panel mb-4">
                     <div class="gg-panel-body pb-2">
                         <div class="gg-panel-head">
-                            <h2 class="gg-step-title"><span class="gg-step-n">2</span> Select Staff Member &amp; Assign</h2>
+                            <h2 class="gg-step-title"><span class="gg-step-n">3</span> Select Staff Member &amp; Assign</h2>
                             <div class="gg-search-box">
                                 <i class="bi bi-search"></i>
                                 <asp:TextBox ID="txtSearchStaff" runat="server" CssClass="gg-input" Placeholder="Search staff name or role..." AutoPostBack="true" OnTextChanged="txtSearchStaff_TextChanged" onkeyup="triggerPostBackOnType(this)"></asp:TextBox>
                             </div>
                             <asp:Button ID="btnSearchStaff" runat="server" Text="Search" CssClass="gg-btn gg-btn-outline gg-btn-sm" OnClick="btnSearchStaff_Click" />
                         </div>
-                        <p class="gg-muted small mb-0">Assign buttons unlock once you have selected a job in step 1.</p>
+                        <p class="gg-muted small mb-0">Assign buttons unlock once a job, date and time slots are set and the person is free in those slots.</p>
+                        <div class="mt-2">
+                            <asp:CheckBox ID="chkHideBooked" runat="server" AutoPostBack="true" OnCheckedChanged="chkHideBooked_CheckedChanged" Text="&nbsp;Hide staff that are booked in these slots" CssClass="gg-muted small" />
+                        </div>
+
                     </div>
 
                     <!-- Staff GridView -->
@@ -122,6 +158,10 @@
                                     </ItemTemplate>
                                 </asp:TemplateField>
                                 <asp:BoundField DataField="contactNumber" HeaderText="Contact Number" />
+                                <asp:TemplateField HeaderText="Availability">
+                                    <ItemTemplate><%# Eval("StatusHtml") %></ItemTemplate>
+                                </asp:TemplateField>
+
                                 <asp:TemplateField HeaderText="Action" ItemStyle-Width="150px" ItemStyle-CssClass="text-end">
                                     <ItemTemplate>
                                         <asp:LinkButton ID="btnAssignStaff" runat="server" CommandName="AssignStaffMember"
