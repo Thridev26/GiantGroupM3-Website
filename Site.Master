@@ -719,7 +719,7 @@ body.dark-mode .gg-msg.is-error { background: #3a1f1c; color: #f1948a; }
                                 <% if (!IsClient()) { %>
                                 <a class="dropdown-item" runat="server" href="~/Clients/AddClient.aspx"><i class="bi bi-person-plus me-2"></i>Add New Client</a>
                                 <% } %>
-                                <a class="dropdown-item" runat="server" href="~/Clients/UpdateClient.aspx"><i class="bi bi-person-gear me-2"></i>Update Client Info</a>
+                                <a class="dropdown-item" runat="server" href="~/ClientProfile.aspx"><i class="bi bi-person-gear me-2"></i>Update Client Info</a>
 
                                 <% if (!IsClient()) { %>
                                 <div class="dropdown-divider my-1"></div>
@@ -808,7 +808,7 @@ body.dark-mode .gg-msg.is-error { background: #3a1f1c; color: #f1948a; }
                                 <% } %>
 
                                 <h6 class="dropdown-header">Progress</h6>
-                                <a class="dropdown-item" runat="server" href="~/Jobs/Progress.aspx"><i class="bi bi-graph-up-arrow me-2"></i>View Job Progress</a>
+                                <a class="dropdown-item" runat="server" href="~/ClientJobProgress.aspx"><i class="bi bi-graph-up-arrow me-2"></i>View Job Progress</a>
                                 <% if (CanSeeEditJobProgress()) { %>
                                 <a class="dropdown-item" runat="server" href="~/Jobs/EditProgress.aspx"><i class="bi bi-pencil-square me-2"></i>Edit Job Progress</a>
                                 <% } %>

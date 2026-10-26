@@ -182,7 +182,9 @@
     <Content Include="AssignAsset.aspx" />
     <Content Include="AssignStaff.aspx" />
     <Content Include="Calendar.aspx" />
+    <Content Include="ClientJobProgress.aspx" />
     <Content Include="ClientPortal.aspx" />
+    <Content Include="ClientProfile.aspx" />
     <Content Include="Contact.aspx" />
     <Content Include="Content\Alt Logo .png" />
     <Content Include="Content\bootstrap-grid.css" />
@@ -223,7 +225,6 @@
     <Content Include="Help.aspx" />
     <Content Include="HomeRouter.aspx" />
     <Content Include="ManagementPortal.aspx" />
-	  
     <Content Include="NotFound.aspx" />
     <Content Include="PrintQuote.aspx" />
     <Content Include="Privacy.aspx" />
@@ -447,12 +448,26 @@
     <Compile Include="Calendar.aspx.designer.cs">
       <DependentUpon>Calendar.aspx</DependentUpon>
     </Compile>
+    <Compile Include="ClientJobProgress.aspx.cs">
+      <DependentUpon>ClientJobProgress.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="ClientJobProgress.aspx.designer.cs">
+      <DependentUpon>ClientJobProgress.aspx</DependentUpon>
+    </Compile>
     <Compile Include="ClientPortal.aspx.cs">
       <DependentUpon>ClientPortal.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="ClientPortal.aspx.designer.cs">
       <DependentUpon>ClientPortal.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="ClientProfile.aspx.cs">
+      <DependentUpon>ClientProfile.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="ClientProfile.aspx.designer.cs">
+      <DependentUpon>ClientProfile.aspx</DependentUpon>
     </Compile>
     <Compile Include="Contact.aspx.cs">
       <DependentUpon>Contact.aspx</DependentUpon>

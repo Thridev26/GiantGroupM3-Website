@@ -150,8 +150,8 @@
                         <span class="gg-tile is-lg"><i class="bi bi-clock-history"></i></span>
                         <div>
                             <h3>Request &amp; Job History</h3>
-                            <p>Track live status updates, review past estimates, and download completion reports for all your managed properties in one place.</p>
-                            <a runat="server" href="~/Requests/ViewRequests.aspx" class="gg-btn gg-btn-outline gg-btn-arrow">View History</a>
+                            <p>See the latest recorded status of your active service requests and jobs in one place.</p>
+                            <a runat="server" href="~/ClientJobProgress.aspx" class="gg-btn gg-btn-outline gg-btn-arrow">View Job Progress</a>
                         </div>
                     </div>
                 </div>
@@ -165,11 +165,11 @@
                         <HeaderTemplate>
                             <div class="cp-panel-head">
                                 <h3>Latest activity</h3>
-                                <a runat="server" href="~/Requests/ViewRequests.aspx">View all</a>
+                                <a runat="server" href="~/ClientJobProgress.aspx">View all</a>
                             </div>
                         </HeaderTemplate>
                         <ItemTemplate>
-                            <a runat="server" href="~/Requests/ViewRequests.aspx" class="gg-row">
+                            <a runat="server" href="~/ClientJobProgress.aspx" class="gg-row">
                                 <div>
                                     <div class="gg-row-title">Request #<%#: Eval("jobRequestID") %></div>
                                     <div class="gg-row-sub">Open to see details and quotes</div>
@@ -189,7 +189,7 @@
                 <div class="gg-surface cp-links">
                     <div class="cp-panel-head"><h3>Need something else?</h3></div>
                     <a runat="server" href="~/RequestQuote.aspx"><i class="bi bi-file-earmark-plus"></i>Request a quote<i class="bi bi-chevron-right"></i></a>
-                    <a runat="server" href="~/Clients/UpdateClient.aspx"><i class="bi bi-person-gear"></i>Update your details<i class="bi bi-chevron-right"></i></a>
+                    <a runat="server" href="~/ClientProfile.aspx"><i class="bi bi-person-gear"></i>Update your details<i class="bi bi-chevron-right"></i></a>
                     <a runat="server" href="~/Help.aspx"><i class="bi bi-question-circle"></i>Read the FAQ<i class="bi bi-chevron-right"></i></a>
                     <a runat="server" href="~/Contact.aspx"><i class="bi bi-headset"></i>Contact support<i class="bi bi-chevron-right"></i></a>
                 </div>
