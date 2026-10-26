@@ -71,6 +71,50 @@ namespace GiantGroupM3
                 BindJobRequests();
             }
         }
+        private void BindJobRequests()
+        {
+            string query = @"SELECT jr.jobRequestID, jr.siteAddress, jr.urgencyLevel, jr.dateRecieved, jr.status, c.clientName
+                             FROM JobRequest jr
+                             LEFT JOIN Client c ON c.clientID = jr.clientID
+                             WHERE jr.status NOT IN ('Cancelled', 'Quote Sent', 'Quote Accepted') ";
+
+            if (!IsManagementView)
+                query += "AND jr.clientID = @ClientID ";
+
+            query += "ORDER BY jr.dateRecieved DESC";
+
+            // Management sees which client each request belongs to (column index 1 = "Client").
+            gvJobRequests.Columns[1].Visible = IsManagementView;
+
+            using (SqlConnection conn = new SqlConnection(connString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                if (!IsManagementView)
+                    cmd.Parameters.Add("@ClientID", SqlDbType.Int).Value = _clientId;
+
+                using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                {
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+
+                    gvJobRequests.DataSource = dt;
+                    gvJobRequests.DataBind();
+
+                    bool hasData = dt.Rows.Count > 0;
+
+                    pnlJobSelection.Visible = hasData;
+                    pnlEmptyState.Visible = !hasData;
+
+                    // On fresh query, if no row is selected, hide details and show prompt
+                    if (gvJobRequests.SelectedIndex < 0)
+                    {
+                        pnlFormContent.Visible = false;
+                        pnlSelectionDetails.Visible = false;
+                        pnlSelectionPrompt.Visible = true;
+                    }
+                }
+            }
+        }
 
         private bool ResolveAccess()
         {
@@ -119,50 +163,71 @@ namespace GiantGroupM3
         // ------------------------------------------------------------------
         //  Job request list
         // ------------------------------------------------------------------
-        private void BindJobRequests()
+
+        private void BindRequestItems(int jobRequestId)
         {
-            string query = @"SELECT jr.jobRequestID, jr.siteAddress, jr.urgencyLevel, jr.dateRecieved, jr.status, c.clientName
-                             FROM JobRequest jr
-                             LEFT JOIN Client c ON c.clientID = jr.clientID
-                             WHERE jr.status NOT IN ('Cancelled', 'Quote Sent', 'Quote Accepted') ";
-
-            if (!IsManagementView)
-                query += "AND jr.clientID = @ClientID ";
-
-            query += "ORDER BY jr.dateRecieved DESC";
-
-            // Management sees which client each request belongs to (column index 1 = "Client").
-            gvJobRequests.Columns[1].Visible = IsManagementView;
+            string query = @"
+        SELECT
+            jt.JobTypeName,
+            jt.JobRate,
+            COALESCE(billable.Quantity, 0) AS Quantity,
+            CASE
+                WHEN jt.JobTypeName LIKE '%Grass%'
+                  OR jt.JobTypeName LIKE '%Paving%'
+                  OR jt.JobTypeName LIKE '%Tiling%'
+                    THEN 'm²'
+                WHEN jt.JobTypeName LIKE '%Tree%'
+                  OR jt.JobTypeName LIKE '%Stump%'
+                    THEN 'Trees / Units'
+                WHEN jt.JobTypeName LIKE '%Refuse%'
+                  OR jt.JobTypeName LIKE '%Cartage%'
+                    THEN 'm³'
+                ELSE 'Item(s)'
+            END AS UnitOfMeasure,
+            CAST(
+                jt.JobRate * COALESCE(billable.Quantity, 0)
+                AS DECIMAL(18, 2)
+            ) AS LineTotal
+        FROM RequestItem ri
+        INNER JOIN JobType jt
+            ON ri.jobTypeID = jt.jobTypeID
+        OUTER APPLY
+        (
+            SELECT TOP (1)
+                TRY_CONVERT(DECIMAL(18, 2), id.detailValue) AS Quantity
+            FROM ItemDetail id
+            WHERE id.requestItemID = ri.requestItemID
+              AND id.jobDetailID =
+                  CASE
+                      WHEN jt.JobTypeName = 'Tree Felling' THEN 1
+                      WHEN jt.JobTypeName = 'Grass Cutting' THEN 6
+                      WHEN jt.JobTypeName = 'Tree Planting' THEN 10
+                      WHEN jt.JobTypeName = 'Vegetation Clearance' THEN 14
+                      WHEN jt.JobTypeName = 'Hedge Trimming' THEN 18
+                      ELSE NULL
+                  END
+            ORDER BY id.jobDetailID
+        ) billable
+        WHERE ri.jobRequestID = @JobRequestID
+        ORDER BY jt.JobTypeName;";
 
             using (SqlConnection conn = new SqlConnection(connString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
             {
-                if (!IsManagementView)
-                    cmd.Parameters.Add("@ClientID", SqlDbType.Int).Value = _clientId;
+                cmd.Parameters.Add("@JobRequestID", SqlDbType.Int).Value =
+                    jobRequestId;
 
                 using (SqlDataAdapter da = new SqlDataAdapter(cmd))
                 {
                     DataTable dt = new DataTable();
                     da.Fill(dt);
 
-                    gvJobRequests.DataSource = dt;
-                    gvJobRequests.DataBind();
-
-                    bool hasData = dt.Rows.Count > 0;
-
-                    pnlJobSelection.Visible = hasData;
-                    pnlEmptyState.Visible = !hasData;
-
-                    // On fresh query, if no row is selected, hide details and show prompt
-                    if (gvJobRequests.SelectedIndex < 0)
-                    {
-                        pnlFormContent.Visible = false;
-                        pnlSelectionDetails.Visible = false;
-                        pnlSelectionPrompt.Visible = true;
-                    }
+                    gvRequestItems.DataSource = dt;
+                    gvRequestItems.DataBind();
                 }
             }
         }
+
 
         protected void gvJobRequests_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -244,56 +309,57 @@ namespace GiantGroupM3
             }
         }
 
-        private void BindRequestItems(int jobRequestId)
-        {
-            string query = @"
-                SELECT 
-                    jt.JobTypeName, 
-                    jt.JobRate, 
-                    ISNULL(id.detailValue, 1.00) AS Quantity,
-                    CASE 
-                        WHEN jt.JobTypeName LIKE '%Grass%' OR jt.JobTypeName LIKE '%Paving%' OR jt.JobTypeName LIKE '%Tiling%' THEN 'm²'
-                        WHEN jt.JobTypeName LIKE '%Tree%' OR jt.JobTypeName LIKE '%Stump%' THEN 'Trees / Units'
-                        WHEN jt.JobTypeName LIKE '%Refuse%' OR jt.JobTypeName LIKE '%Cartage%' THEN 'm³'
-                        ELSE 'Item(s)'
-                    END AS UnitOfMeasure,
-                    (jt.JobRate * ISNULL(id.detailValue, 1.00)) AS LineTotal
-                FROM RequestItem ri
-                INNER JOIN JobType jt ON ri.jobTypeID = jt.jobTypeID
-                LEFT JOIN ItemDetail id ON ri.requestItemID = id.requestItemID
-                WHERE ri.jobRequestID = @JobRequestID";
+        
 
-            using (SqlConnection conn = new SqlConnection(connString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                cmd.Parameters.Add("@JobRequestID", SqlDbType.Int).Value = jobRequestId;
-                using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                {
-                    DataTable dt = new DataTable();
-                    da.Fill(dt);
-                    gvRequestItems.DataSource = dt;
-                    gvRequestItems.DataBind();
-                }
-            }
-        }
 
         private decimal GetServicesSubtotal(int jobRequestId)
         {
-            const string calcQuery = @"SELECT ISNULL(SUM(jt.JobRate * ISNULL(id.detailValue, 1)), 0) 
-                                       FROM RequestItem ri 
-                                       INNER JOIN JobType jt ON ri.jobTypeID = jt.jobTypeID 
-                                       LEFT JOIN ItemDetail id ON ri.requestItemID = id.requestItemID 
-                                       WHERE ri.jobRequestID = @JobRequestID";
+            const string calcQuery = @"
+        SELECT
+            ISNULL(
+                SUM(
+                    jt.JobRate *
+                    COALESCE(billable.Quantity, 0)
+                ),
+                0
+            )
+        FROM RequestItem ri
+        INNER JOIN JobType jt
+            ON ri.jobTypeID = jt.jobTypeID
+        OUTER APPLY
+        (
+            SELECT TOP (1)
+                TRY_CONVERT(DECIMAL(18, 2), id.detailValue) AS Quantity
+            FROM ItemDetail id
+            WHERE id.requestItemID = ri.requestItemID
+              AND id.jobDetailID =
+                 CASE
+    WHEN jt.JobTypeName = 'Tree Felling' THEN 1
+    WHEN jt.JobTypeName = 'Grass Cutting' THEN 6
+    WHEN jt.JobTypeName = 'Tree Planting' THEN 10
+    WHEN jt.JobTypeName = 'Vegetation Clearance' THEN 14
+    WHEN jt.JobTypeName = 'Hedge Trimming' THEN 18
+    ELSE NULL
+END
+        ) billable
+        WHERE ri.jobRequestID = @JobRequestID;";
 
             using (SqlConnection conn = new SqlConnection(connString))
             using (SqlCommand cmd = new SqlCommand(calcQuery, conn))
             {
-                cmd.Parameters.Add("@JobRequestID", SqlDbType.Int).Value = jobRequestId;
+                cmd.Parameters.Add("@JobRequestID", SqlDbType.Int).Value =
+                    jobRequestId;
+
                 conn.Open();
+
                 object result = cmd.ExecuteScalar();
-                return result != null && result != DBNull.Value ? Convert.ToDecimal(result) : 0m;
+
+                return result != null && result != DBNull.Value
+                    ? Convert.ToDecimal(result)
+                    : 0m;
             }
         }
+
 
         private bool QuoteExists(int jobRequestId)
         {
@@ -403,16 +469,50 @@ namespace GiantGroupM3
                 {
                     conn.Open();
 
-                    const string checkDetailsQuery = "SELECT COUNT(*) FROM RequestItem ri INNER JOIN ItemDetail id ON ri.requestItemID = id.requestItemID WHERE ri.jobRequestID = @JobRequestID";
-                    using (SqlCommand cmdDetails = new SqlCommand(checkDetailsQuery, conn))
+
+                    const string checkDetailsQuery = @"
+    SELECT COUNT(*)
+    FROM RequestItem ri
+    INNER JOIN JobType jt
+        ON ri.jobTypeID = jt.jobTypeID
+    WHERE ri.jobRequestID = @JobRequestID
+      AND EXISTS
+      (
+          SELECT 1
+          FROM ItemDetail id
+          WHERE id.requestItemID = ri.requestItemID
+            AND id.jobDetailID =
+                CASE
+                    WHEN jt.JobTypeName = 'Tree Felling' THEN 1
+                    WHEN jt.JobTypeName = 'Grass Cutting' THEN 6
+                    WHEN jt.JobTypeName = 'Tree Planting' THEN 10
+                    WHEN jt.JobTypeName = 'Vegetation Clearance' THEN 14
+                    WHEN jt.JobTypeName = 'Hedge Trimming' THEN 18
+                    ELSE NULL
+                END
+            AND TRY_CONVERT(DECIMAL(18, 2), id.detailValue) > 0
+      );";
+
+                    using (SqlCommand cmdDetails =
+                           new SqlCommand(checkDetailsQuery, conn))
                     {
-                        cmdDetails.Parameters.Add("@JobRequestID", SqlDbType.Int).Value = jobRequestId;
-                        if ((int)cmdDetails.ExecuteScalar() == 0)
+                        cmdDetails.Parameters.Add("@JobRequestID", SqlDbType.Int).Value =
+                            jobRequestId;
+
+                        int validItems = Convert.ToInt32(cmdDetails.ExecuteScalar());
+
+                        if (validItems == 0)
                         {
-                            ShowMessage("Cannot generate a quote yet. Site measurements or item details have not been provided for this job request.", "alert alert-danger rounded-3 mb-4", false);
+                            ShowMessage(
+                                "Cannot generate a quote yet. Valid billable quantities " +
+                                "must be provided for the requested services.",
+                                "alert alert-danger rounded-3 mb-4",
+                                false);
+
                             return;
                         }
                     }
+
                 }
 
                 // 2. Recalculate everything on the server from database values
