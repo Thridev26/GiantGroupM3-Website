@@ -141,11 +141,17 @@ namespace GiantGroupM3
             catch (Exception ex)
             {
                 System.Diagnostics.Trace.TraceError(
-                    "PayFast checkout failed: {0}", ex);
+        "PayFast checkout failed: {0}", ex);
 
+                context.Response.Clear();
+                context.Response.TrySkipIisCustomErrors = true;
                 context.Response.StatusCode = 500;
+                context.Response.ContentType = "text/plain";
+
                 context.Response.Write(
-                    "Checkout could not be started. Please try again later.");
+                    "Checkout failed: " +
+                    HttpUtility.HtmlEncode(
+                        ex.GetType().Name + ": " + ex.Message));
             }
         }
 
