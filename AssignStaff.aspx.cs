@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.Globalization;
+using System.Linq;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 
@@ -208,7 +211,30 @@ namespace GiantGroupM3
                 {
                     DataTable dt = new DataTable();
                     da.Fill(dt);
-                    gvStaff.DataSource = dt;
+
+                    // Mark each person free / booked for the applied date + the job's time slots
+                    dt.Columns.Add("IsBooked", typeof(bool));
+                    dt.Columns.Add("StatusHtml", typeof(string));
+                    Dictionary<string, Scheduling.Booking> bookings = CurrentBookings();
+                    foreach (DataRow r in dt.Rows)
+                    {
+                        if (bookings == null)
+                        {
+                            r["IsBooked"] = true;
+                            r["StatusHtml"] = SelectedJobId.HasValue
+                                ? "<span class='gg-chip'>Choose date &amp; slots in step 2</span>"
+                                : "<span class='gg-chip'>Select a job first</span>";
+                            continue;
+                        }
+                        Scheduling.Booking b;
+                        bookings.TryGetValue(Convert.ToString(r["staffID"]), out b);
+                        r["IsBooked"] = b != null;
+                        r["StatusHtml"] = Scheduling.StatusHtml(b);
+                    }
+
+                    DataView view = dt.DefaultView;
+                    if (chkHideBooked.Checked && bookings != null) view.RowFilter = "IsBooked = false";
+                    gvStaff.DataSource = view;
                     gvStaff.DataBind();
                 }
             }
@@ -220,8 +246,100 @@ namespace GiantGroupM3
             if (e.Row.RowType == DataControlRowType.DataRow)
             {
                 var btn = e.Row.FindControl("btnAssignStaff") as LinkButton;
-                if (btn != null) btn.Enabled = SelectedJobId.HasValue;
+                DataRowView drv = e.Row.DataItem as DataRowView;
+                bool free = drv != null && !(bool)drv["IsBooked"];
+                if (btn != null) btn.Enabled = SelectedJobId.HasValue && free;
             }
+        }
+
+
+        // ------------------------------------------------------------
+        // Step 2: date + time slots for THIS booking
+        // ------------------------------------------------------------
+        // The date and slots the availability grid is checked against, and that the next Assign will book.
+        // Held in ViewState (tamper-proof). They belong to this booking only: they are never written to the job.
+        private DateTime? AppliedDate
+        {
+            get { return ViewState["AppliedDate"] as DateTime?; }
+            set { ViewState["AppliedDate"] = value; }
+        }
+
+        private List<int> AppliedSlots
+        {
+            get { int[] a = ViewState["AppliedSlots"] as int[]; return a == null ? new List<int>() : a.ToList(); }
+            set { ViewState["AppliedSlots"] = value == null ? null : value.ToArray(); }
+        }
+
+        private void InitSchedule(int jobId)
+        {
+            cblSlots.DataSource = Scheduling.GetTimeSlots();
+            cblSlots.DataBind();
+            foreach (ListItem li in cblSlots.Items) li.Selected = false;
+
+            DateTime date = Scheduling.GetJobStartDate(jobId) ?? DateTime.Today;
+            txtWorkDate.Text = date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+            AppliedDate = null;
+            AppliedSlots = null;
+            pnlSchedule.Visible = true;
+            UpdateScheduleSummary();
+        }
+
+        private void UpdateScheduleSummary()
+        {
+            List<int> slots = AppliedSlots;
+            if (!AppliedDate.HasValue || slots.Count == 0)
+            {
+                lblScheduleSummary.Text = "Pick a date and the slots you want to book for, then press <strong>Check availability</strong>.";
+                return;
+            }
+            lblScheduleSummary.Text = "Checking <strong>" + Server.HtmlEncode(AppliedDate.Value.ToString("dddd d MMMM yyyy", CultureInfo.InvariantCulture))
+                + "</strong> &middot; " + Server.HtmlEncode(Scheduling.DescribeSlots(slots));
+        }
+
+        protected void btnApplySchedule_Click(object sender, EventArgs e)
+        {
+            if (!SelectedJobId.HasValue)
+            {
+                ShowMessage("Please select a job from Step 1 first.", "gg-msg is-warning");
+                return;
+            }
+
+            DateTime date;
+            if (!DateTime.TryParseExact(txtWorkDate.Text.Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out date))
+            {
+                ShowMessage("Please enter a valid work date.", "gg-msg is-warning");
+                return;
+            }
+
+            List<int> chosen = cblSlots.Items.Cast<ListItem>().Where(i => i.Selected).Select(i => int.Parse(i.Value)).ToList();
+            if (!Scheduling.AllSlotsExist(chosen))
+            {
+                ShowMessage("Tick at least one time slot.", "gg-msg is-warning");
+                return;
+            }
+
+            AppliedDate = date;
+            AppliedSlots = chosen;
+            UpdateScheduleSummary();
+            gvStaff.PageIndex = 0;
+            BindStaffGrid();
+            ShowMessage("Availability updated for the slots you ticked. Anything already booked in those slots on that day is locked.", "gg-msg is-info");
+        }
+
+        protected void chkHideBooked_CheckedChanged(object sender, EventArgs e)
+        {
+            gvStaff.PageIndex = 0;
+            BindStaffGrid();
+        }
+
+        /// <summary>Bookings for the applied date + slots, or null when no schedule has been applied yet.</summary>
+        private Dictionary<string, Scheduling.Booking> CurrentBookings()
+        {
+            if (!SelectedJobId.HasValue || !AppliedDate.HasValue) return null;
+            List<int> slots = AppliedSlots;
+            if (slots.Count == 0) return null;
+            return Scheduling.GetStaffBookings(AppliedDate.Value, SelectedJobId.Value, slots);
         }
 
         // ------------------------------------------------------------
@@ -283,8 +401,9 @@ namespace GiantGroupM3
 
             pnlSelectedJob.CssClass = "gg-selected";
             pnlJobsGrid.Visible = false;
+            InitSchedule(jobId);
             BindStaffGrid(); // re-bind so the Assign buttons unlock
-            ShowMessage("Job selected! Now select an operational staff member to assign below.", "gg-msg is-info");
+            ShowMessage("Job selected! Now choose its date and time slots (step 2), then check availability.", "gg-msg is-info");
         }
 
         protected void btnClearJob_Click(object sender, EventArgs e)
@@ -293,6 +412,8 @@ namespace GiantGroupM3
             hfSelectedJobID.Value = string.Empty;
             pnlSelectedJob.CssClass = "gg-selected d-none";
             pnlJobsGrid.Visible = true;
+            pnlSchedule.Visible = false;
+            AppliedDate = null;
             lblMessage.CssClass = "d-none";
             BindJobsGrid();
             BindStaffGrid(); // re-lock the Assign buttons
@@ -352,35 +473,27 @@ namespace GiantGroupM3
                         }
                     }
 
-                    // Don't assign the same person to the same job twice on the same day
-                    using (SqlCommand dup = new SqlCommand(
-                        "SELECT COUNT(1) FROM [dbo].[JobStaffAssignment] WHERE staffID = @S AND jobID = @J AND assignmentDate = @D", conn))
+                    // Date + slots come from step 2 (this booking only)
+                    List<int> slots = AppliedSlots;
+                    if (!AppliedDate.HasValue || slots.Count == 0)
                     {
-                        dup.Parameters.Add("@S", SqlDbType.Int).Value = staffId;
-                        dup.Parameters.Add("@J", SqlDbType.Int).Value = jobId;
-                        dup.Parameters.Add("@D", SqlDbType.Date).Value = DateTime.Today;
-                        if (Convert.ToInt32(dup.ExecuteScalar()) > 0)
-                        {
-                            ShowMessage("This staff member is already assigned to Job #" + jobId + " today.", "gg-msg is-warning");
-                            return;
-                        }
+                        ShowMessage("Choose a date and time slots in step 2 first.", "gg-msg is-warning");
+                        return;
                     }
+                    DateTime date = AppliedDate.Value;
 
-                    string insertQuery = @"
-                        INSERT INTO [dbo].[JobStaffAssignment] (staffID, jobID, hoursWorked, assignmentDate)
-                        VALUES (@StaffID, @JobID, @HoursWorked, @AssignmentDate)";
-
-                    using (SqlCommand cmd = new SqlCommand(insertQuery, conn))
+                    // Clash check + insert happen together in one serializable transaction
+                    string error = Scheduling.AssignStaff(staffId, jobId, date, slots);
+                    if (error != null)
                     {
-                        cmd.Parameters.Add("@StaffID", SqlDbType.Int).Value = staffId;
-                        cmd.Parameters.Add("@JobID", SqlDbType.Int).Value = jobId;
-                        cmd.Parameters.AddWithValue("@HoursWorked", 8.00m);
-                        cmd.Parameters.Add("@AssignmentDate", SqlDbType.Date).Value = DateTime.Today;
-                        cmd.ExecuteNonQuery();
+                        ShowMessage(error, "gg-msg is-warning");
+                        BindStaffGrid();
+                        return;
                     }
                 }
 
-                ShowMessage("Staff member successfully assigned to Job #" + jobId + "!", "gg-msg is-success");
+                ShowMessage("Staff member assigned to Job #" + jobId + " on " + AppliedDate.Value.ToString("yyyy-MM-dd") + " (" + Scheduling.DescribeSlots(AppliedSlots) + ").", "gg-msg is-success");
+                BindStaffGrid();
             }
             catch (Exception ex)
             {

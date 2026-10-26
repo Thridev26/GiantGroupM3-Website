@@ -14,7 +14,7 @@
         }
 
         .quote-container {
-            max-width: 900px;
+            max-width: 1120px;
             margin: 2rem auto;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: var(--text-dark);
@@ -201,6 +201,20 @@
             margin-top: 0.75rem;
         }
 
+        /* Step bar */
+        .step-bar { display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+        .step-bar .step { display: flex; align-items: center; gap: .5rem; padding: .45rem .9rem; border-radius: 999px; background: #eef2ef; color: var(--text-muted); font-size: .85rem; font-weight: 600; }
+        .step-bar .step b { display: inline-flex; width: 1.4rem; height: 1.4rem; align-items: center; justify-content: center; border-radius: 50%; background: #cfd8d3; color: #fff; font-size: .75rem; }
+        .step-bar .step.is-on { background: #e2f0e8; color: var(--primary-dark); }
+        .step-bar .step.is-on b { background: var(--primary-color); }
+
+        /* Sticky summary */
+        .summary-sticky { position: sticky; top: 1rem; }
+        .summary-sticky .breakdown-card { background: #fff; }
+        .selected-strip { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; background: #e7f5ec; border: 1px solid #b7e0c6; border-radius: 10px; padding: .85rem 1.1rem; margin-top: 1rem; }
+        .selected-strip .k { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); font-weight: 600; }
+        .selected-strip .v { font-weight: 700; color: var(--primary-dark); }
+
         /* Action Buttons */
         .btn-primary-custom {
             background-color: var(--primary-color);
@@ -248,7 +262,13 @@
         <!-- Page Header -->
         <div class="page-header">
             <h2>Request a Quote</h2>
-            <p class="text-muted mb-0">Select your evaluated job request below to automatically factor in site coordinates, travel fees, and VAT.</p>
+            <p class="text-muted mb-0">Pick a job request, check the figures, then generate the quote. Travel and VAT are worked out for you.</p>
+        </div>
+
+        <div class="step-bar" aria-label="Progress">
+            <span class="step is-on"><b>1</b> Choose request</span>
+            <asp:Panel ID="lblStepReview" runat="server" CssClass="step"><b>2</b> Review services &amp; travel</asp:Panel>
+            <asp:Panel ID="lblStepGenerate" runat="server" CssClass="step"><b>3</b> Generate quote</asp:Panel>
         </div>
 
         <!-- Alert Notification Panel -->
@@ -260,7 +280,7 @@
         <asp:Panel ID="pnlJobSelection" runat="server">
             <div class="card-custom">
                 <div class="card-header-custom">
-                    1. Select Your Job Request
+                    Choose a job request
                 </div>
                 <div class="card-body-custom">
                     <div class="table-responsive">
@@ -269,7 +289,7 @@
                             CssClass="table-custom mb-3" GridLines="None">
                             <SelectedRowStyle CssClass="row-selected" />
                             <Columns>
-                                <asp:BoundField DataField="jobRequestID" HeaderText="Request ID" />
+                                <asp:BoundField DataField="jobRequestID" HeaderText="Request #" />
                                 <asp:BoundField DataField="clientName" HeaderText="Client" Visible="false" />
                                 <asp:BoundField DataField="siteAddress" HeaderText="Site Address" />
                                 <asp:TemplateField HeaderText="Urgency">
@@ -278,32 +298,28 @@
                                     </ItemTemplate>
                                 </asp:TemplateField>
                                 <asp:BoundField DataField="dateRecieved" HeaderText="Date Received" DataFormatString="{0:yyyy-MM-dd}" />
-                                <asp:BoundField DataField="status" HeaderText="Status" />
-                                <asp:CommandField ShowSelectButton="True" SelectText="Select Request" ButtonType="Button" ControlStyle-CssClass="btn btn-sm btn-outline-success fw-bold px-3 text-nowrap" />
+                                <asp:BoundField DataField="status" HeaderText="Request Status" />
+                                <asp:CommandField ShowSelectButton="True" SelectText="Select" ButtonType="Button" ControlStyle-CssClass="btn btn-sm btn-success fw-bold px-3 text-nowrap" />
                             </Columns>
                         </asp:GridView>
                     </div>
 
-                    <!-- Layout displaying Site Address (Only visible when a request IS selected) -->
-                    <asp:Panel ID="pnlSelectionDetails" runat="server" Visible="false" CssClass="row g-3 mt-2 pt-3 border-top">
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <asp:Label runat="server" AssociatedControlID="txtSelectedJobId" CssClass="form-label-custom d-block" Text="Selected Request ID" />
-                                <asp:TextBox ID="txtSelectedJobId" runat="server" CssClass="form-control-custom" ReadOnly="true" />
-                            </div>
+                    <!-- Shown once a request is selected -->
+                    <asp:Panel ID="pnlSelectionDetails" runat="server" Visible="false" CssClass="selected-strip">
+                        <div>
+                            <asp:Label runat="server" AssociatedControlID="txtSelectedJobId" CssClass="k" Text="Selected request" />
+                            <asp:TextBox ID="txtSelectedJobId" runat="server" CssClass="form-control-custom" ReadOnly="true" style="width: 110px;" />
                         </div>
-                        <div class="col-md-9">
-                            <div class="form-group">
-                                <asp:Label runat="server" AssociatedControlID="txtSiteAddress" CssClass="form-label-custom d-block" Text="Site Address" />
-                                <asp:TextBox ID="txtSiteAddress" runat="server" CssClass="form-control-custom" ReadOnly="true" />
-                            </div>
+                        <div style="flex: 1; min-width: 220px;">
+                            <asp:Label runat="server" AssociatedControlID="txtSiteAddress" CssClass="k" Text="Site address" />
+                            <asp:TextBox ID="txtSiteAddress" runat="server" CssClass="form-control-custom" ReadOnly="true" />
                         </div>
                     </asp:Panel>
 
                     <!-- Prompt shown BEFORE any request is selected -->
                     <asp:Panel ID="pnlSelectionPrompt" runat="server" CssClass="text-center py-3 text-muted bg-light rounded-3 mt-2 border">
                         <p class="mb-0 small fw-semibold">
-                            <i class="bi bi-info-circle me-1"></i> Click <strong>"Select Request"</strong> on an item above to load the service breakdown and calculate logistics.
+                            <i class="bi bi-info-circle me-1"></i> Press <strong>Select</strong> on a request above to see its services, travel cost and total.
                         </p>
                     </asp:Panel>
                 </div>
@@ -312,120 +328,113 @@
 
         <!-- Dynamic Form Content Panel -->
         <asp:Panel ID="pnlFormContent" runat="server">
+            <div class="row g-4">
 
-            <!-- Section 2: Requested Services Grid -->
-            <div class="card-custom">
-                <div class="card-header-custom">
-                    2. Requested Services
-                </div>
-                <div class="card-body-custom p-0">
-                    <div class="table-responsive">
-                        <asp:GridView ID="gvRequestItems" runat="server" AutoGenerateColumns="False" CssClass="table-custom" GridLines="None"
-                            EmptyDataText="No services have been added to this request yet.">
-                            <EmptyDataRowStyle CssClass="text-center text-muted p-4" />
-                            <Columns>
-                                <asp:BoundField DataField="JobTypeName" HeaderText="Service / Job Type" />
-                                <asp:BoundField DataField="JobRate" HeaderText="Rate (ZAR)" DataFormatString="{0:C}" />
-                                <asp:BoundField DataField="Quantity" HeaderText="Quantity / Value" DataFormatString="{0:0.##}" />
-                                <asp:BoundField DataField="UnitOfMeasure" HeaderText="Unit" />
-                                <asp:BoundField DataField="LineTotal" HeaderText="Line Total" DataFormatString="{0:C}" ItemStyle-CssClass="fw-semibold" />
-                            </Columns>
-                        </asp:GridView>
+                <!-- Left: what is being quoted -->
+                <div class="col-lg-7">
+                    <div class="card-custom">
+                        <div class="card-header-custom">Requested services</div>
+                        <div class="card-body-custom p-0">
+                            <div class="table-responsive">
+                                <asp:GridView ID="gvRequestItems" runat="server" AutoGenerateColumns="False" CssClass="table-custom" GridLines="None"
+                                    EmptyDataText="No services have been added to this request yet.">
+                                    <EmptyDataRowStyle CssClass="text-center text-muted p-4" />
+                                    <Columns>
+                                        <asp:BoundField DataField="JobTypeName" HeaderText="Service" />
+                                        <asp:BoundField DataField="JobRate" HeaderText="Rate" DataFormatString="{0:C}" />
+                                        <asp:BoundField DataField="Quantity" HeaderText="Qty" DataFormatString="{0:0.##}" />
+                                        <asp:BoundField DataField="UnitOfMeasure" HeaderText="Unit" />
+                                        <asp:BoundField DataField="LineTotal" HeaderText="Line Total" DataFormatString="{0:C}" ItemStyle-CssClass="fw-semibold" />
+                                    </Columns>
+                                </asp:GridView>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-custom">
+                        <div class="card-header-custom">Travel &amp; logistics</div>
+                        <div class="card-body-custom">
+                            <div class="row align-items-center g-3 mb-3">
+                                <div class="col-sm-5">
+                                    <span class="form-label-custom d-block">From</span>
+                                    <strong class="text-dark">7 Baumann Rd, Durban, Queensburgh Industrial</strong>
+                                </div>
+                                <div class="col-sm-2 text-sm-center">
+                                    <span class="badge bg-secondary px-3 py-2">
+                                        <asp:Label ID="lblOneWayDistance" runat="server" Text="0.0 km" />
+                                    </span>
+                                    <small class="d-block text-muted mt-1" style="font-size: 0.75rem;">one way</small>
+                                </div>
+                                <div class="col-sm-5 text-sm-end">
+                                    <span class="form-label-custom d-block">To (client site)</span>
+                                    <strong class="text-dark"><asp:Label ID="lblDisplaySiteAddress" runat="server" Text="[No Address Selected]" /></strong>
+                                </div>
+                            </div>
+
+                            <div class="travel-summary-card">
+                                <div class="travel-total-row">
+                                    <span class="travel-total-label">Estimated travel / fuel fee</span>
+                                    <asp:Label ID="lblTravelFee" runat="server" CssClass="travel-total-amount" Text="R 0,00" />
+                                </div>
+                                <div class="travel-metric-item">
+                                    <span class="travel-metric-label">How it is worked out</span>
+                                    <asp:Label ID="lblTravelBreakdown" runat="server" CssClass="travel-metric-val" Text="Base call-out + distance" />
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Right: totals + action, always in view -->
+                <div class="col-lg-5">
+                    <div class="summary-sticky">
+                        <div class="card-custom">
+                            <div class="card-header-custom">Quote summary</div>
+                            <div class="card-body-custom">
+                                <div class="breakdown-card">
+                                    <div class="breakdown-line">
+                                        <span class="text-muted">Services subtotal</span>
+                                        <asp:Label ID="lblSubtotal" runat="server" Font-Bold="true" Text="R 0,00" />
+                                    </div>
+                                    <div class="breakdown-line">
+                                        <span class="text-muted">Travel / fuel fee</span>
+                                        <asp:Label ID="lblTravelFeeSummary" runat="server" Font-Bold="true" Text="R 0,00" />
+                                    </div>
+                                    <div class="breakdown-line divider">
+                                        <span>Subtotal</span>
+                                        <asp:Label ID="lblSubtotalWithTravel" runat="server" Font-Bold="true" Text="R 0,00" />
+                                    </div>
+                                    <div class="breakdown-line">
+                                        <span class="text-muted">VAT (15%)</span>
+                                        <asp:Label ID="lblVat" runat="server" Font-Bold="true" Text="R 0,00" />
+                                    </div>
+                                    <div class="breakdown-line total">
+                                        <span>Total (incl. VAT)</span>
+                                        <asp:Label ID="lblTotalWithVat" runat="server" Text="R 0,00" />
+                                    </div>
+                                </div>
+                                <div class="estimate-note">
+                                    Generating saves the quote with these figures, marks it as sent and sets it to expire in one month.
+                                </div>
+
+                                <div class="mt-4">
+                                    <asp:Button ID="btnGenerateArbitraryQuote" runat="server" Text="Generate quote"
+                                        CssClass="btn-primary-custom" OnClick="btnGenerateArbitraryQuote_Click"
+                                        UseSubmitBehavior="false"
+                                        OnClientClick="this.disabled = true; this.value = 'Generating quote…';" />
+
+                                    <asp:Button ID="btnViewPdfQuote" runat="server" Text="View quote (print / PDF)"
+                                        CssClass="btn-primary-custom mt-2" OnClick="btnViewPdfQuote_Click" Visible="false" />
+
+                                    <asp:Button ID="btnCancel" runat="server" Text="Choose a different request"
+                                        CssClass="btn-secondary-custom" OnClick="btnCancel_Click" CausesValidation="false" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
-
-            <!-- Section 3: Travel & Logistics Calculation -->
-            <div class="card-custom">
-                <div class="card-header-custom">
-                    3. Travel &amp; Logistics Calculation
-                </div>
-                <div class="card-body-custom">
-                    <!-- Address & Distance Route Banner -->
-                    <div class="p-3 mb-3 rounded-3" style="background-color: #f1f3f5; border: 1px solid #dee2e6;">
-                        <div class="row align-items-center g-3">
-                            <div class="col-md-5">
-                                <span class="form-label-custom d-block text-muted">Business Origin</span>
-                                <strong class="text-dark">7 Baumann Rd, Durban, Queensburgh Industrial</strong>
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <span class="badge bg-secondary px-3 py-2">
-                                    ➔ <asp:Label ID="lblOneWayDistance" runat="server" Text="0.0 km" /> ➔
-                                </span>
-                                <small class="d-block text-muted mt-1" style="font-size: 0.75rem;">One-Way Distance</small>
-                            </div>
-                            <div class="col-md-5 text-md-end">
-                                <span class="form-label-custom d-block text-muted">Client Site Location</span>
-                                <strong class="text-dark"><asp:Label ID="lblDisplaySiteAddress" runat="server" Text="[No Address Selected]" /></strong>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Travel Fee Summary Card -->
-                    <div class="travel-summary-card">
-                        <div class="travel-total-row">
-                            <span class="travel-total-label">Estimated Travel / Fuel Fee</span>
-                            <asp:Label ID="lblTravelFee" runat="server" CssClass="travel-total-amount" Text="R 0,00" />
-                        </div>
-
-                        <div class="travel-metrics-grid">
-                            <div class="travel-metric-item">
-                                <span class="travel-metric-label">Fee Breakdown</span>
-                                <asp:Label ID="lblTravelBreakdown" runat="server" CssClass="travel-metric-val" Text="Base Call-out + Distance calculation" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Section 4: Cost Breakdown Summary -->
-            <div class="card-custom">
-                <div class="card-header-custom">
-                    4. Financial Cost Summary
-                </div>
-                <div class="card-body-custom">
-                    <div class="breakdown-card">
-                        <div class="breakdown-line">
-                            <span class="text-muted">Services Subtotal:</span>
-                            <asp:Label ID="lblSubtotal" runat="server" Font-Bold="true" Text="R 0,00" />
-                        </div>
-                        <div class="breakdown-line">
-                            <span class="text-muted">Estimated Travel / Fuel Fee:</span>
-                            <asp:Label ID="lblTravelFeeSummary" runat="server" Font-Bold="true" Text="R 0,00" />
-                        </div>
-                        <div class="breakdown-line divider">
-                            <span>Subtotal (Incl. Travel):</span>
-                            <asp:Label ID="lblSubtotalWithTravel" runat="server" Font-Bold="true" Text="R 0,00" />
-                        </div>
-                        <div class="breakdown-line">
-                            <span class="text-muted">VAT (15%):</span>
-                            <asp:Label ID="lblVat" runat="server" Font-Bold="true" Text="R 0,00" />
-                        </div>
-                        <div class="breakdown-line total">
-                            <span>Total Amount (Incl. VAT):</span>
-                            <asp:Label ID="lblTotalWithVat" runat="server" Text="R 0,00" />
-                        </div>
-                    </div>
-                    <div class="estimate-note">
-                        The quote is saved with these figures. Travel is calculated from the site coordinates on your job request.
-                    </div>
-
-                    <!-- Action Buttons -->
-                    <div class="mt-4">
-                        <asp:Button ID="btnGenerateArbitraryQuote" runat="server" Text="Save & Generate Quote"
-                            CssClass="btn-primary-custom" OnClick="btnGenerateArbitraryQuote_Click"
-                            UseSubmitBehavior="false"
-                            OnClientClick="this.disabled = true; this.value = 'Generating quote…';" />
-
-                        <asp:Button ID="btnViewPdfQuote" runat="server" Text="View Quote PDF"
-                            CssClass="btn-primary-custom mt-2" OnClick="btnViewPdfQuote_Click" Visible="false" />
-
-                        <asp:Button ID="btnCancel" runat="server" Text="Cancel"
-                            CssClass="btn-secondary-custom" OnClick="btnCancel_Click" CausesValidation="false" />
-                    </div>
-                </div>
-            </div>
-
         </asp:Panel>
 
         <!-- Cleaned Empty State Panel -->
@@ -439,7 +448,7 @@
                 </div>
                 <h4 class="fw-bold text-dark mb-2">No Pending Job Requests Found</h4>
                 <p class="text-muted mb-4">There are currently no job requests eligible for quote generation. Already-quoted requests can be found under your quotes.</p>
-                <a runat="server" href="~/JobRequest.aspx" class="btn btn-success px-4 py-2 fw-semibold me-2">
+                <a runat="server" href="~/Requests/SubmitRequest.aspx" class="btn btn-success px-4 py-2 fw-semibold me-2">
                     Submit New Job Request
                 </a>
                 <a runat="server" href="~/ViewQuote.aspx" class="btn btn-outline-secondary px-4 py-2 fw-semibold">

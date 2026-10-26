@@ -9,6 +9,10 @@
         .detail-value { font-weight: 600; color: #212529; }
         .quote-grid th { white-space: nowrap; font-size: 0.78rem; }
         .quote-grid td { vertical-align: middle; }
+        .stat-card { transition: border-color .2s ease; }
+        .stat-sub { font-size: .75rem; color: #6c757d; }
+        .status-tabs .btn { border-radius: 999px; }
+        .filter-hint { font-size: .8rem; color: #6c757d; }
     </style>
 
     <div class="container py-4">
@@ -16,10 +20,10 @@
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
             <div>
                 <h2 class="fw-bold text-dark mb-1">Quotes Management &amp; Archive</h2>
-                <p class="text-muted small mb-0">Review, manage, and track client quotations.</p>
+                <p class="text-muted small mb-0"><asp:Label ID="lblSubtitle" runat="server" Text="Review, manage, and track client quotations." /></p>
             </div>
             <div>
-                <asp:Label ID="lblStatusFilter" runat="server" AssociatedControlID="ddlStatusFilter" CssClass="form-label small fw-bold text-muted me-2 mb-0" Text="Show:" />
+                <asp:Label ID="lblStatusFilter" runat="server" AssociatedControlID="ddlStatusFilter" CssClass="form-label small fw-bold text-muted me-2 mb-0" Text="Filter by status:" />
                 <asp:DropDownList ID="ddlStatusFilter" runat="server" AutoPostBack="true"
                     OnSelectedIndexChanged="ddlStatusFilter_SelectedIndexChanged"
                     CssClass="form-select form-select-sm d-inline-block w-auto" />
@@ -41,29 +45,29 @@
             <a runat="server" href="~/RequestQuote.aspx" class="btn btn-success px-4 fw-semibold">Request a Quote</a>
         </asp:Panel>
 
-        <!-- Summary cards -->
+        <!-- Summary cards: these follow the status chosen in the filter above -->
         <asp:Panel ID="pnlStats" runat="server" CssClass="row g-3 mb-4">
             <div class="col-6 col-lg-3">
                 <div class="card border-0 shadow-sm rounded-4 stat-card h-100"><div class="card-body py-3">
-                    <div class="stat-label">Total quotes</div>
+                    <div class="stat-label"><asp:Label ID="lblStatTotalTitle" runat="server" Text="Total quotes" /></div>
                     <div class="stat-value"><asp:Label ID="lblStatTotal" runat="server" Text="0" /></div>
                 </div></div>
             </div>
             <div class="col-6 col-lg-3">
                 <div class="card border-0 shadow-sm rounded-4 stat-card h-100"><div class="card-body py-3">
-                    <div class="stat-label">Awaiting response</div>
+                    <div class="stat-label"><asp:Label ID="lblStatAwaitingTitle" runat="server" Text="Awaiting response" /></div>
                     <div class="stat-value"><asp:Label ID="lblStatAwaiting" runat="server" Text="0" /></div>
                 </div></div>
             </div>
             <div class="col-6 col-lg-3">
                 <div class="card border-0 shadow-sm rounded-4 stat-card h-100"><div class="card-body py-3">
-                    <div class="stat-label">Accepted</div>
+                    <div class="stat-label"><asp:Label ID="lblStatAcceptedTitle" runat="server" Text="Accepted" /></div>
                     <div class="stat-value"><asp:Label ID="lblStatAccepted" runat="server" Text="0" /></div>
                 </div></div>
             </div>
             <div class="col-6 col-lg-3">
                 <div class="card border-0 shadow-sm rounded-4 stat-card h-100"><div class="card-body py-3">
-                    <div class="stat-label">Accepted value</div>
+                    <div class="stat-label"><asp:Label ID="lblStatValueTitle" runat="server" Text="Accepted value" /></div>
                     <div class="stat-value"><asp:Label ID="lblStatValue" runat="server" Text="R 0,00" /></div>
                 </div></div>
             </div>
@@ -101,24 +105,6 @@
                     </PagerTemplate>
 
                     <Columns>
-                        <asp:TemplateField HeaderText="Action">
-                            <ItemTemplate>
-                                <asp:LinkButton ID="lnkSelect" runat="server" CommandName="Select" CausesValidation="false"
-                                    CssClass="btn btn-sm btn-outline-success fw-semibold text-nowrap"
-                                    Text='<%# SelectButtonText() %>' />
-                            </ItemTemplate>
-                        </asp:TemplateField>
-
-                        <asp:TemplateField HeaderText="Print / View">
-                            <ItemTemplate>
-                                <asp:HyperLink ID="lnkPrintQuote" runat="server"
-                                    NavigateUrl='<%# Eval("jobRequestID", "PrintQuote.aspx?jobRequestID={0}") %>'
-                                    CssClass="btn btn-sm btn-dark text-nowrap" Target="_blank" rel="noopener">
-                                    🖨️ Print
-                                </asp:HyperLink>
-                            </ItemTemplate>
-                        </asp:TemplateField>
-
                         <asp:TemplateField HeaderText="Quote No.">
                             <ItemTemplate>
                                 <span class="fw-semibold text-success text-nowrap"><%#: Eval("jobRequestID", "GT – {0}") %></span>
@@ -141,6 +127,17 @@
                                 <span class='<%# GetStatusCss(Eval("quoteStatus")) %>'><%#: Eval("quoteStatus") %></span>
                             </ItemTemplate>
                         </asp:TemplateField>
+                        <asp:TemplateField HeaderText="" ItemStyle-CssClass="text-end text-nowrap">
+                            <ItemTemplate>
+                                <asp:LinkButton ID="lnkSelect" runat="server" CommandName="Select" CausesValidation="false"
+                                    CssClass="btn btn-sm btn-success fw-semibold text-nowrap"
+                                    Text='<%# SelectButtonText() %>' />
+                                <asp:HyperLink ID="lnkPrintQuote" runat="server"
+                                    NavigateUrl='<%# Eval("jobRequestID", "PrintQuote.aspx?jobRequestID={0}") %>'
+                                    CssClass="btn btn-sm btn-outline-dark text-nowrap" Target="_blank" rel="noopener"
+                                    ToolTip="Print / save as PDF">🖨️</asp:HyperLink>
+                            </ItemTemplate>
+                        </asp:TemplateField>
                     </Columns>
                 </asp:GridView>
             </div>
@@ -161,6 +158,7 @@
                 <div class="col-6 col-md-3"><span class="detail-label">Date issued</span><span class="detail-value"><asp:Label ID="lblDetailIssued" runat="server" /></span></div>
                 <div class="col-6 col-md-3"><span class="detail-label">Valid until</span><span class="detail-value"><asp:Label ID="lblDetailExpiry" runat="server" /></span></div>
                 <div class="col-6 col-md-3"><span class="detail-label">Total (incl. VAT)</span><span class="detail-value"><asp:Label ID="lblDetailAmount" runat="server" /></span></div>
+                <div class="col-6 col-md-3"><span class="detail-label">Status</span><asp:Label ID="lblDetailStatus" runat="server" /></div>
             </div>
 
             <%-- Management Edit Panel --%>
