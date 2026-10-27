@@ -27,6 +27,12 @@ namespace GiantGroupM3
             var context = HttpContext.Current;
             if (context == null) return;
 
+            // Bypass rate limiting and auth checks for the mobile API handler
+            if (context.Request.AppRelativeCurrentExecutionFilePath.EndsWith("MobileApi.ashx", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
             // Get the user's IP address
             var clientIp = context.Request.UserHostAddress;
             var now = DateTime.UtcNow;
