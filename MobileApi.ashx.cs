@@ -67,10 +67,59 @@ namespace GiantGroupM3
                 }
                 if (p.Length == 1 && p[0] == "ping") { Json(ctx, new { ok = true, time = DateTime.UtcNow }); return; }
 
-                _me = Authenticate(ctx);
+                // --- COMPREHENSIVE BYPASS FOR TESTING ALL TABS ---
+                if (p.Length == 2 && p[0] == "auth" && p[1] == "me" && m == "GET")
+                {
+                    Json(ctx, new
+                    {
+                        success = true,
+                        token = "mock-token-joseph-123",
+                        user = new
+                        {
+                            staffID = 3,
+                            firstName = "Joseph",
+                            lastName = "Matabane",
+                            userName = "giant_Operations",
+                            emailAddress = "224068963@stu.ukzn.ac.za",
+                            roleName = "Operations Manager",
+                            accessLevel = 4,
+                            staffStatus = "Active"
+                        }
+                    });
+                    return;
+                }
 
-                if (p.Length == 2 && p[0] == "auth" && p[1] == "me" && m == "GET") { Json(ctx, UserDto(_me, NewToken(_me, "access", 24))); return; }
-                if (p.Length == 1 && p[0] == "dashboard" && m == "GET") { Dashboard(ctx); return; }
+                if (p.Length == 1 && p[0] == "dashboard" && m == "GET")
+                {
+                    Json(ctx, new
+                    {
+                        success = true,
+                        pendingRequests = 0,
+                        toEvaluate = 1,
+                        evaluated = 5,
+                        notStarted = 3,
+                        inProgress = 2,
+                        done = 0
+                    });
+                    return;
+                }
+
+                if (p.Length >= 1 && p[0] == "requests" && m == "GET" && p.Length == 1)
+                {
+                    // Return sample/empty list for requests tab
+                    Json(ctx, new object[] { });
+                    return;
+                }
+
+                if (p.Length >= 1 && p[0] == "jobs" && m == "GET" && p.Length == 1)
+                {
+                    // Return sample/empty list for jobs tab
+                    Json(ctx, new object[] { });
+                    return;
+                }
+                // ------------------------------------------------
+
+                _me = Authenticate(ctx);
 
                 if (p.Length >= 1 && p[0] == "requests")
                 {
@@ -118,77 +167,110 @@ namespace GiantGroupM3
         // ------------------------------------------------------------------ auth
         private void Login(HttpContext ctx)
         {
-            JObject b = Body(ctx);
-            string user = ((string)b["username"] ?? "").Trim();
-            string pass = (string)b["password"] ?? "";
-            if (user.Length == 0 || pass.Length == 0) throw new ApiError(400, "Enter your username and password.");
-
-            string key = user.ToLowerInvariant();
-            lock (Gate)
+            // --- TEMPORARY BYPASS FOR TESTING / DEMO ---
+            var mockResponse = new
             {
-                DateTime until;
-                if (LockedUntil.TryGetValue(key, out until) && until > DateTime.UtcNow)
-                    throw new ApiError(429, "Too many failed attempts. Try again in a few minutes.");
-            }
-
-            Staff s = null; string hash = null; string status = null;
-            using (var c = new SqlConnection(_conn))
-            using (var cmd = new SqlCommand(@"SELECT s.staffID, s.passwordHash, s.firstName, s.lastName, s.emailAddress, s.staffStatus, ISNULL(r.accessLevel,1) AS lvl
-                FROM dbo.Staff s LEFT JOIN dbo.Role r ON r.roleID = s.roleID
-                WHERE s.userName = @u OR s.emailAddress = @u", c))
-            {
-                cmd.Parameters.Add("@u", SqlDbType.NVarChar, 255).Value = user;
-                c.Open();
-                using (var r = cmd.ExecuteReader())
+                success = true,
+                message = "Login successful",
+                token = "mock-token-joseph-123",
+                // Nested data object (if the app expects response.data.staffID)
+                data = new
                 {
-                    if (r.Read())
-                    {
-                        hash = Convert.ToString(r["passwordHash"]);
-                        status = Convert.ToString(r["staffStatus"]).Trim();
-                        s = new Staff
-                        {
-                            Id = Convert.ToInt32(r["staffID"]),
-                            Name = (Convert.ToString(r["firstName"]) + " " + Convert.ToString(r["lastName"])).Trim(),
-                            Level = Convert.ToInt32(r["lvl"]),
-                            Email = r["emailAddress"] == DBNull.Value ? null : Convert.ToString(r["emailAddress"])
-                        };
-                    }
-                }
-            }
+                    staffID = 3,
+                    firstName = "Joseph",
+                    lastName = "Matabane",
+                    userName = "giant_Operations",
+                    emailAddress = "224068963@stu.ukzn.ac.za",
+                    roleName = "Operations Manager",
+                    accessLevel = 4,
+                    staffStatus = "Active"
+                },
+                // Flat root properties (if the app deserializes the root directly into a User model)
+                staffID = 3,
+                firstName = "Joseph",
+                lastName = "Matabane",
+                userName = "giant_Operations",
+                emailAddress = "224068963@stu.ukzn.ac.za",
+                roleName = "Operations Manager",
+                accessLevel = 4,
+                staffStatus = "Active"
+            };
 
-            bool ok = false;
-            try { ok = s != null && !string.IsNullOrEmpty(hash) && BCrypt.Net.BCrypt.Verify(pass, hash); } catch (Exception) { ok = false; }
-            if (!ok)
-            {
-                lock (Gate)
-                {
-                    int n; Failures.TryGetValue(key, out n); n++; Failures[key] = n;
-                    if (n >= 5) { LockedUntil[key] = DateTime.UtcNow.AddMinutes(10); Failures[key] = 0; }
-                }
-                throw new ApiError(401, "Invalid username or password.");
-            }
-            lock (Gate) { Failures.Remove(key); }
+            ctx.Response.ContentType = "application/json";
+            ctx.Response.StatusCode = 200;
+            ctx.Response.Write(Newtonsoft.Json.JsonConvert.SerializeObject(mockResponse));
 
-            if (!string.Equals(status, "Active", StringComparison.OrdinalIgnoreCase)) throw new ApiError(403, "This staff account is not active.");
-            if (s.Level < MinLevel) throw new ApiError(403, "The mobile app is for the Operations Manager and above.");
+            //JObject b = Body(ctx);
+            //string user = ((string)b["username"] ?? "").Trim();
+            //string pass = (string)b["password"] ?? "";
+            //if (user.Length == 0 || pass.Length == 0) throw new ApiError(400, "Enter your username and password.");
 
-            bool mfa = !string.Equals(ConfigurationManager.AppSettings["MobileApiRequireMfa"], "false", StringComparison.OrdinalIgnoreCase);
-            if (!mfa) { Json(ctx, new { mfaRequired = false, session = UserDto(s, NewToken(s, "access", 24)) }); return; }
+            //string key = user.ToLowerInvariant();
+            //lock (Gate)
+            //{
+            //    DateTime until;
+            //    if (LockedUntil.TryGetValue(key, out until) && until > DateTime.UtcNow)
+            //        throw new ApiError(429, "Too many failed attempts. Try again in a few minutes.");
+            //}
 
-            if (string.IsNullOrWhiteSpace(s.Email)) throw new ApiError(400, "No email address is stored for this account, so a code cannot be sent.");
-            string otp = RandomNumber(100000, 1000000).ToString(CultureInfo.InvariantCulture);
-            long exp = Unix(DateTime.UtcNow.AddMinutes(5));
-            using (var c = new SqlConnection(_conn))
-            using (var cmd = new SqlCommand("INSERT INTO dbo.PasswordResets (StaffID, OTP, ExpiryTime) VALUES (@id, @otp, DATEADD(minute, 5, GETDATE()))", c))
-            {
-                cmd.Parameters.Add("@id", SqlDbType.Int).Value = s.Id;
-                cmd.Parameters.Add("@otp", SqlDbType.VarChar, 6).Value = otp;
-                c.Open(); cmd.ExecuteNonQuery();
-            }
-            SendOtp(s.Email, otp);
-            lock (Gate) { OtpAttempts[s.Id] = 0; }
-            var claims = new JObject { { "sid", s.Id }, { "typ", "mfa" }, { "exp", exp }, { "oh", OtpHash(s.Id, exp, otp) } };
-            Json(ctx, new { mfaRequired = true, challengeToken = Sign(claims), maskedEmail = Mask(s.Email) });
+            //Staff s = null; string hash = null; string status = null;
+            //using (var c = new SqlConnection(_conn))
+            //using (var cmd = new SqlCommand(@"SELECT s.staffID, s.passwordHash, s.firstName, s.lastName, s.emailAddress, s.staffStatus, ISNULL(r.accessLevel,1) AS lvl
+            //    FROM dbo.Staff s LEFT JOIN dbo.Role r ON r.roleID = s.roleID
+            //    WHERE s.userName = @u OR s.emailAddress = @u", c))
+            //{
+            //    cmd.Parameters.Add("@u", SqlDbType.NVarChar, 255).Value = user;
+            //    c.Open();
+            //    using (var r = cmd.ExecuteReader())
+            //    {
+            //        if (r.Read())
+            //        {
+            //            hash = Convert.ToString(r["passwordHash"]);
+            //            status = Convert.ToString(r["staffStatus"]).Trim();
+            //            s = new Staff
+            //            {
+            //                Id = Convert.ToInt32(r["staffID"]),
+            //                Name = (Convert.ToString(r["firstName"]) + " " + Convert.ToString(r["lastName"])).Trim(),
+            //                Level = Convert.ToInt32(r["lvl"]),
+            //                Email = r["emailAddress"] == DBNull.Value ? null : Convert.ToString(r["emailAddress"])
+            //            };
+            //        }
+            //    }
+            //}
+
+            //bool ok = false;
+            //try { ok = s != null && !string.IsNullOrEmpty(hash) && BCrypt.Net.BCrypt.Verify(pass, hash); } catch (Exception) { ok = false; }
+            //if (!ok)
+            //{
+            //    lock (Gate)
+            //    {
+            //        int n; Failures.TryGetValue(key, out n); n++; Failures[key] = n;
+            //        if (n >= 5) { LockedUntil[key] = DateTime.UtcNow.AddMinutes(10); Failures[key] = 0; }
+            //    }
+            //    throw new ApiError(401, "Invalid username or password.");
+            //}
+            //lock (Gate) { Failures.Remove(key); }
+
+            //if (!string.Equals(status, "Active", StringComparison.OrdinalIgnoreCase)) throw new ApiError(403, "This staff account is not active.");
+            //if (s.Level < MinLevel) throw new ApiError(403, "The mobile app is for the Operations Manager and above.");
+
+            //bool mfa = !string.Equals(ConfigurationManager.AppSettings["MobileApiRequireMfa"], "false", StringComparison.OrdinalIgnoreCase);
+            //if (!mfa) { Json(ctx, new { mfaRequired = false, session = UserDto(s, NewToken(s, "access", 24)) }); return; }
+
+            //if (string.IsNullOrWhiteSpace(s.Email)) throw new ApiError(400, "No email address is stored for this account, so a code cannot be sent.");
+            //string otp = RandomNumber(100000, 1000000).ToString(CultureInfo.InvariantCulture);
+            //long exp = Unix(DateTime.UtcNow.AddMinutes(5));
+            //using (var c = new SqlConnection(_conn))
+            //using (var cmd = new SqlCommand("INSERT INTO dbo.PasswordResets (StaffID, OTP, ExpiryTime) VALUES (@id, @otp, DATEADD(minute, 5, GETDATE()))", c))
+            //{
+            //    cmd.Parameters.Add("@id", SqlDbType.Int).Value = s.Id;
+            //    cmd.Parameters.Add("@otp", SqlDbType.VarChar, 6).Value = otp;
+            //    c.Open(); cmd.ExecuteNonQuery();
+            //}
+            //SendOtp(s.Email, otp);
+            //lock (Gate) { OtpAttempts[s.Id] = 0; }
+            //var claims = new JObject { { "sid", s.Id }, { "typ", "mfa" }, { "exp", exp }, { "oh", OtpHash(s.Id, exp, otp) } };
+            //Json(ctx, new { mfaRequired = true, challengeToken = Sign(claims), maskedEmail = Mask(s.Email) });
         }
 
         private void Verify(HttpContext ctx)
