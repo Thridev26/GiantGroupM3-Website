@@ -224,6 +224,7 @@
     </Content>
     <Content Include="Help.aspx" />
     <Content Include="HomeRouter.aspx" />
+    <Content Include="invoicing\Payments.aspx" />
     <Content Include="ManagementPortal.aspx" />
     <Content Include="NotFound.aspx" />
     <Content Include="PrintQuote.aspx" />
@@ -264,6 +265,8 @@
     <Content Include="Account\Web.config" />
     <Content Include="CalendarEvents.ashx" />
     <Content Include="MobileApi.ashx" />
+    <Content Include="PayFastITN.ashx" />
+    <Content Include="PayFastCheckout.ashx" />
     <None Include="Properties\PublishProfiles\IST-WST-Group-1 - FTP.pubxml" />
     <None Include="Properties\PublishProfiles\IST-WST-Group-1 - Web Deploy.pubxml" />
     <None Include="Properties\PublishProfiles\IST-WST-Group-1 - Web Deploy1.pubxml" />
@@ -502,6 +505,13 @@
       <DependentUpon>HomeRouter.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
+    <Compile Include="invoicing\Payments.aspx.cs">
+      <DependentUpon>Payments.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="invoicing\Payments.aspx.designer.cs">
+      <DependentUpon>Payments.aspx</DependentUpon>
+    </Compile>
     <Compile Include="ManagementPortal.aspx.cs">
       <DependentUpon>ManagementPortal.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -513,6 +523,12 @@
     <Compile Include="NotFound.aspx.cs">
       <DependentUpon>NotFound.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="PayFastCheckout.ashx.cs">
+      <DependentUpon>PayFastCheckout.ashx</DependentUpon>
+    </Compile>
+    <Compile Include="PayFastITN.ashx.cs">
+      <DependentUpon>PayFastITN.ashx</DependentUpon>
     </Compile>
     <Compile Include="PrintQuote.aspx.cs">
       <DependentUpon>PrintQuote.aspx</DependentUpon>
