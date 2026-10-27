@@ -144,7 +144,7 @@ namespace GiantGroupM3
                     if (r.Read())
                     {
                         hash = Convert.ToString(r["passwordHash"]);
-                        status = Convert.ToString(r["staffStatus"]);
+                        status = Convert.ToString(r["staffStatus"]).Trim();
                         s = new Staff
                         {
                             Id = Convert.ToInt32(r["staffID"]),
@@ -227,7 +227,7 @@ namespace GiantGroupM3
         {
             using (var c = new SqlConnection(_conn))
             using (var cmd = new SqlCommand(@"SELECT s.firstName, s.lastName, s.emailAddress, ISNULL(r.accessLevel,1) AS lvl
-                FROM dbo.Staff s LEFT JOIN dbo.Role r ON r.roleID = s.roleID WHERE s.staffID = @id AND s.staffStatus = 'Active'", c))
+                FROM dbo.Staff s LEFT JOIN dbo.Role r ON r.roleID = s.roleID WHERE s.staffID = @id AND RTRIM(LTRIM(s.staffStatus)) = 'Active'", c))
             {
                 cmd.Parameters.Add("@id", SqlDbType.Int).Value = id;
                 c.Open();
