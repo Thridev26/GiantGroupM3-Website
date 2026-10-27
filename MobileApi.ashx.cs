@@ -32,6 +32,8 @@ namespace GiantGroupM3
         public bool IsReusable { get { return false; } }
 
         private const int MinLevel = 4;
+        // The mobile app has no sign-in. Its requests run at Manager level (5) so every request status the website can set is available.
+        private const int AppAccessLevel = 5;
         private const int MaxPhotoBytes = 15 * 1024 * 1024;
         private static readonly string[] RequestStatuses = { "Pending", "Evaluation Date Set", "Site Evaluated", "Quote Sent", "Quote Accepted", "Cancelled" };
         private static readonly string[] JobStatuses = { "Not Started", "In Progress", "Completed" };
@@ -67,59 +69,10 @@ namespace GiantGroupM3
                 }
                 if (p.Length == 1 && p[0] == "ping") { Json(ctx, new { ok = true, time = DateTime.UtcNow }); return; }
 
-                // --- COMPREHENSIVE BYPASS FOR TESTING ALL TABS ---
-                if (p.Length == 2 && p[0] == "auth" && p[1] == "me" && m == "GET")
-                {
-                    Json(ctx, new
-                    {
-                        success = true,
-                        token = "mock-token-joseph-123",
-                        user = new
-                        {
-                            staffID = 3,
-                            firstName = "Joseph",
-                            lastName = "Matabane",
-                            userName = "giant_Operations",
-                            emailAddress = "224068963@stu.ukzn.ac.za",
-                            roleName = "Operations Manager",
-                            accessLevel = 4,
-                            staffStatus = "Active"
-                        }
-                    });
-                    return;
-                }
-
-                if (p.Length == 1 && p[0] == "dashboard" && m == "GET")
-                {
-                    Json(ctx, new
-                    {
-                        success = true,
-                        pendingRequests = 0,
-                        toEvaluate = 1,
-                        evaluated = 5,
-                        notStarted = 3,
-                        inProgress = 2,
-                        done = 0
-                    });
-                    return;
-                }
-
-                if (p.Length >= 1 && p[0] == "requests" && m == "GET" && p.Length == 1)
-                {
-                    // Return sample/empty list for requests tab
-                    Json(ctx, new object[] { });
-                    return;
-                }
-
-                if (p.Length >= 1 && p[0] == "jobs" && m == "GET" && p.Length == 1)
-                {
-                    // Return sample/empty list for jobs tab
-                    Json(ctx, new object[] { });
-                    return;
-                }
-                // ------------------------------------------------
 
                 _me = Authenticate(ctx);
+
+                if (p.Length == 1 && p[0] == "dashboard" && m == "GET") { Dashboard(ctx); return; }
 
                 if (p.Length >= 1 && p[0] == "requests")
                 {
@@ -295,14 +248,10 @@ namespace GiantGroupM3
             Json(ctx, UserDto(s, NewToken(s, "access", 24)));
         }
 
+        // No sign-in: every request is served as the app's own access level.
         private Staff Authenticate(HttpContext ctx)
         {
-            string h = ctx.Request.Headers["Authorization"] ?? "";
-            if (!h.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)) throw new ApiError(401, "Sign in required.");
-            JObject claims = Validate(h.Substring(7).Trim(), "access");
-            Staff s = LoadStaff((int)claims["sid"]);
-            if (s == null || s.Level < MinLevel) throw new ApiError(401, "Session is no longer valid.");
-            return s;
+            return new Staff { Id = 0, Name = "Giant Group Ops App", Level = AppAccessLevel, Email = null };
         }
 
         private Staff LoadStaff(int id)
@@ -431,7 +380,7 @@ namespace GiantGroupM3
                     (SELECT COUNT(*) FROM dbo.JobRequest WHERE status = 'Site Evaluated') AS evaluated,
                     (SELECT COUNT(*) FROM dbo.Job WHERE jobStatus = 'Not Started') AS notStarted,
                     (SELECT COUNT(*) FROM dbo.Job WHERE jobStatus = 'In Progress') AS inProgress,
-                    (SELECT COUNT(*) FROM dbo.Job WHERE jobStatus = 'Completed' AND endDate >= DATEADD(day,-7,GETDATE())) AS completedWeek", c))
+                    (SELECT COUNT(*) FROM dbo.Job WHERE jobStatus = 'Completed' AND startDate >= DATEADD(day,-7,GETDATE())) AS completedWeek", c))
                 using (var r = cmd.ExecuteReader())
                 {
                     r.Read();
@@ -618,7 +567,7 @@ namespace GiantGroupM3
         private static string JobSql()
         {
             return @"SELECT j.jobID, jr.jobRequestID, c.clientName + ' ' + c.clientSurname AS clientName, c.phoneNumber AS clientPhone, jr.siteAddress, jr.latitude, jr.longitude,
-                j.jobStatus AS status, j.startDate, j.endDate, ISNULL(j.totalFuelCost,0) AS fuelCost, ISNULL(j.dumpingCost,0) AS dumpingCost, ISNULL(j.totalLabourCost,0) AS labourCost, j.quoteID,
+                j.jobStatus AS status, j.startDate, CAST(NULL AS date) AS endDate, ISNULL(j.totalFuelCost,0) AS fuelCost, ISNULL(j.dumpingCost,0) AS dumpingCost, CAST(0 AS decimal(10,2)) AS labourCost, j.quoteID,
                 STUFF((SELECT ', ' + jt2.jobTypeName FROM dbo.RequestItem ri2 INNER JOIN dbo.JobType jt2 ON jt2.jobTypeID = ri2.jobTypeID
                        WHERE ri2.jobRequestID = jr.jobRequestID ORDER BY jt2.jobTypeName FOR XML PATH(''), TYPE).value('.', 'nvarchar(max)'), 1, 2, '') AS requestedItems,
                 (SELECT COUNT(*) FROM dbo.SitePhoto sp WHERE sp.jobID = j.jobID) AS photoCount
@@ -661,7 +610,6 @@ namespace GiantGroupM3
             decimal? fuel = ParseMoney(b["fuelCost"]), dump = ParseMoney(b["dumpingCost"]);
             using (var c = new SqlConnection(_conn))
             using (var cmd = new SqlCommand(@"UPDATE dbo.Job SET jobStatus = @s,
-                    endDate = CASE WHEN @s = 'Completed' THEN ISNULL(endDate, GETDATE()) WHEN @s IN ('Not Started','In Progress') THEN NULL ELSE endDate END,
                     totalFuelCost = ISNULL(@f, totalFuelCost), dumpingCost = ISNULL(@d, dumpingCost)
                     WHERE jobID = @id AND jobStatus <> 'Archived'", c))
             {
@@ -881,3 +829,4 @@ namespace GiantGroupM3
         }
     }
 }
+
