@@ -13,6 +13,7 @@ using System.Web;
 
 namespace GiantGroupM3
 {
+    //<%@ WebHandler Language="C#" CodeBehind="PayFastITN.ashx.cs" Class="GiantGroupM3.PayFastITN" %>
     public class PayFastITN : IHttpHandler
     {
         private string ConnectionString
@@ -31,6 +32,7 @@ namespace GiantGroupM3
 
             try
             {
+                context.Response.ContentType = "text/plain";
                 if (!string.Equals(
                     context.Request.HttpMethod, "POST",
                     StringComparison.OrdinalIgnoreCase))
