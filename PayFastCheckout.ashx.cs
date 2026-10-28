@@ -8,6 +8,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Web;
 using System.Web.SessionState;
+using System.Web.Hosting;
 
 namespace GiantGroupM3
 {
@@ -151,6 +152,7 @@ namespace GiantGroupM3
                     "Checkout failed: " +
                     HttpUtility.HtmlEncode(
                         ex.GetType().Name + ": " + ex.Message));
+                context.Response.Write("Notification rejected: " + ex.Message);
             }
         }
 
