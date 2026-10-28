@@ -19,6 +19,44 @@ namespace GiantGroupM3
             BundleConfig.RegisterBundles(BundleTable.Bundles);
         }
 
+        // Phones and tablets get Site.Mobile.Master. Every page declares MasterPageFile="~/Site.Master",
+        // so the choice is made here, during PreInit, before the page loads its master.
+        protected void Application_PreRequestHandlerExecute(object sender, EventArgs e)
+        {
+            var context = HttpContext.Current;
+            if (context == null) return;
+
+            var page = context.Handler as System.Web.UI.Page;
+            if (page == null) return;
+
+            if (IsTouchDeviceRequest(context.Request))
+            {
+                page.PreInit += UseMobileMaster;
+            }
+        }
+
+        private static void UseMobileMaster(object sender, EventArgs e)
+        {
+            var page = (System.Web.UI.Page)sender;
+            if (string.Equals(page.MasterPageFile, "~/Site.Master", StringComparison.OrdinalIgnoreCase))
+            {
+                page.MasterPageFile = "~/Site.Mobile.Master";
+            }
+        }
+
+        private static bool IsTouchDeviceRequest(HttpRequest request)
+        {
+            if (request.Browser != null && request.Browser.IsMobileDevice) return true;
+
+            var ua = request.UserAgent ?? string.Empty;
+            return ua.IndexOf("iPhone", StringComparison.OrdinalIgnoreCase) >= 0
+                || ua.IndexOf("iPod", StringComparison.OrdinalIgnoreCase) >= 0
+                || ua.IndexOf("iPad", StringComparison.OrdinalIgnoreCase) >= 0
+                || ua.IndexOf("Android", StringComparison.OrdinalIgnoreCase) >= 0
+                || ua.IndexOf("Mobile", StringComparison.OrdinalIgnoreCase) >= 0
+                || ua.IndexOf("Tablet", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
         // Track requests per IP address: IP -> (Request Count, Window Start Time)
         private static readonly ConcurrentDictionary<string, (int Count, DateTime WindowStart)> _requestTracker = new ConcurrentDictionary<string, (int, DateTime)>();
 

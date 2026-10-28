@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Security.Principal;
@@ -80,6 +80,34 @@ namespace GiantGroupM3
             }
         }
 
+        protected void lnkLogoHome_Click(object sender, EventArgs e)
+        {
+            // 1. Check if user is logged in as Staff (check integer values, string representations, or session names)
+            bool isStaff = Session["UserLevel"] != null ||
+                           Session["StaffName"] != null ||
+                           Session["Staff"] != null ||
+                           Session["UserName"] != null ||
+                           Session["User"] != null ||
+                           Session["Role"]?.ToString().ToLower() == "staff" ||
+                           Session["UserRole"]?.ToString().ToLower() == "staff";
+
+            if (isStaff)
+            {
+                // Level 1 staff or any logged-in staff member goes to Management Portal
+                Response.Redirect("~/ManagementPortal.aspx");
+                return;
+            }
+
+            // 2. Check if logged in as Client
+            if (Session["ClientID"] != null || Session["Role"]?.ToString().ToLower() == "client")
+            {
+                Response.Redirect("~/ClientPortal.aspx");
+                return;
+            }
+
+            // 3. Guest / Not logged in
+            Response.Redirect("~/Default.aspx");
+        }
         protected void BtnLogout_Click(object sender, EventArgs e)
         {
             // 1. Clear session variables and abandon session
@@ -95,6 +123,7 @@ namespace GiantGroupM3
             }
 
             // 3. CRITICAL: Instantly force current thread/context to anonymous 
+            // so LoginView recognizes the state change on the very same redirect cycle
             var anonymousPrincipal = new System.Security.Principal.GenericPrincipal(
                 new System.Security.Principal.GenericIdentity(string.Empty), null);
             Context.User = anonymousPrincipal;
@@ -119,8 +148,7 @@ namespace GiantGroupM3
             Response.Cache.SetCacheability(HttpCacheability.NoCache);
             Response.Cache.SetNoStore();
             Response.Cache.SetExpires(DateTime.UtcNow.AddMinutes(-1));
-
-            // 6. FORCE CLEAR current user context immediately
+            // 6. FORCE CLEAR current user context immediately so UI methods re-evaluate
             Context.User = new System.Security.Principal.GenericPrincipal(
                 new System.Security.Principal.GenericIdentity(string.Empty), null);
 
@@ -128,6 +156,8 @@ namespace GiantGroupM3
             Response.Clear();
             Response.Redirect("~/", true);
         }
+
+
 
         // --- Permission & Role Helper Methods for Navigation ---
 
@@ -139,6 +169,7 @@ namespace GiantGroupM3
                 return false;
             }
 
+            // Allow staff OR clients to pass the login check
             if (Session["UserLevel"] == null && Session["StaffName"] == null && !IsClient())
             {
                 return false;
@@ -149,6 +180,7 @@ namespace GiantGroupM3
 
         public bool IsClient()
         {
+            // Check all possible session keys your login code might populate
             if (Session["UserRole"] != null && Session["UserRole"].ToString().Equals("Client", StringComparison.OrdinalIgnoreCase))
             {
                 return true;
@@ -157,6 +189,7 @@ namespace GiantGroupM3
             {
                 return true;
             }
+            // Added this to catch Session["UserType"] set during Login.aspx.cs
             if (Session["UserType"] != null && Session["UserType"].ToString().Equals("Client", StringComparison.OrdinalIgnoreCase))
             {
                 return true;
@@ -167,20 +200,23 @@ namespace GiantGroupM3
             }
 
             return false;
-        }
+        }        
 
         public int GetUserLevel()
         {
+            // Check all possible session keys where user level might be stored
             string[] levelKeys = { "UserLevel", "Level", "User_Level", "StaffLevel", "AccessLevel" };
 
             foreach (var key in levelKeys)
             {
                 if (Session[key] != null)
                 {
+                    // Handle if it's already an integer
                     if (Session[key] is int intVal)
                     {
                         return intVal;
                     }
+                    // Handle if it's a string representation of a number
                     if (int.TryParse(Session[key].ToString(), out int parsedLevel))
                     {
                         return parsedLevel;
@@ -188,9 +224,11 @@ namespace GiantGroupM3
                 }
             }
 
+            // Fallback: If Teboho is logged in as staff but level is unmapped, 
+            // force a default level of 1 so unassigned staff don't accidentally get admin rights!
             if (Session["StaffName"] != null || Session["Username"] != null)
             {
-                return 1;
+                return 1; // Treat unknown logged-in staff as Level 1 for safety
             }
 
             return 0;
@@ -200,57 +238,101 @@ namespace GiantGroupM3
 
         public bool CanSeeCalendar()
         {
+            // If not logged in at all, return false
             if (!IsLoggedIn()) return false;
+
+            // If the user is a client, return false
             if (IsClient()) return false;
+
+            // If it's a logged-in staff member (meaning they are logged in and not a client), return true
             return true;
         }
 
         public bool CanSeeClientsTab()
         {
             if (!IsLoggedIn()) return false;
-            if (IsClient()) return true;
+            if (IsClient()) return true; // Clients see the tab (for updating info)
             int level = GetUserLevel();
-            if (level == 4 || level == 1) return false;
-            return level >= 5;
+            // Level 4 and Level 1 and Level 5 should NOT see clients tab. Level 6 can see it.
+            if (level == 4 || level == 1 || level == 5) return false;
+            return level >= 6;
         }
 
         public bool CanSeeUpdateClientInfoOnly()
         {
+            // Clients should only see "Update Client Info" under Clients tab
             return IsClient();
         }
 
         public bool CanSeeJobRequestsTab()
         {
             if (!IsLoggedIn()) return false;
+
+            // Clients must ALWAYS be able to see the Job Requests tab
             if (IsClient()) return true;
+
+            // Staff restrictions (Level 5 and above)
             int level = GetUserLevel();
-            if (level < 5) return false;
+            if (level < 6) return false;
+
             return true;
         }
 
         public bool CanSeeQuotationsTab()
         {
             if (!IsLoggedIn()) return false;
+
+            // Clients are allowed to see it (for view-only access)
             if (IsClient()) return true;
+
             int level = GetUserLevel();
+
+            // Level 1 and Level 4 staff members must NOT see the Quotations tab/words
             if (level == 1 || level == 4) return false;
+
             return true;
         }
 
         public bool CanSeeCreateEditQuote()
         {
             if (!IsLoggedIn()) return false;
-            if (IsClient()) return false;
+            if (IsClient()) return false; // Clients never see Create/Edit Quote
+
             int level = GetUserLevel();
+            // Level 1 and 4 must NOT see the tab at all
             if (level == 1 || level == 4) return false;
-            return level == 6 || level == 5;
+
+            // Assuming higher admin levels (like level 6) get Create/Edit, 
+            // while Level 5 is restricted to view-only based on your note.
+            return level == 6 || level == 5; // Adjust if level 5
+        }
+
+        public bool CanSeeRequestQuote()
+        {
+            if (!IsLoggedIn()) return false;
+
+            // Clients see it (same logic as View Quote)
+            if (IsClient()) return true;
+
+            int level = GetUserLevel();
+            // Level 1 and 4 must NOT see it
+            if (level == 1 || level == 4) return false;
+
+            // Matches View Quote visibility logic
+            return level == 5 || level == 6;
         }
 
         public bool CanSeeViewQuoteOnly()
         {
             if (!IsLoggedIn()) return false;
+
+
+            // Clients and Level 5 should see the View Quote sub-tab, 
+            // while higher levels (like Level 6) can also see everything.
             if (IsClient()) return true;
+
             int level = GetUserLevel();
+            // Level 1 and 4 must NOT see the tab at all
             if (level == 1 || level == 4) return false;
             return level == 5 || level == 6;
         }
@@ -258,15 +340,45 @@ namespace GiantGroupM3
         public bool CanSeeAllocationTab()
         {
             if (!IsLoggedIn()) return false;
-            return true;
+            return true; // Available, but sub-items controlled below
         }
 
         public bool CanSeeStaffAllocationOnly()
         {
+            // All clients should only see view staff allocation under Allocation tab
             if (IsClient()) return true;
-            return true;
+            return true; // Staff can see too, or adjust if needed
         }
 
+        public bool CanAssign()
+        {
+            if (!IsLoggedIn()) return false;
+
+            int level = 0;
+
+            // Check all potential session key variants
+            if (Session["AccessLevel"] != null)
+                int.TryParse(Session["AccessLevel"].ToString(), out level);
+            else if (Session["accessLevel"] != null)
+                int.TryParse(Session["accessLevel"].ToString(), out level);
+            else if (Session["UserLevel"] != null)
+                int.TryParse(Session["UserLevel"].ToString(), out level);
+            else if (Session["userLevel"] != null)
+                int.TryParse(Session["userLevel"].ToString(), out level);
+
+            int roleId = 0;
+            if (Session["RoleID"] != null)
+                int.TryParse(Session["RoleID"].ToString(), out roleId);
+            else if (Session["roleID"] != null)
+                int.TryParse(Session["roleID"].ToString(), out roleId);
+
+            // Allow level 5 (System Manager) or level 6 (Owner), or roleID 10 or 11
+            return level == 5 || level == 6 || roleId == 10 || roleId == 11;
+        }
+
+        // Optional wrappers if referenced individually in existing markup
+        public bool CanAssignAsset() => CanAssign();
+        public bool CanAssignStaff() => CanAssign();
         public bool CanSeeJobsTab()
         {
             if (!IsLoggedIn()) return false;
@@ -281,27 +393,34 @@ namespace GiantGroupM3
             return level >= 4;
         }
 
+
         public bool CanSeeViewJobProgress()
         {
             if (!IsLoggedIn()) return false;
-            return true;
+            return true; // View progress available to staff/clients who have job access
         }
 
         public bool CanSeeEditJobProgress()
         {
             if (!IsLoggedIn()) return false;
-            if (IsClient()) return false;
+            if (IsClient()) return false; // Clients cannot edit progress
             int level = GetUserLevel();
-            if (level == 1) return false;
-            return level >= 4;
+            if (level == 1) return false; // Level 1 cannot edit progress
+            return level >= 4; // Adjust based on which staff levels can edit progress
         }
 
         public bool CanSeeInvoicingTab()
         {
             if (!IsLoggedIn()) return false;
+
+            // Clients are allowed to see it
             if (IsClient()) return true;
+
             int level = GetUserLevel();
-            if (level == 1 || level == 4) return false;
+
+            // Level 1 and Level 4 staff members must NOT see the Invoicing tab/words
+            if (level == 1 || level == 4 || level == 5) return false;
+
             return true;
         }
 
@@ -310,11 +429,12 @@ namespace GiantGroupM3
             if (!IsLoggedIn()) return false;
             if (IsClient()) return false;
             int level = GetUserLevel();
-            return level == 6;
+            return level == 6; // Level 6 only
         }
 
         public bool CanSeeManageMakePaymentsOnly()
         {
+            // Clients should only see manage/make payments under invoice tab
             return true;
         }
 
@@ -323,7 +443,7 @@ namespace GiantGroupM3
             if (!IsLoggedIn()) return false;
             if (IsClient()) return false;
             int level = GetUserLevel();
-            return level == 6;
+            return level == 6; // Level 5 explicitly should NOT see reports tab anymore
         }
     }
 }
