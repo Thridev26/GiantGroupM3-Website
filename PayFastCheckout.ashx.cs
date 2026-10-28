@@ -86,8 +86,7 @@ namespace GiantGroupM3
                 Guid checkoutToken = CreatePaymentIntent(
                     jobId, clientId, balance);
 
-                string baseUrl =
-                    context.Request.Url.GetLeftPart(UriPartial.Authority);
+                string baseUrl = "https://ist-wst-group-1.azurewebsites.net";
 
                 string paymentsUrl = baseUrl +
                     VirtualPathUtility.ToAbsolute("~/Invoicing/Payments.aspx");
