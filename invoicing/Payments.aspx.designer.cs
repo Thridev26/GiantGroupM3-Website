@@ -33,6 +33,24 @@ namespace GiantGroupM3.Invoicing
         protected global::System.Web.UI.WebControls.Panel pnlReviewNote;
 
         /// <summary>
+        /// pnlPaymentMessage control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel pnlPaymentMessage;
+
+        /// <summary>
+        /// lblPaymentMessage control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblPaymentMessage;
+
+        /// <summary>
         /// gvPayments control.
         /// </summary>
         /// <remarks>
