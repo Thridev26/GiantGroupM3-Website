@@ -38,9 +38,10 @@ namespace GiantGroupM3.Requests
         {
             Response.Cache.SetCacheability(System.Web.HttpCacheability.NoCache);
             Response.Cache.SetNoStore();
-
+            string role = Convert.ToString(Session["UserRole"]);
             if (!Request.IsAuthenticated || ClientId <= 0 ||
-                !string.Equals(Convert.ToString(Session["UserRole"]), "Client", StringComparison.OrdinalIgnoreCase))
+     (!role.Equals("Client", StringComparison.OrdinalIgnoreCase) &&
+      !role.Equals("Owner", StringComparison.OrdinalIgnoreCase)))
             {
                 Response.Redirect(ResolveUrl("~/Account/Login.aspx"), false);
                 Context.ApplicationInstance.CompleteRequest();
@@ -79,8 +80,11 @@ namespace GiantGroupM3.Requests
         protected void btnSubmit_Click(object sender, EventArgs e)
         {
             // Recheck authorization in the event handler as well as Page_Load.
+            string role = Convert.ToString(Session["UserRole"]);
+
             if (!Request.IsAuthenticated || ClientId <= 0 ||
-                !string.Equals(Convert.ToString(Session["UserRole"]), "Client", StringComparison.OrdinalIgnoreCase))
+                (!role.Equals("Client", StringComparison.OrdinalIgnoreCase) &&
+                 !role.Equals("Owner", StringComparison.OrdinalIgnoreCase)))
             {
                 Response.Redirect(ResolveUrl("~/Account/Login.aspx"), false);
                 Context.ApplicationInstance.CompleteRequest();
