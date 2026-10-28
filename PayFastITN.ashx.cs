@@ -128,7 +128,8 @@ namespace GiantGroupM3
                     throw new InvalidOperationException(
                         "Invalid gross payment amount.");
 
-                string validationBody = BuildFormBody(fields);
+                string validationBody = BuildFormBody(
+      context.Request.Form);
 
                 if (!ValidateWithPayFast(validationBody))
                     throw new InvalidOperationException(
@@ -304,18 +305,18 @@ namespace GiantGroupM3
         }
 
         private static string BuildFormBody(
-            IList<KeyValuePair<string, string>> fields)
+    System.Collections.Specialized.NameValueCollection form)
         {
             var parts = new List<string>();
 
-            foreach (var field in fields)
+            foreach (string key in form.AllKeys)
             {
-                if (string.IsNullOrEmpty(field.Value))
+                if (string.IsNullOrEmpty(key))
                     continue;
 
                 parts.Add(
-                    HttpUtility.UrlEncode(field.Key) + "=" +
-                    HttpUtility.UrlEncode(field.Value));
+                    HttpUtility.UrlEncode(key) + "=" +
+                    HttpUtility.UrlEncode(form[key] ?? ""));
             }
 
             return string.Join("&", parts);

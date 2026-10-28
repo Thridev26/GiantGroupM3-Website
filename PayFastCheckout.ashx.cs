@@ -231,8 +231,8 @@ namespace GiantGroupM3
         }
 
         internal static string GenerateSignature(
-            IList<KeyValuePair<string, string>> fields,
-            string passphrase)
+    IList<KeyValuePair<string, string>> fields,
+    string passphrase)
         {
             var parts = new List<string>();
 
@@ -240,34 +240,51 @@ namespace GiantGroupM3
             {
                 if (!string.IsNullOrEmpty(field.Value))
                 {
-                    parts.Add(
-                        field.Key + "=" +
-                        HttpUtility.UrlEncode(field.Value.Trim()));
+                    string value = field.Value.Trim();
+
+                    string encodedValue = HttpUtility.UrlEncode(value);
+
+                    // PayFast requires uppercase URL-encoding.
+                    encodedValue = System.Text.RegularExpressions.Regex.Replace(
+                        encodedValue,
+                        @"%[0-9a-fA-F]{2}",
+                        match => match.Value.ToUpperInvariant());
+
+                    parts.Add(field.Key + "=" + encodedValue);
                 }
             }
 
             if (!string.IsNullOrWhiteSpace(passphrase))
             {
-                parts.Add(
-                    "passphrase=" +
-                    HttpUtility.UrlEncode(passphrase.Trim()));
+                string encodedPassphrase =
+                    HttpUtility.UrlEncode(passphrase.Trim());
+
+                encodedPassphrase =
+                    System.Text.RegularExpressions.Regex.Replace(
+                        encodedPassphrase,
+                        @"%[0-9a-fA-F]{2}",
+                        match => match.Value.ToUpperInvariant());
+
+                parts.Add("passphrase=" + encodedPassphrase);
             }
+
+            string parameterString = string.Join("&", parts);
 
             using (MD5 md5 = MD5.Create())
             {
-                byte[] bytes = Encoding.UTF8.GetBytes(
-                    string.Join("&", parts));
-
+                byte[] bytes = Encoding.UTF8.GetBytes(parameterString);
                 byte[] hash = md5.ComputeHash(bytes);
+
                 var result = new StringBuilder();
 
                 foreach (byte b in hash)
+                {
                     result.Append(b.ToString("x2"));
+                }
 
                 return result.ToString();
             }
         }
-
         public bool IsReusable
         {
             get { return false; }
