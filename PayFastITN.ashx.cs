@@ -262,7 +262,7 @@ namespace GiantGroupM3
                                 "@amount", SqlDbType.Decimal);
                             amountParam.Precision = 10;
                             amountParam.Scale = 2;
-                            amountParam.Value = expectedAmount;
+                            amountParam.Value = decimal.Round(grossAmount, 2);
 
                             cmd.Parameters.Add("@jobID",
                                 SqlDbType.Int).Value = jobId;

@@ -74,6 +74,7 @@ namespace GiantGroupM3
                 string passphrase =
                     ConfigurationManager.AppSettings["PayFastPassphrase"] ?? "";
 
+
                 decimal balance = GetOutstandingBalance(jobId, clientId);
 
                 if (balance < 5.00m)
@@ -84,8 +85,42 @@ namespace GiantGroupM3
                     return;
                 }
 
+                // Read the amount selected by the client.
+                // If no amount is supplied, pay the full balance
+                // to preserve compatibility with your existing Pay Now button.
+                string amountText = context.Request.QueryString["amount"];
+                decimal paymentAmount;
+
+                if (string.IsNullOrWhiteSpace(amountText))
+                {
+                    paymentAmount = balance;
+                }
+                else if (!decimal.TryParse(
+                    amountText,
+                    NumberStyles.AllowDecimalPoint,
+                    CultureInfo.InvariantCulture,
+                    out paymentAmount))
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.Write("Invalid payment amount.");
+                    return;
+                }
+
+                // Validate the amount on the server.
+                if (paymentAmount < 5.00m ||
+                    paymentAmount > balance ||
+                    decimal.Round(paymentAmount, 2) != paymentAmount)
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.Write(
+                        "Payment must be at least R5.00 and cannot exceed " +
+                        "the outstanding balance.");
+                    return;
+                }
+
+
                 Guid checkoutToken = CreatePaymentIntent(
-                    jobId, clientId, balance);
+    jobId, clientId, paymentAmount);
 
                 string baseUrl = "https://ist-wst-group-1.azurewebsites.net";
 
@@ -104,12 +139,12 @@ namespace GiantGroupM3
                         baseUrl + VirtualPathUtility.ToAbsolute("~/PayFastITN.ashx")),
                     new KeyValuePair<string, string>("m_payment_id",
                         checkoutToken.ToString("N")),
-                    new KeyValuePair<string, string>("amount",
-                        balance.ToString("0.00", CultureInfo.InvariantCulture)),
+                   new KeyValuePair<string, string>("amount",
+    paymentAmount.ToString("0.00", CultureInfo.InvariantCulture)),
                     new KeyValuePair<string, string>("item_name",
                         "Giant Group job " + jobId),
                     new KeyValuePair<string, string>("item_description",
-                        "Outstanding balance for job " + jobId)
+                        "Payment toward job " + jobId)
                 };
 
                 string signature = GenerateSignature(fields, passphrase);
@@ -152,7 +187,6 @@ namespace GiantGroupM3
                     "Checkout failed: " +
                     HttpUtility.HtmlEncode(
                         ex.GetType().Name + ": " + ex.Message));
-                context.Response.Write("Notification rejected: " + ex.Message);
             }
         }
 
