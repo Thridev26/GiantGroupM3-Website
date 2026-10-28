@@ -212,9 +212,14 @@
     <Content Include="Content\oak-undecided.png" />
     <Content Include="Content\sandstone.css" />
     <Content Include="Content\Site.css" />
-    <Content Include="Content\Slideshow\site-clearing.png" />
-    <Content Include="Content\Slideshow\team-crew.png" />
-    <Content Include="Content\Slideshow\tree-felling.png" />
+    <Content Include="Content\Slideshow\slide-photo-1.jpg" />
+    <Content Include="Content\Slideshow\slide-photo-2.jpg" />
+    <Content Include="Content\Slideshow\slide-photo-3.jpg" />
+    <Content Include="Content\Slideshow\slide-photo-4.jpg" />
+    <Content Include="Content\Slideshow\slide-photo-5.jpg" />
+    <Content Include="Content\Slideshow\slide-photo-6.jpg" />
+    <Content Include="Content\Slideshow\slide-photo-7.jpg" />
+    <Content Include="Content\Slideshow\slide-photo-8.jpg" />
     <Content Include="Content\The Giant Group Logo .png" />
     <Content Include="Default.aspx" />
     <Content Include="favicon.ico" />

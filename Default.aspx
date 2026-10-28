@@ -2,84 +2,94 @@
 
 <asp:Content ID="BodyContent" ContentPlaceHolderID="MainContent" runat="server">
     <style>
-        /* ================= HERO ================= */
-        .gg-hero {
-            position: relative; height: 560px; color: #fff; overflow: hidden;
-            border-radius: 24px;
-            background: linear-gradient(135deg, #1b4332 0%, #0f2d1e 100%);
-            box-shadow: var(--gg-shadow-md);
+        /* ================= HERO SLIDESHOW ================= */
+        #hero {
+            --interval: 5000ms; --fade: 1300ms;
+            --sl-h: clamp(560px, calc(100vh - 120px), 720px);
+            --sl-green: var(--giant-green-accent, #2d6a4f);
+            --sl-lime: var(--giant-emerald, #52b788);
+            --sl-forest: var(--giant-green-dark, #0f2d1e);
+            position: relative; height: var(--sl-h); overflow: hidden;
+            border-radius: 24px; background: var(--sl-forest);
+            box-shadow: 0 18px 44px rgba(15, 45, 30, .28);
         }
-        /* Tree-ring cross-section: the one signature graphic on this page */
-        .gg-hero::before {
-            content: ""; position: absolute; inset: 0; pointer-events: none;
-            background: repeating-radial-gradient(circle at 86% 52%, rgba(149,213,178,.16) 0 1.5px, transparent 1.5px 28px);
-            -webkit-mask-image: radial-gradient(circle at 86% 52%, #000 0, transparent 62%);
-                    mask-image: radial-gradient(circle at 86% 52%, #000 0, transparent 62%);
+        #hero .slide {
+            position: absolute; inset: 0; display: flex; align-items: center;
+            padding: clamp(20px, 4vw, 56px) clamp(20px, 4vw, 56px) 76px;
+            opacity: 0; filter: blur(8px); transform: scale(1.04); pointer-events: none;
+            transition: opacity var(--fade) ease, filter var(--fade) ease, transform var(--fade) ease;
         }
-        .gg-slide {
-            position: absolute; inset: 0;
-            opacity: 0; visibility: hidden;
-            transition: opacity 1s ease, visibility 1s ease;
+        #hero .slide.active { opacity: 1; filter: none; transform: none; z-index: 2; pointer-events: auto; }
+        #hero .dark { background: var(--sl-forest); color: #fff; }
+ 
+        /* slide 1: title + cover photo */
+        #hero .grid { width: 100%; max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: clamp(20px, 4vw, 56px); align-items: center; }
+        #hero .eyebrow { font-family: var(--gg-display, inherit); font-weight: 700; font-size: clamp(.72rem, .9vw, .85rem); letter-spacing: .12em; text-transform: uppercase; color: var(--sl-lime); margin: 0 0 12px; }
+        #hero h1 { margin: 0 0 14px; font-family: var(--gg-display, inherit); font-weight: 700; line-height: 1.06; letter-spacing: -.02em; color: inherit; font-size: clamp(2.2rem, 5.2vw, 4rem); text-transform: uppercase; }
+        #hero .sl-lead { font-size: clamp(.95rem, 1.35vw, 1.2rem); line-height: 1.55; color: #b7d3c3; margin: 0 0 22px; max-width: 36ch; font-weight: 400; }
+ 
+        /* photos */
+        #hero .ph { position: relative; border-radius: 20px; overflow: hidden; background: #1b4332; box-shadow: 0 0 0 2px rgba(82, 183, 136, .35), 0 24px 50px rgba(0, 0, 0, .5); aspect-ratio: 3 / 2; }
+        #hero .ph.tall { aspect-ratio: 3 / 4; }
+        #hero .ph.sq { aspect-ratio: 1; max-width: 420px; justify-self: end; width: 100%; }
+        #hero .ph img { width: 100%; height: 100%; object-fit: cover; display: block; transform: scale(1.02); }
+        #hero .slide.active .ph img { animation: slKb calc(var(--interval) + var(--fade) + 500ms) ease-out forwards; }
+        #hero .slide.active .ph.b img { --kx: 1.5%; }
+        @keyframes slKb { to { transform: scale(1.14) translate(var(--kx, -1.5%), -1%); } }
+        #hero .ph.missing img { display: none; }
+        #hero .ph.missing::after { content: attr(data-label); position: absolute; inset: 0; display: grid; place-items: center; color: #8a8a8a; font-weight: 700; font-size: 1.1rem; }
+ 
+        /* photo slides: caption on top, photos below */
+        #hero .slide.pics { flex-direction: column; justify-content: center; align-items: center; }
+        #hero .sl-cap { text-align: center; max-width: 640px; margin: 0 auto 18px; }
+        #hero .sl-cap b { display: block; font-family: var(--gg-display, inherit); font-weight: 700; font-size: clamp(1.15rem, 2vw, 1.6rem); letter-spacing: -.01em; }
+        #hero .sl-cap span { display: block; margin-top: 4px; font-size: clamp(.85rem, 1.1vw, 1rem); color: #b7d3c3; }
+        #hero .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; max-width: calc((var(--sl-h) - 200px) * 1.5 + 14px); }
+        #hero .ph.land { width: 100%; max-width: calc((var(--sl-h) - 200px) * 1.5); }
+ 
+        /* last slide: logo + actions */
+        #hero .center { width: 100%; text-align: center; max-width: 720px; margin: 0 auto; }
+        #hero .sl-logo { display: inline-flex; align-items: center; justify-content: center; background: #fff; border-radius: 20px; padding: 16px 32px; margin: 0 auto 28px; box-shadow: 0 10px 30px rgba(0, 0, 0, .35); }
+        #hero .sl-logo img { display: block; height: 110px; width: auto; max-width: 100%; }
+        #hero .sl-actions { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: center; }
+        #hero .sl-btn { display: inline-flex; align-items: center; padding: .8rem 1.6rem; border-radius: 999px; font-weight: 700; font-size: 1rem; text-decoration: none; border: 1.5px solid transparent; transition: background-color .15s ease, transform .15s ease; }
+        #hero .sl-btn:hover { transform: translateY(-1px); }
+        #hero .sl-btn-light { background: #fff; color: #1b4332; }
+        #hero .sl-btn-light:hover { background: #e9f5f0; color: #1b4332; }
+        #hero .sl-btn-ghost { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .55); }
+        #hero .sl-btn-ghost:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+ 
+        /* entrance choreography */
+        #hero [data-in] { opacity: 0; transform: translateY(18px); }
+        #hero .slide.active [data-in] { animation: slUp 800ms cubic-bezier(.2, .7, .2, 1) calc(350ms + var(--d, 0) * 130ms) forwards; }
+        @keyframes slUp { to { opacity: 1; transform: none; } }
+ 
+        /* controls (bottom centre, clear of the floating chat buttons) */
+        #hero .ctrl { position: absolute; left: 50%; transform: translateX(-50%); bottom: 16px; z-index: 6; display: flex; gap: 6px; padding: 5px; border-radius: 999px; background: rgba(10, 31, 20, .78); }
+        #hero .ctrl button { width: 36px; height: 36px; border-radius: 50%; border: 0; background: transparent; color: #fff; font-size: 15px; cursor: pointer; }
+        #hero .ctrl button:hover { background: rgba(255, 255, 255, .18); }
+        #hero .ctrl button:focus-visible { outline: 2px solid var(--sl-lime); }
+        #hero .bar { position: absolute; left: 0; bottom: 0; width: 100%; height: 4px; z-index: 6; background: rgba(255, 255, 255, .12); }
+        #hero .bar i { display: block; width: 0; height: 100%; background: var(--sl-lime); }
+        #hero .bar i.run { animation: slFill var(--interval) linear forwards; }
+        #hero.paused .bar i { animation-play-state: paused; }
+        @keyframes slFill { to { width: 100%; } }
+ 
+        @media (max-width: 820px) {
+            #hero { --sl-h: 640px; border-radius: 18px; }
+            #hero .slide { align-items: flex-start; overflow-y: auto; padding-bottom: 84px; }
+            #hero .slide.final, #hero .slide.pics { align-items: center; }
+            #hero .grid { grid-template-columns: 1fr; }
+            #hero .ph.sq { justify-self: center; }
+            #hero .sl-logo img { height: 84px; }
         }
-        .gg-slide.active { opacity: 1; visibility: visible; }
-
-        .gg-text-slide {
-            display: flex; flex-direction: column;
-            align-items: flex-start; justify-content: center;
-            text-align: left; padding: 3rem 4.5rem;
+        @media (prefers-reduced-motion: reduce) {
+            #hero .slide { filter: none; transform: none; transition: none; }
+            #hero .slide.active .ph img { animation: none; }
+            #hero [data-in], #hero .slide.active [data-in] { opacity: 1; transform: none; animation: none; }
         }
-        .gg-text-slide > * { max-width: 640px; }
-        .gg-text-slide h1 {
-            font-family: var(--gg-display); font-weight: 600; letter-spacing: -.025em;
-            font-size: clamp(2.4rem, 5.2vw, 4rem); line-height: 1.04;
-        }
-        .gg-text-slide p.lead { color: #d3e8dc !important; line-height: 1.65; font-size: 1.1rem; }
-        .gg-hero-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
-
-        /* photo slides: whole photo shown, blurred copy fills the sides */
-        .gg-photo-slide::before {
-            content: ""; position: absolute; inset: -30px; z-index: 0;
-            background-image: var(--photo);
-            background-size: cover; background-position: center;
-            filter: blur(28px) brightness(0.6);
-        }
-        .gg-photo-slide img {
-            position: relative; z-index: 1;
-            width: 100%; height: 100%; object-fit: contain;
-        }
-        .gg-photo-slide::after {
-            content: ""; position: absolute; inset: 0; z-index: 1;
-            background: linear-gradient(to top, rgba(8,24,16,.78), transparent 55%);
-        }
-        .gg-caption {
-            position: absolute; left: 2.5rem; bottom: 3.4rem; z-index: 2;
-            color: #fff; font-family: var(--gg-display); font-size: clamp(1.3rem, 2.6vw, 1.8rem);
-            font-weight: 500; letter-spacing: -.01em;
-            padding-left: 1rem; border-left: 3px solid var(--gg-500);
-        }
-
-        .gg-dots {
-            position: absolute; bottom: 1.3rem; left: 50%;
-            transform: translateX(-50%);
-            display: flex; gap: 8px; z-index: 3;
-        }
-        .gg-dots button {
-            width: 9px; height: 9px; border: none; padding: 0;
-            border-radius: 999px; cursor: pointer;
-            background: rgba(255,255,255,.4);
-            transition: width .25s ease, background-color .25s ease;
-        }
-        .gg-dots button.active { background: #fff; width: 26px; }
-
-        .gg-arrows { position: absolute; right: 1.5rem; bottom: 1rem; z-index: 3; display: flex; gap: .5rem; }
-        .gg-arrows button {
-            width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
-            border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.1); color: #fff;
-            -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
-            display: inline-flex; align-items: center; justify-content: center;
-            transition: background-color .15s ease;
-        }
-        .gg-arrows button:hover { background: rgba(255,255,255,.25); }
+ 
+        
 
         /* ================= STATS ================= */
       .gg-stats {
@@ -170,56 +180,68 @@
             .gg-section { margin-top: 3.5rem; }
         }
         @media (max-width: 768px) {
-            .gg-hero { height: 480px; border-radius: 18px; }
-            .gg-text-slide { padding: 2rem 1.5rem 4rem; }
-            .gg-text-slide p.lead { font-size: 1rem; }
-            .gg-caption { left: 1.25rem; bottom: 4rem; }
+            
+            
             .gg-about { padding: 1.5rem; }
         }
-        @media (prefers-reduced-motion: reduce) {
-            .gg-slide { transition: none; }
-        }
+        
     </style>
 
     <div class="container my-4">
-
         <!-- 1. HERO SLIDESHOW -->
-        <div id="hero" class="gg-hero text-white" data-aos="zoom-in">
-
-            <div class="gg-slide gg-text-slide active">
-                <h1 class="text-white mb-3">Welcome to The Giant Group</h1>
-                <p class="lead mb-4">
-                    South Africa’s premier titan in professional tree felling, hazardous vegetation management, and commercial property maintenance.
-                </p>
-                <div class="gg-hero-actions">
+        <div id="hero" class="mb-5" data-aos="zoom-in" aria-roledescription="carousel" aria-label="The Giant Group presentation">
+ 
+            <!-- 1: title + cover photo -->
+            <div class="slide dark"><div class="grid">
+                <div class="copy">
+                    <p class="eyebrow" data-in="true" style="--d:0">Professional Arborist &amp; Site Services</p>
+                    <h1 data-in="true " style="--d:1">The Giant Group</h1>
+                    <p class="sl-lead" data-in="true" style="--d:2">Precision tree care, high-risk felling, stump removal &amp; hazard management</p>
+                </div>
+                <div class="ph sq" data-photo="1" data-alt="Giant Treefelling branded trailer and work vehicles" data-in="true" style="--d:1"></div>
+            </div></div>
+ 
+            <!-- 2: photos with caption -->
+            <div class="slide dark pics">
+                <div class="sl-cap" data-in="true" style="--d:0"><b>High-Risk Aerial Felling</b><span>Expert climbing and rigging for tall trees and tight spaces.</span></div>
+                <div class="pair" data-in="true" style="--d:1"><div class="ph tall" data-photo="2" data-alt="Climber on a tall tree trunk holding up his helmet, chainsaw at his side"></div><div class="ph tall b" data-photo="3" data-alt="Ladder leaning against a tall tree being taken down in sections"></div></div>
+            </div>
+ 
+            <!-- 3: photos with caption -->
+            <div class="slide dark pics">
+                <div class="sl-cap" data-in ="true" style="--d:0"><b>Complete Stump &amp; Root Removal</b><span>Clean ground, ready for building or replanting.</span></div>
+                <div class="pair" data-in="true" style="--d:1"><div class="ph tall" data-photo="4" data-alt="Crew digging out the roots of a large stump beside a building"></div><div class="ph tall b" data-photo="5" data-alt="A freshly cut tree stump surrounded by sawdust"></div></div>
+            </div>
+ 
+            <!-- 4: photo with caption -->
+            <div class="slide dark pics">
+                <div class="sl-cap" data-in="true" style="--d:0"><b>The Team Behind Every Job</b><span>Experienced crews, ready for emergency call-outs.</span></div>
+                <div class="ph land" data-photo="6" data-alt="Two Giant Group team members smiling as they carry a log" data-in="true" style="--d:1"></div>
+            </div>
+ 
+            <!-- 5 (last): logo and calls to action only -->
+            <div class="slide dark final"><div class="center">
+                <div class="sl-logo" data-in="true" style="--d:0">
+                    <img runat="server" src="~/Content/The Giant Group Logo .png" alt="The Giant Group" />
+                </div>
+                <div class="sl-actions" data-in="true" style="--d:1">
                     <% if (IsClient) { %>
-                    <a runat="server" href="~/Requests/SubmitRequest.aspx" class="gg-btn gg-btn-light gg-btn-arrow">Submit Job Request</a>
+                    <a runat="server" href="~/Requests/SubmitRequest.aspx" class="sl-btn sl-btn-light">Submit Job Request</a>
                     <% } else if (IsStaff) { %>
-                    <a runat="server" href="~/Calendar.aspx" class="gg-btn gg-btn-ghost-light gg-btn-arrow">View Schedule</a>
+                    <a runat="server" href="~/Calendar.aspx" class="sl-btn sl-btn-ghost">View Schedule</a>
                     <% } else { %>
-                    <a runat="server" href="~/Contact.aspx" class="gg-btn gg-btn-light gg-btn-arrow">Get a free quote</a>
-                    <a runat="server" href="~/Account/Login.aspx" class="gg-btn gg-btn-ghost-light">Log in</a>
+                    <a runat="server" href="~/Contact.aspx" class="sl-btn sl-btn-light">Get a free quote &rarr;</a>
+                    <a runat="server" href="~/Account/Register.aspx" class="sl-btn sl-btn-ghost">Register</a>
+                    <a runat="server" href="~/Account/Login.aspx" class="sl-btn sl-btn-ghost">Log in</a>
                     <% } %>
                 </div>
-            </div>
-
-            <div class="gg-slide gg-photo-slide" style="--photo:url('<%= ResolveUrl("~/Content/Slideshow/team-crew.png") %>')">
-                <img runat="server" src="~/Content/Slideshow/team-crew.png" alt="The Giant Group crew on site" />
-                <span class="gg-caption">Our certified felling crew</span>
-            </div>
-            <div class="gg-slide gg-photo-slide" style="--photo:url('<%= ResolveUrl("~/Content/Slideshow/tree-felling.png") %>')">
-                <img runat="server" src="~/Content/Slideshow/tree-felling.png" alt="Hazardous tree dismantling" />
-                <span class="gg-caption">Hazardous tree dismantling</span>
-            </div>
-            <div class="gg-slide gg-photo-slide" style="--photo:url('<%= ResolveUrl("~/Content/Slideshow/site-clearing.png") %>')">
-                <img runat="server" src="~/Content/Slideshow/site-clearing.png" alt="Site clearing" />
-                <span class="gg-caption">Site clearing and vegetation management</span>
-            </div>
-
-            <div class="gg-dots" id="heroDots"></div>
-            <div class="gg-arrows">
-                <button type="button" id="heroPrev" aria-label="Previous slide"><i class="bi bi-chevron-left"></i></button>
-                <button type="button" id="heroNext" aria-label="Next slide"><i class="bi bi-chevron-right"></i></button>
+            </div></div>
+ 
+            <div class="bar"><i id="heroBar"></i></div>
+            <div class="ctrl">
+                <button type="button" id="heroPrev" aria-label="Previous slide">&#8592;</button>
+                <button type="button" id="heroPlay" aria-label="Pause slideshow">&#10074;&#10074;</button>
+                <button type="button" id="heroNext" aria-label="Next slide">&#8594;</button>
             </div>
         </div>
 
@@ -810,85 +832,99 @@
         </div>
     </div>
 
-    <script>
-        (function () {
-            var slides = document.querySelectorAll('#hero .gg-slide');
-            var dotsBox = document.getElementById('heroDots');
-            var SLIDE_MS = 5000;    // time on each slide
-            var CHAT_MS = 7000;
-            var NOTICE_MS = 7000;   // how long the guest notice stays up
-            var current = 0, timer, noticeTimer, noticeShown = false, chatOpened = false;
+ <script>
+     (function () {
+         var hero = document.getElementById('hero');
+         if (!hero) return;
 
-            function stored(key) { try { return sessionStorage.getItem(key); } catch (e) { return null; } }
-            function store(key, val) { try { sessionStorage.setItem(key, val); } catch (e) { } }
+         /* photos for data-photo 1..6 */
+         var PHOTOS = [
+                '<%= ResolveUrl("~/Content/Slideshow/slide-photo-1.jpg") %>',
+                '<%= ResolveUrl("~/Content/Slideshow/slide-photo-2.jpg") %>',
+                '<%= ResolveUrl("~/Content/Slideshow/slide-photo-3.jpg") %>',
+                '<%= ResolveUrl("~/Content/Slideshow/slide-photo-4.jpg") %>',
+                '<%= ResolveUrl("~/Content/Slideshow/slide-photo-5.jpg") %>',
+                '<%= ResolveUrl("~/Content/Slideshow/slide-photo-6.jpg") %>'
+         ];
+         var INTERVAL = 5000;    // ms per slide (keep in sync with --interval in the CSS)
+         var NOTICE_MS = 5500;   // how long the guest notice stays up
+         var CHAT_MS = 7000;     // how long Oak stays open on its own
 
-            // dots
-            slides.forEach(function (_, i) {
-                var b = document.createElement('button');
-                b.type = 'button';
-                b.setAttribute('aria-label', 'Show slide ' + (i + 1));
-                b.addEventListener('click', function () { show(i); restart(); });
-                dotsBox.appendChild(b);
-            });
-            var dots = dotsBox.querySelectorAll('button');
-            dots[0].classList.add('active');
+         hero.querySelectorAll('[data-photo]').forEach(function (box) {
+             var n = +box.dataset.photo, img = new Image();
+             img.alt = box.dataset.alt || ''; img.src = PHOTOS[n - 1];
+             box.dataset.label = 'Photo ' + n;
+             img.onerror = function () { box.classList.add('missing'); };
+             box.appendChild(img);
+         });
 
-            // guest notice card (lives in Site.Master)
-            var notice = document.getElementById('guestNoticeCard');
-            function showNotice() {
-                if (!notice || noticeShown || stored('guestCardDismissed')) return;
-                noticeShown = true;
-                notice.style.display = 'block';
-                noticeTimer = setTimeout(function () { notice.style.display = 'none'; }, NOTICE_MS);
-            }
+         var bar = document.getElementById('heroBar');
+         var playBtn = document.getElementById('heroPlay');
+         var slides = Array.prototype.slice.call(hero.querySelectorAll('.slide'));
+         var index = -1, timer = null, playing = true;
 
-            // Oak chat: open once per visit, on the last slide
-            function openChatOnce() {
-                if (!notice) return;   // guests only
-                if (chatOpened || stored('oakAutoOpened')) return;
-                chatOpened = true;
-                store('oakAutoOpened', '1');
-                notice.style.display = 'none';
-                if (typeof openChatbot !== 'function') return;
-                openChatbot();
+         /* guest notice card (lives in Site.Master; only exists for guests) */
+         var notice = document.getElementById('guestNoticeCard');
+         var noticeShown = false;
+         function showNotice() {
+             if (!notice || noticeShown || sessionStorage.getItem('guestCardDismissed')) return;
+             noticeShown = true;
+             notice.style.display = 'block';
+             setTimeout(function () { notice.style.display = 'none'; }, NOTICE_MS);
+         }
 
-                // Close it again after CHAT_MS, unless the visitor is using it
-                var chatEl = document.getElementById('chatbotPopup');
-                var engaged = false;
-                if (chatEl) {
-                    ['mouseenter', 'mousedown', 'touchstart', 'keydown', 'focusin'].forEach(function (ev) {
-                        chatEl.addEventListener(ev, function () { engaged = true; });
-                    });
-                    setTimeout(function () {
-                        if (!engaged) chatEl.style.display = 'none';
-                    }, CHAT_MS);
-                }
-            }
+         /* Oak: opens once per session on the last slide, closes itself unless the visitor uses it */
+         var chatOpened = false;
+         function openChatOnce() {
+             if (!notice) return;   // guests only
+             if (chatOpened || sessionStorage.getItem('oakAutoOpened')) return;
+             chatOpened = true;
+             sessionStorage.setItem('oakAutoOpened', '1');
+             notice.style.display = 'none';
+             if (typeof openChatbot !== 'function') return;
+             openChatbot();
+             var chatEl = document.getElementById('chatbotPopup');
+             var engaged = false;
+             if (chatEl) {
+                 ['mouseenter', 'mousedown', 'touchstart', 'keydown', 'focusin'].forEach(function (ev) {
+                     chatEl.addEventListener(ev, function () { engaged = true; });
+                 });
+                 setTimeout(function () { if (!engaged) chatEl.style.display = 'none'; }, CHAT_MS);
+             }
+         }
 
-            function show(i) {
-                slides[current].classList.remove('active');
-                dots[current].classList.remove('active');
-                current = i;
-                slides[current].classList.add('active');
-                dots[current].classList.add('active');
-                if (current === slides.length - 1) openChatOnce();
-            }
+         function go(n) {
+             var prev = index;
+             if (slides[index]) slides[index].classList.remove('active');
+             index = (n + slides.length) % slides.length;
+             var cur = slides[index];
+             void cur.offsetWidth; cur.classList.add('active'); cur.scrollTop = 0;
 
-            function next() {
-                var wasFirst = (current === 0);
-                show((current + 1) % slides.length);   // loops forever
-                if (wasFirst) showNotice();            // notice on the first change
-            }
-            function prev() { show((current - 1 + slides.length) % slides.length); }
-            function restart() { clearInterval(timer); timer = setInterval(next, SLIDE_MS); }
-            restart();
+             var last = (index === slides.length - 1);   // stop on the last slide so the buttons stay put
+             bar.classList.remove('run'); void bar.offsetWidth;
+             if (playing && !last) bar.classList.add('run');
+             clearTimeout(timer);
+             if (playing && !last) timer = setTimeout(function () { go(index + 1); }, INTERVAL);
 
-            document.getElementById('heroNext').addEventListener('click', function () { next(); restart(); });
-            document.getElementById('heroPrev').addEventListener('click', function () { prev(); restart(); });
-
-            var hero = document.getElementById('hero');
-            hero.addEventListener('mouseenter', function () { clearInterval(timer); });
-            hero.addEventListener('mouseleave', restart);
-        })();
-    </script>
+             if (prev === 0 && index === 1) showNotice();
+             if (last) openChatOnce();
+         }
+         function setPlaying(p) {
+             playing = p; hero.classList.toggle('paused', !p);
+             playBtn.innerHTML = p ? '&#10074;&#10074;' : '&#9654;';
+             playBtn.setAttribute('aria-label', p ? 'Pause slideshow' : 'Play slideshow');
+             go(index);
+         }
+         document.getElementById('heroNext').onclick = function () { go(index + 1); };
+         document.getElementById('heroPrev').onclick = function () { go(index - 1); };
+         playBtn.onclick = function () { setPlaying(!playing); };
+         document.addEventListener('keydown', function (e) {
+             var t = e.target;   // don't steal the arrow keys while typing (chat box, search, forms)
+             if (t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable)) return;
+             if (e.key === 'ArrowRight') go(index + 1);
+             if (e.key === 'ArrowLeft') go(index - 1);
+         });
+         go(0);
+     })();
+ </script>
 </asp:Content>
