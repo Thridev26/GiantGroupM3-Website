@@ -230,27 +230,20 @@ namespace GiantGroupM3
         }
 
         internal static string GenerateSignature(
-    IList<KeyValuePair<string, string>> fields,
-    string passphrase)
+     IList<KeyValuePair<string, string>> fields,
+     string passphrase,
+     bool skipEmpty = true)
         {
             var parts = new List<string>();
-
-            foreach (KeyValuePair<string, string> field in fields)
+            foreach (var field in fields)
             {
-                if (!string.IsNullOrEmpty(field.Value))
-                {
-                    string value = field.Value.Trim();
+                if (skipEmpty && string.IsNullOrEmpty(field.Value)) continue;
 
-                    string encodedValue = HttpUtility.UrlEncode(value);
-
-                    // PayFast requires uppercase URL-encoding.
-                    encodedValue = System.Text.RegularExpressions.Regex.Replace(
-                        encodedValue,
-                        @"%[0-9a-fA-F]{2}",
-                        match => match.Value.ToUpperInvariant());
-
-                    parts.Add(field.Key + "=" + encodedValue);
-                }
+                string value = skipEmpty ? field.Value.Trim() : (field.Value ?? "");
+                string enc = HttpUtility.UrlEncode(value);
+                enc = System.Text.RegularExpressions.Regex.Replace(
+                    enc, @"%[0-9a-fA-F]{2}", m => m.Value.ToUpperInvariant());
+                parts.Add(field.Key + "=" + enc);
             }
 
             if (!string.IsNullOrWhiteSpace(passphrase))

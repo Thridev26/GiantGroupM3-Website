@@ -29,6 +29,7 @@ namespace GiantGroupM3
         public void ProcessRequest(HttpContext context)
         {
             context.Response.ContentType = "text/plain";
+            context.Response.TrySkipIisCustomErrors = true;   // <-- add this
 
             try
             {
@@ -78,7 +79,7 @@ namespace GiantGroupM3
                     context.Request.Form["signature"];
 
                 string calculatedSignature =
-                    PayFastCheckout.GenerateSignature(fields, passphrase);
+     PayFastCheckout.GenerateSignature(fields, passphrase, skipEmpty: false);
 
                 if (string.IsNullOrWhiteSpace(suppliedSignature) ||
                     !FixedTimeEquals(
