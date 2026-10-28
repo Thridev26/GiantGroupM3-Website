@@ -212,9 +212,14 @@
     <Content Include="Content\oak-undecided.png" />
     <Content Include="Content\sandstone.css" />
     <Content Include="Content\Site.css" />
-    <Content Include="Content\Slideshow\site-clearing.png" />
-    <Content Include="Content\Slideshow\team-crew.png" />
-    <Content Include="Content\Slideshow\tree-felling.png" />
+    <Content Include="Content\Slideshow\slide-photo-1.jpg" />
+    <Content Include="Content\Slideshow\slide-photo-2.jpg" />
+    <Content Include="Content\Slideshow\slide-photo-3.jpg" />
+    <Content Include="Content\Slideshow\slide-photo-4.jpg" />
+    <Content Include="Content\Slideshow\slide-photo-5.jpg" />
+    <Content Include="Content\Slideshow\slide-photo-6.jpg" />
+    <Content Include="Content\Slideshow\slide-photo-7.jpg" />
+    <Content Include="Content\Slideshow\slide-photo-8.jpg" />
     <Content Include="Content\The Giant Group Logo .png" />
     <Content Include="Default.aspx" />
     <Content Include="favicon.ico" />
@@ -264,11 +269,13 @@
     <Content Include="Content\bootstrap-grid.css.map" />
     <Content Include="Account\Web.config" />
     <Content Include="CalendarEvents.ashx" />
+    <Content Include="MobileApi.ashx" />
     <Content Include="PayFastITN.ashx" />
     <Content Include="PayFastCheckout.ashx" />
     <None Include="Properties\PublishProfiles\IST-WST-Group-1 - FTP.pubxml" />
     <None Include="Properties\PublishProfiles\IST-WST-Group-1 - Web Deploy.pubxml" />
     <None Include="Properties\PublishProfiles\IST-WST-Group-1 - Web Deploy1.pubxml" />
+    <None Include="Properties\PublishProfiles\IST-WST-Group-1 - Web Deploy2.pubxml" />
     <None Include="Scripts\jquery-3.7.0.intellisense.js" />
     <Content Include="Scripts\jquery-3.7.0.js" />
     <Content Include="Scripts\jquery-3.7.0.min.js" />
@@ -432,6 +439,9 @@
     <Compile Include="App_Start\IdentityConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="App_Start\Startup.Auth.cs" />
+    <Compile Include="MobileApi.ashx.cs">
+      <DependentUpon>MobileApi.ashx</DependentUpon>
+    </Compile>
     <Compile Include="Scheduling.cs" />
     <Compile Include="AssignAsset.aspx.cs">
       <DependentUpon>AssignAsset.aspx</DependentUpon>
