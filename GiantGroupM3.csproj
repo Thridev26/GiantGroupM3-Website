@@ -442,6 +442,7 @@
     <Compile Include="MobileApi.ashx.cs">
       <DependentUpon>MobileApi.ashx</DependentUpon>
     </Compile>
+    <Compile Include="MobileApiV2.cs" />
     <Compile Include="Scheduling.cs" />
     <Compile Include="AssignAsset.aspx.cs">
       <DependentUpon>AssignAsset.aspx</DependentUpon>

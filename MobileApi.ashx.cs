@@ -107,6 +107,7 @@ namespace GiantGroupM3
                         if (p.Length == 2 && m == "DELETE") { DeletePhoto(ctx, id); return; }
                     }
                 }
+                if (MobileApiV2.TryHandle(ctx, p, m, _conn)) return;
                 throw new ApiError(404, "Unknown endpoint.");
             }
             catch (ApiError ex) { Fail(ctx, ex.Code, ex.Message); }
