@@ -9,25 +9,56 @@ namespace GiantGroupM3
 {
     public partial class ViewJobProgress : System.Web.UI.Page
     {
+
         protected void Page_Load(object sender, EventArgs e)
         {
+            Response.Cache.SetCacheability(
+                System.Web.HttpCacheability.NoCache);
+            Response.Cache.SetNoStore();
 
-            int level;
-            string role = Convert.ToString(Session["UserRole"]);
-
-            bool allowed =
-                Request.IsAuthenticated &&
-                int.TryParse(Convert.ToString(Session["UserLevel"]), out level) &&
-                level >= 4 && level <= 6 &&
-                string.Equals(role, "Staff", StringComparison.OrdinalIgnoreCase);
-
-            if (!allowed)
+            if (!Request.IsAuthenticated)
             {
-                Response.Redirect("~/Account/Login.aspx", false);
+                Response.Redirect(
+                    ResolveUrl("~/Account/Login.aspx"),
+                    false);
                 Context.ApplicationInstance.CompleteRequest();
                 return;
             }
 
+            string role = Convert.ToString(Session["UserRole"]);
+
+            int level;
+            bool validLevel = int.TryParse(
+                Convert.ToString(Session["UserLevel"]),
+                out level);
+
+            bool isStaff = string.Equals(
+                role,
+                "Staff",
+                StringComparison.OrdinalIgnoreCase);
+
+            bool authorised =
+                isStaff &&
+                validLevel &&
+                level >= 4 &&
+                level <= 6;
+
+            if (!authorised)
+            {
+                Response.StatusCode = 403;
+                Response.TrySkipIisCustomErrors = true;
+                Response.Write(
+                    "Access denied. This page requires " +
+                    "Operations Manager access or higher.");
+                Context.ApplicationInstance.CompleteRequest();
+                return;
+            }
+
+            if (!IsPostBack)
+            {
+                // Database loading will be added later.
+            }
         }
+
     }
 }
