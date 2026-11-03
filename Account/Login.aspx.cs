@@ -438,7 +438,7 @@ namespace GiantGroupM3.Account
                 string staffQuery = @"SELECT s.staffID, s.passwordHash, s.firstName, r.accessLevel 
                                      FROM staff s 
                                      LEFT JOIN Role r ON s.roleID = r.roleID 
-                                     WHERE s.emailAddress = @Email";
+                                     WHERE s.emailAddress = @Email AND LTRIM(RTRIM(s.staffStatus)) = 'Active'";
 
                 using (SqlCommand cmd = new SqlCommand(staffQuery, conn))
                 {
@@ -461,7 +461,7 @@ namespace GiantGroupM3.Account
                 }
 
                 // 2. Check client table
-                string clientQuery = "SELECT clientID, passwordHash, clientName FROM client WHERE emailAddress = @Email";
+                string clientQuery = "SELECT clientID, passwordHash, clientName FROM client WHERE emailAddress = @Email AND status = 'Active'";
                 using (SqlCommand cmd = new SqlCommand(clientQuery, conn))
                 {
                     cmd.Parameters.AddWithValue("@Email", email);
@@ -499,7 +499,7 @@ namespace GiantGroupM3.Account
             using (SqlConnection conn = new SqlConnection(connString))
             {
                 conn.Open();
-                string staffQuery = "SELECT s.staffID, s.firstName, r.accessLevel FROM staff s LEFT JOIN Role r ON s.roleID = r.roleID WHERE s.emailAddress = @Email";
+                string staffQuery = "SELECT s.staffID, s.firstName, r.accessLevel FROM staff s LEFT JOIN Role r ON s.roleID = r.roleID WHERE s.emailAddress = @Email AND LTRIM(RTRIM(s.staffStatus)) = 'Active'";
                 using (SqlCommand cmd = new SqlCommand(staffQuery, conn))
                 {
                     cmd.Parameters.AddWithValue("@Email", email);
@@ -516,7 +516,7 @@ namespace GiantGroupM3.Account
                     }
                 }
 
-                string clientQuery = "SELECT clientID, clientName FROM client WHERE emailAddress = @Email";
+                string clientQuery = "SELECT clientID, clientName FROM client WHERE emailAddress = @Email AND status = 'Active'";
                 using (SqlCommand cmd = new SqlCommand(clientQuery, conn))
                 {
                     cmd.Parameters.AddWithValue("@Email", email);

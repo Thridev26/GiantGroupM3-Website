@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Configuration;
 using System.Data.SqlClient;
 using System.Web;
@@ -8,101 +8,128 @@ namespace GiantGroupM3.Account
 {
     public partial class VerifyOtp : Page
     {
+        private const int MaxResetOtpAttempts = 5;
+        private const int ResetGrantMinutes = 10;
+
         protected void VerifyOtp_Click(object sender, EventArgs e)
         {
-            if (IsValid)
+            if (!IsValid) return;
+
+            string email = (Request.QueryString["email"] ?? (Session["PendingEmail"] as string) ?? string.Empty).Trim();
+            string enteredOtp = (OtpCode.Text ?? string.Empty).Trim();
+
+            if (email.Length == 0)
             {
-                // 1. Get email and userType safely from QueryString or Session
-                string email = Request.QueryString["email"] ?? Session["PendingEmail"] as string;
-                string userType = Request.QueryString["type"] ?? Session["PendingUserType"] as string;
-                string enteredOtp = OtpCode.Text.Trim();
+                ShowError("Invalid session email.");
+                return;
+            }
 
-                if (string.IsNullOrEmpty(email))
+            int attempts = (Session["ResetOtpAttempts"] as int?) ?? 0;
+            if (attempts >= MaxResetOtpAttempts)
+            {
+                ShowError("Too many incorrect codes. Please request a new code and try again.");
+                return;
+            }
+
+            string connString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
+
+            bool isStaff;
+            int userId;
+            if (!FindAccount(connString, email, out isStaff, out userId))
+            {
+                ShowError("Invalid or expired OTP code.");
+                return;
+            }
+
+            // The fallback code is only honoured when AllowDemoMfaCode is "true" in Web.config.
+            bool demoEnabled = string.Equals(ConfigurationManager.AppSettings["AllowDemoMfaCode"], "true", StringComparison.OrdinalIgnoreCase);
+            bool isDemoFallback = demoEnabled && enteredOtp == "123456";
+
+            bool otpValid = isDemoFallback || IsOtpValid(connString, userId, isStaff, enteredOtp);
+            if (!otpValid)
+            {
+                Session["ResetOtpAttempts"] = attempts + 1;
+                ShowError("Invalid or expired OTP code.");
+                return;
+            }
+
+            // The code is used up once it has been accepted.
+            ConsumeResetCodes(connString, userId, isStaff);
+
+            // Server-side grant: ResetPassword only trusts this, never a URL parameter.
+            Session.Remove("ResetOtpAttempts");
+            Session["PwdResetUserId"] = userId;
+            Session["PwdResetIsStaff"] = isStaff;
+            Session["PwdResetExpiresUtc"] = DateTime.UtcNow.AddMinutes(ResetGrantMinutes);
+
+            Response.Redirect("~/Account/ResetPassword?verified=true");
+        }
+
+        private void ShowError(string message)
+        {
+            FailureText.Text = HttpUtility.HtmlEncode(message);
+            ErrorBox.Visible = true;
+        }
+
+        /// <summary>Finds an active staff member first, then an active client, for this email.</summary>
+        private static bool FindAccount(string connString, string email, out bool isStaff, out int userId)
+        {
+            isStaff = false;
+            userId = 0;
+            using (SqlConnection conn = new SqlConnection(connString))
+            {
+                conn.Open();
+                using (SqlCommand staffCmd = new SqlCommand("SELECT staffID FROM staff WHERE emailAddress = @Email AND LTRIM(RTRIM(staffStatus)) = 'Active'", conn))
                 {
-                    FailureText.Text = "Invalid session email.";
-                    ErrorBox.Visible = true;
-                    return;
-                }
-
-                // Live demo safety fallback code
-                bool isDemoFallback = (enteredOtp == "123456");
-                bool otpValid = isDemoFallback;
-
-                if (!otpValid)
-                {
-                    string connString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
-                    int userId = 0;
-                    bool isStaff = false;
-
-                    using (SqlConnection conn = new SqlConnection(connString))
+                    staffCmd.Parameters.AddWithValue("@Email", email);
+                    object staffRes = staffCmd.ExecuteScalar();
+                    if (staffRes != null)
                     {
-                        conn.Open();
-
-                        // Step A: First check if the email exists in the staff table
-                        string checkStaffQuery = "SELECT staffID FROM staff WHERE emailAddress = @Email";
-                        using (SqlCommand staffCmd = new SqlCommand(checkStaffQuery, conn))
-                        {
-                            staffCmd.Parameters.AddWithValue("@Email", email);
-                            object staffRes = staffCmd.ExecuteScalar();
-                            if (staffRes != null)
-                            {
-                                userId = Convert.ToInt32(staffRes);
-                                isStaff = true;
-                            }
-                        }
-
-                        // Step B: If not in staff, check the client table
-                        if (!isStaff)
-                        {
-                            string checkClientQuery = "SELECT clientID FROM client WHERE emailAddress = @Email";
-                            using (SqlCommand clientCmd = new SqlCommand(checkClientQuery, conn))
-                            {
-                                clientCmd.Parameters.AddWithValue("@Email", email);
-                                object clientRes = clientCmd.ExecuteScalar();
-                                if (clientRes != null)
-                                {
-                                    userId = Convert.ToInt32(clientRes);
-                                    isStaff = false; // It's a client
-                                }
-                            }
-                        }
-
-                        // If the email wasn't found in either table, fail early
-                        if (userId > 0)
-                        {
-                            // Step C: Build the verification query pointing to the correct foreign key column
-                            string verifyQuery = isStaff
-                                ? "SELECT TOP 1 ResetID FROM PasswordResets WHERE StaffID = @ID AND OTP = @OTP AND ExpiryTime > GETDATE() ORDER BY ResetID DESC"
-                                : "SELECT TOP 1 ResetID FROM PasswordResets WHERE ClientID = @ID AND OTP = @OTP AND ExpiryTime > GETDATE() ORDER BY ResetID DESC";
-
-                            using (SqlCommand verifyCmd = new SqlCommand(verifyQuery, conn))
-                            {
-                                verifyCmd.Parameters.AddWithValue("@ID", userId);
-                                verifyCmd.Parameters.AddWithValue("@OTP", enteredOtp);
-
-                                using (SqlDataReader reader = verifyCmd.ExecuteReader())
-                                {
-                                    if (reader.HasRows)
-                                    {
-                                        otpValid = true;
-                                    }
-                                }
-                            }
-                        }
+                        userId = Convert.ToInt32(staffRes);
+                        isStaff = true;
+                        return true;
                     }
                 }
+                using (SqlCommand clientCmd = new SqlCommand("SELECT clientID FROM client WHERE emailAddress = @Email AND status = 'Active'", conn))
+                {
+                    clientCmd.Parameters.AddWithValue("@Email", email);
+                    object clientRes = clientCmd.ExecuteScalar();
+                    if (clientRes != null)
+                    {
+                        userId = Convert.ToInt32(clientRes);
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
 
-                if (otpValid)
-                {
-                    // Successfully verified! Redirect to password reset
-                    string resolvedType = userType ?? "client";
-                    Response.Redirect($"~/Account/ResetPassword?email={HttpUtility.UrlEncode(email)}&type={HttpUtility.UrlEncode(resolvedType)}&verified=true");
-                }
-                else
-                {
-                    FailureText.Text = "Invalid or expired OTP code.";
-                    ErrorBox.Visible = true;
-                }
+        private static bool IsOtpValid(string connString, int userId, bool isStaff, string otp)
+        {
+            string sql = isStaff
+                ? "SELECT TOP 1 ResetID FROM PasswordResets WHERE StaffID = @ID AND OTP = @OTP AND ExpiryTime > GETDATE() ORDER BY ResetID DESC"
+                : "SELECT TOP 1 ResetID FROM PasswordResets WHERE ClientID = @ID AND OTP = @OTP AND ExpiryTime > GETDATE() ORDER BY ResetID DESC";
+            using (SqlConnection conn = new SqlConnection(connString))
+            using (SqlCommand cmd = new SqlCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@ID", userId);
+                cmd.Parameters.AddWithValue("@OTP", otp);
+                conn.Open();
+                return cmd.ExecuteScalar() != null;
+            }
+        }
+
+        private static void ConsumeResetCodes(string connString, int userId, bool isStaff)
+        {
+            string sql = isStaff
+                ? "DELETE FROM PasswordResets WHERE StaffID = @ID"
+                : "DELETE FROM PasswordResets WHERE ClientID = @ID";
+            using (SqlConnection conn = new SqlConnection(connString))
+            using (SqlCommand cmd = new SqlCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@ID", userId);
+                conn.Open();
+                cmd.ExecuteNonQuery();
             }
         }
     }

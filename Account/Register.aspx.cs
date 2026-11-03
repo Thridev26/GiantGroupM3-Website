@@ -1,15 +1,31 @@
-﻿using System;
+using System;
 using System.Configuration;
 using System.Data.SqlClient;
+using System.Net;
 using System.Net.Mail;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
+using System.Web.Script.Serialization;
 using System.Web.UI;
 
 namespace GiantGroupM3.Account
 {
     public partial class Register : Page
     {
+        private const int ClaimOtpMinutes = 5;
+        private const int MaxClaimOtpAttempts = 5;
+
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            bool claimPending = Session["ClaimEmail"] != null;
+            pnlRegister.Visible = !claimPending;
+            pnlClaimVerify.Visible = claimPending;
+            if (claimPending)
+                litClaimEmail.Text = HttpUtility.HtmlEncode("We sent a 6-digit code to " + (string)Session["ClaimEmail"] + ".");
+        }
+
         protected void CreateUser_Click(object sender, EventArgs e)
         {
             if (!IsValid) return;
@@ -60,7 +76,6 @@ namespace GiantGroupM3.Account
                     // 2. Does this email exist in the client table, and do they already have a password?
                     bool clientExists = false;
                     bool hasPasswordAlready = false;
-
                     using (SqlCommand clientCmd = new SqlCommand("SELECT clientID, passwordHash FROM client WHERE emailAddress = @Email", conn))
                     {
                         clientCmd.Parameters.AddWithValue("@Email", email);
@@ -83,33 +98,16 @@ namespace GiantGroupM3.Account
                     }
                     else if (clientExists)
                     {
-                        // Client was pre-created by admin; they are now claiming the account.
-                        // (Login still requires an emailed one-time code, so the password alone is not enough to get in.)
-                        string updateQuery = @"UPDATE client 
-                                             SET passwordHash = @PasswordHash, 
-                                                 clientName = ISNULL(NULLIF(@FirstName, ''), clientName), 
-                                                 clientSurname = ISNULL(NULLIF(@Surname, ''), clientSurname),
-                                                 phoneNumber = ISNULL(NULLIF(@Phone, ''), phoneNumber),
-                                                 clientType = @ClientType
-                                             WHERE emailAddress = @Email";
-
-                        using (SqlCommand updateCmd = new SqlCommand(updateQuery, conn))
-                        {
-                            updateCmd.Parameters.AddWithValue("@PasswordHash", hashedPassword);
-                            updateCmd.Parameters.AddWithValue("@FirstName", firstName);
-                            updateCmd.Parameters.AddWithValue("@Surname", surname);
-                            updateCmd.Parameters.AddWithValue("@Phone", phone);
-                            updateCmd.Parameters.AddWithValue("@ClientType", clientType);
-                            updateCmd.Parameters.AddWithValue("@Email", email);
-                            updateCmd.ExecuteNonQuery();
-                        }
+                        // A pre-created client is claiming the account. Prove they control the email
+                        // address (emailed code) before any password is accepted.
+                        BeginClaimVerification(email, firstName, surname, phone, clientType, hashedPassword);
+                        return;
                     }
                     else
                     {
                         // Brand new client registration
-                        string insertQuery = @"INSERT INTO client (clientName, clientSurname, clientType, emailAddress, status, dateAdded, phoneNumber, passwordHash) 
+                        string insertQuery = @"INSERT INTO client (clientName, clientSurname, clientType, emailAddress, status, dateAdded, phoneNumber, passwordHash)
                                              VALUES (@FirstName, @Surname, @ClientType, @Email, 'Active', GETDATE(), @Phone, @PasswordHash)";
-
                         using (SqlCommand insertCmd = new SqlCommand(insertQuery, conn))
                         {
                             insertCmd.Parameters.AddWithValue("@FirstName", firstName);
@@ -132,6 +130,194 @@ namespace GiantGroupM3.Account
 
             // Successfully processed, redirect to Login with a success flag
             Response.Redirect("~/Account/Login?registered=true");
+        }
+
+        // ---------------------------------------------------------------
+        // Claiming a pre-created account: emailed code first
+        // ---------------------------------------------------------------
+        private void BeginClaimVerification(string email, string firstName, string surname, string phone, string clientType, string hashedPassword)
+        {
+            string otp = GenerateOtp();
+
+            try
+            {
+                SendVerificationCode(email, otp);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("Claim verification code failed: " + ex);
+                ShowError("We couldn't send a verification code right now. Please try again in a moment.");
+                return;
+            }
+
+            Session["ClaimEmail"] = email;
+            Session["ClaimFirstName"] = firstName;
+            Session["ClaimSurname"] = surname;
+            Session["ClaimPhone"] = phone;
+            Session["ClaimClientType"] = clientType;
+            Session["ClaimPasswordHash"] = hashedPassword;
+            Session["ClaimOtp"] = otp;
+            Session["ClaimOtpExpiry"] = DateTime.UtcNow.AddMinutes(ClaimOtpMinutes);
+            Session["ClaimAttempts"] = 0;
+
+            pnlRegister.Visible = false;
+            pnlClaimVerify.Visible = true;
+            litClaimEmail.Text = HttpUtility.HtmlEncode("We sent a 6-digit code to " + email + ".");
+            litClaimMessage.Text = string.Empty;
+        }
+
+        protected void ClaimVerify_Click(object sender, EventArgs e)
+        {
+            string email = Session["ClaimEmail"] as string;
+            string storedOtp = Session["ClaimOtp"] as string;
+
+            if (email == null || storedOtp == null || !(Session["ClaimOtpExpiry"] is DateTime))
+            {
+                ClearClaim();
+                ShowRegistrationForm();
+                ShowError("Your verification session has expired. Please fill in the form again.");
+                return;
+            }
+
+            DateTime expiry = (DateTime)Session["ClaimOtpExpiry"];
+            if (DateTime.UtcNow > expiry)
+            {
+                ClearClaim();
+                ShowRegistrationForm();
+                ShowError("That code has expired. Please fill in the form again to get a new one.");
+                return;
+            }
+
+            int attempts = (Session["ClaimAttempts"] as int?) ?? 0;
+            if (attempts >= MaxClaimOtpAttempts)
+            {
+                ClearClaim();
+                ShowRegistrationForm();
+                ShowError("Too many incorrect codes. Please fill in the form again.");
+                return;
+            }
+
+            string entered = (ClaimOtpCode.Text ?? string.Empty).Trim();
+
+            // Same fallback rule as login: only honoured when AllowDemoMfaCode is "true" in Web.config.
+            bool demoEnabled = string.Equals(ConfigurationManager.AppSettings["AllowDemoMfaCode"], "true", StringComparison.OrdinalIgnoreCase);
+            bool valid = (demoEnabled && entered == "123456") || ConstantTimeEquals(entered, storedOtp);
+
+            if (!valid)
+            {
+                attempts++;
+                Session["ClaimAttempts"] = attempts;
+                int left = MaxClaimOtpAttempts - attempts;
+                if (left <= 0)
+                {
+                    ClearClaim();
+                    ShowRegistrationForm();
+                    ShowError("Too many incorrect codes. Please fill in the form again.");
+                    return;
+                }
+                litClaimMessage.Text = HttpUtility.HtmlEncode("Invalid or expired code. You have " + left + " attempt" + (left == 1 ? "" : "s") + " left.");
+                return;
+            }
+
+            // Code accepted: set the password, but only if the account still has none.
+            string connString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
+            int rows;
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(connString))
+                using (SqlCommand updateCmd = new SqlCommand(@"UPDATE client
+                                             SET passwordHash = @PasswordHash,
+                                                 clientName = ISNULL(NULLIF(@FirstName, ''), clientName),
+                                                 clientSurname = ISNULL(NULLIF(@Surname, ''), clientSurname),
+                                                 phoneNumber = ISNULL(NULLIF(@Phone, ''), phoneNumber),
+                                                 clientType = @ClientType
+                                             WHERE emailAddress = @Email
+                                               AND (passwordHash IS NULL OR passwordHash = '')", conn))
+                {
+                    updateCmd.Parameters.AddWithValue("@PasswordHash", (string)Session["ClaimPasswordHash"]);
+                    updateCmd.Parameters.AddWithValue("@FirstName", (string)Session["ClaimFirstName"]);
+                    updateCmd.Parameters.AddWithValue("@Surname", (string)Session["ClaimSurname"]);
+                    updateCmd.Parameters.AddWithValue("@Phone", (string)Session["ClaimPhone"]);
+                    updateCmd.Parameters.AddWithValue("@ClientType", (string)Session["ClaimClientType"]);
+                    updateCmd.Parameters.AddWithValue("@Email", email);
+                    conn.Open();
+                    rows = updateCmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("Account claim failed: " + ex);
+                ClearClaim();
+                ShowRegistrationForm();
+                ShowError("We couldn't create your account right now. Please try again in a moment.");
+                return;
+            }
+
+            ClearClaim();
+
+            if (rows != 1)
+            {
+                ShowRegistrationForm();
+                ShowError("An account with this email already exists and is active. Please log in.");
+                return;
+            }
+
+            Response.Redirect("~/Account/Login?registered=true");
+        }
+
+        protected void ClaimCancel_Click(object sender, EventArgs e)
+        {
+            ClearClaim();
+            ShowRegistrationForm();
+        }
+
+        private void ShowRegistrationForm()
+        {
+            pnlRegister.Visible = true;
+            pnlClaimVerify.Visible = false;
+        }
+
+        private void ClearClaim()
+        {
+            string[] keys = { "ClaimEmail", "ClaimFirstName", "ClaimSurname", "ClaimPhone", "ClaimClientType",
+                              "ClaimPasswordHash", "ClaimOtp", "ClaimOtpExpiry", "ClaimAttempts" };
+            foreach (string k in keys) Session.Remove(k);
+        }
+
+        /// <summary>Sends the code through the same email service used for login. Type "login" is the template already in use.</summary>
+        private static void SendVerificationCode(string email, string otp)
+        {
+            string webAppUrl = ConfigurationManager.AppSettings["EmailServiceUrl"];
+            if (string.IsNullOrEmpty(webAppUrl)) throw new InvalidOperationException("EmailServiceUrl is not configured.");
+            string jsonData = new JavaScriptSerializer().Serialize(new { email = email, otp = otp, type = "login" });
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            using (WebClient client = new WebClient())
+            {
+                client.Encoding = Encoding.UTF8;
+                client.Headers[HttpRequestHeader.ContentType] = "application/json";
+                client.UploadString(webAppUrl, "POST", jsonData);
+            }
+        }
+
+        /// <summary>Cryptographically secure 6-digit code.</summary>
+        private static string GenerateOtp()
+        {
+            using (var rng = new RNGCryptoServiceProvider())
+            {
+                byte[] bytes = new byte[4];
+                uint limit = uint.MaxValue - (uint.MaxValue % 900000);
+                uint value;
+                do { rng.GetBytes(bytes); value = BitConverter.ToUInt32(bytes, 0); } while (value >= limit);
+                return (100000 + (value % 900000)).ToString();
+            }
+        }
+
+        private static bool ConstantTimeEquals(string a, string b)
+        {
+            if (a == null || b == null || a.Length != b.Length) return false;
+            int diff = 0;
+            for (int i = 0; i < a.Length; i++) diff |= a[i] ^ b[i];
+            return diff == 0;
         }
 
         private static string Validate(string first, string last, string email, string phone, string clientType, string password, string confirm)
@@ -162,7 +348,6 @@ namespace GiantGroupM3.Account
             if (!Regex.IsMatch(password, "[A-Z]") || !Regex.IsMatch(password, "[a-z]") || !Regex.IsMatch(password, "[0-9]"))
                 return "Your password needs an uppercase letter, a lowercase letter and a number.";
             if (!string.Equals(password, confirm, StringComparison.Ordinal)) return "The passwords you entered do not match.";
-
             return null;
         }
 

@@ -99,7 +99,7 @@ namespace GiantGroupM3
                 new FaqItem {
                     Icon = "fa-file-invoice-dollar",
                     Question = "How do quotes and payments work?",
-                    Answer = "After we have assessed your request we will send you a formal quotation. Payment details are provided with your quote and once the work is complete."
+                    Answer = "After we have assessed your request we will send you a formal quotation. Once you accept the quote you can pay online through PayFast from the Invoicing page, in full or in part."
                 },
                 new FaqItem {
                     Icon = "fa-user-shield",
@@ -119,12 +119,12 @@ namespace GiantGroupM3
                 new FaqItem {
                     Icon = "fa-tree",
                     Question = "How do I submit a new job request?",
-                    Answer = "Go to " + Link("~/JobRequest.aspx", "Job Request") + ", add the services you need and the site address, and provide measurements where asked. Measurements matter: we can't generate a quote until item details have been provided."
+                    Answer = "Go to " + Link("~/Requests/SubmitRequest.aspx", "Submit Job Request") + ", choose the services you need, enter the site address and pin the site on the map, then submit. Our team visits the site to take the measurements, and a quote can be prepared once they are recorded."
                 },
                 new FaqItem {
                     Icon = "fa-camera",
-                    Question = "How do I upload site photos?",
-                    Answer = "Open the <strong>Job Requests</strong> menu and choose <strong>Add Site Photos</strong> to upload before or after images of the property. Clear photos help us quote accurately."
+                    Question = "Can I send site photos?",
+                    Answer = "Photo upload is not yet available on the website. Please send photos through the " + Link("~/Contact.aspx", "Contact page") + " and we will add them to your request."
                 },
                 new FaqItem {
                     Icon = "fa-calculator",
@@ -179,7 +179,7 @@ namespace GiantGroupM3
                 new FaqItem {
                     Icon = "fa-edit",
                     Question = "How do I edit or archive quotes?",
-                    Answer = "In " + Link("~/ViewQuote.aspx", "View Quotes") + ", click <strong>Select/Edit</strong> to change the expiry date, amount or status. Use the status filter to find Pending, Sent, Accepted, Declined or Rejected quotes. Changing a quote's status also updates the job request, so you don't need to do both."
+                    Answer = "In " + Link("~/ViewQuote.aspx", "View Quotes") + ", click <strong>Select/Edit</strong> to change the expiry date, amount or status. Use the status filter to find Sent, Accepted or Rejected quotes. Changing a quote's status also updates the job request, so you don't need to do both."
                 },
                 new FaqItem {
                     Icon = "fa-print",
@@ -189,12 +189,12 @@ namespace GiantGroupM3
                 new FaqItem {
                     Icon = "fa-tools",
                     Question = "How do I allocate equipment and staff to a job?",
-                    Answer = "Use the <strong>Allocation</strong> module to assign machinery (chainsaws, chippers, trucks) and certified personnel to each site once a quote has been accepted."
+                    Answer = "Use <strong>Assign Staff</strong> and <strong>Assign Asset</strong> to book people and machinery onto a job's dates and time slots. The system blocks any double-booking. Allocation is available to System Managers and Owners."
                 },
                 new FaqItem {
                     Icon = "fa-camera",
                     Question = "Where are site photos managed?",
-                    Answer = "Under the <strong>Job Requests</strong> menu, <strong>Add Site Photos</strong> lets you upload pre- and post-cutting images for the property record."
+                    Answer = "The website does not yet have a site photo upload page. Site photos are currently captured through the staff mobile app."
                 },
                 new FaqItem {
                     Icon = "fa-credit-card",
@@ -204,7 +204,7 @@ namespace GiantGroupM3
                 new FaqItem {
                     Icon = "fa-user-shield",
                     Question = "What can each role access?",
-                    Answer = "Owners and Admins have access to the management tools and all client records. Clients can only see their own requests, quotes and invoices. Please sign out on shared computers."
+                    Answer = "Owners can see everything, including client records and invoicing. System Managers manage quotes and allocations. Operations Managers manage requests, site evaluations and the team calendar. Clients only see their own requests, quotes and invoices. Please sign out on shared computers."
                 }
             };
         }

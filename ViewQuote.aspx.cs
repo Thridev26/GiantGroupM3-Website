@@ -18,8 +18,8 @@ namespace GiantGroupM3
         private int _clientId;
 
         // Statuses a manager may set, and the filter options each role is offered.
-        private static readonly string[] EditableStatuses = { "Pending", "Sent", "Accepted", "Declined", "Rejected" };
-        private static readonly string[] ManagementFilters = { "All", "Pending", "Sent", "Accepted", "Declined", "Rejected" };
+        private static readonly string[] EditableStatuses = { "Sent", "Accepted", "Rejected" };
+        private static readonly string[] ManagementFilters = { "All", "Sent", "Accepted", "Rejected" };
         private static readonly string[] ClientFilters = { "All", "Sent", "Accepted", "Rejected" };
 
         /// <summary>

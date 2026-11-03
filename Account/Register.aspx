@@ -1,4 +1,4 @@
-﻿<%@ Page Title="Register" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="Register.aspx.cs" Inherits="GiantGroupM3.Account.Register" %>
+<%@ Page Title="Register" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="Register.aspx.cs" Inherits="GiantGroupM3.Account.Register" %>
 
 <asp:Content runat="server" ID="BodyContent" ContentPlaceHolderID="MainContent">
     <link rel="stylesheet" href="<%= ResolveUrl("~/Content/giant-ui.css") %>?v=1" />
@@ -22,6 +22,7 @@
                 </asp:PlaceHolder>
 
                 <!-- Honeypot: real people never see or fill this; bots do -->
+                <asp:Panel runat="server" ID="pnlRegister">
                 <div style="position: absolute; left: -9999px;" aria-hidden="true">
                     <input type="text" name="website" tabindex="-1" autocomplete="off" />
                 </div>
@@ -82,6 +83,20 @@
                 </div>
 
                 <asp:Button runat="server" ID="SubmitButton" OnClick="CreateUser_Click" Text="Create account" CssClass="gg-btn gg-btn-primary w-100 py-3" />
+                </asp:Panel>
+                <asp:Panel runat="server" ID="pnlClaimVerify" Visible="false">
+                    <div class="gg-msg is-success mb-3" role="status">
+                        <i class="bi bi-envelope-check-fill me-1"></i> <asp:Literal runat="server" ID="litClaimEmail" />
+                    </div>
+                    <p class="text-muted small mb-3">This email address is already on our system. To protect the account, enter the code we emailed to that address before a password is set.</p>
+                    <asp:Literal runat="server" ID="litClaimMessage" />
+                    <div class="gg-field mb-4">
+                        <asp:Label runat="server" AssociatedControlID="ClaimOtpCode" CssClass="form-label text-secondary small fw-semibold">Verification code</asp:Label>
+                        <asp:TextBox runat="server" ID="ClaimOtpCode" CssClass="gg-input" MaxLength="6" placeholder="6-digit code" autocomplete="one-time-code" />
+                    </div>
+                    <asp:Button runat="server" ID="ClaimVerifyButton" OnClick="ClaimVerify_Click" CausesValidation="false" Text="Verify and create account" CssClass="gg-btn gg-btn-primary w-100 py-3" />
+                    <asp:Button runat="server" ID="ClaimCancelButton" OnClick="ClaimCancel_Click" CausesValidation="false" Text="Cancel" CssClass="gg-btn w-100 py-2 mt-2" />
+                </asp:Panel>
 
                 <p class="gg-auth-foot mb-0">
                     Already have an account? <a href="Login.aspx">Sign in</a>

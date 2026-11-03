@@ -76,7 +76,7 @@ namespace GiantGroupM3
             string query = @"SELECT jr.jobRequestID, jr.siteAddress, jr.urgencyLevel, jr.dateRecieved, jr.status, c.clientName
                              FROM JobRequest jr
                              LEFT JOIN Client c ON c.clientID = jr.clientID
-                             WHERE jr.status NOT IN ('Cancelled', 'Quote Sent', 'Quote Accepted') ";
+                             WHERE COALESCE(jr.status, 'Pending') NOT IN ('Cancelled', 'Quote Sent', 'Quote Accepted') ";
 
             if (!IsManagementView)
                 query += "AND jr.clientID = @ClientID ";
