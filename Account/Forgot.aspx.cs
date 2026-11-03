@@ -1,9 +1,11 @@
-﻿using System;
+using System;
 using System.Configuration;
 using System.Data.SqlClient;
 using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 using System.Web;
+using System.Web.Script.Serialization;
 using System.Web.UI;
 
 namespace GiantGroupM3.Account
@@ -29,9 +31,8 @@ namespace GiantGroupM3.Account
                 {
                     conn.Open();
 
-                    // 1. Check if email exists in client table and get ClientID
-                    string clientQuery = "SELECT ClientID FROM client WHERE emailAddress = @Email";
-                    using (SqlCommand cmd = new SqlCommand(clientQuery, conn))
+                    // 1. Active client with this email?
+                    using (SqlCommand cmd = new SqlCommand("SELECT clientID FROM client WHERE emailAddress = @Email AND status = 'Active'", conn))
                     {
                         cmd.Parameters.AddWithValue("@Email", email);
                         object result = cmd.ExecuteScalar();
@@ -43,11 +44,10 @@ namespace GiantGroupM3.Account
                         }
                     }
 
-                    // 2. If not a client, check staff table and get StaffID
+                    // 2. Otherwise, active staff with this email?
                     if (!emailExists)
                     {
-                        string staffQuery = "SELECT StaffID FROM staff WHERE emailAddress = @Email";
-                        using (SqlCommand cmd = new SqlCommand(staffQuery, conn))
+                        using (SqlCommand cmd = new SqlCommand("SELECT staffID FROM staff WHERE emailAddress = @Email AND LTRIM(RTRIM(staffStatus)) = 'Active'", conn))
                         {
                             cmd.Parameters.AddWithValue("@Email", email);
                             object result = cmd.ExecuteScalar();
@@ -67,46 +67,27 @@ namespace GiantGroupM3.Account
                     ErrorMessage.Visible = true;
                     return;
                 }
+
                 // GENERATE OTP, SAVE TO DATABASE, & SEND EMAIL
-                // ==========================================
                 try
                 {
-                    string otp = new Random().Next(100000, 999999).ToString();
+                    string otp = GenerateOtp();
 
                     using (SqlConnection conn = new SqlConnection(connString))
                     {
                         conn.Open();
 
                         // Clean up expired records older than 24 hours
-                        string cleanupQuery = "DELETE FROM PasswordResets WHERE ExpiryTime < DATEADD(hour, -24, GETDATE());";
-                        using (SqlCommand cmdCleanup = new SqlCommand(cleanupQuery, conn))
+                        using (SqlCommand cmdCleanup = new SqlCommand("DELETE FROM PasswordResets WHERE ExpiryTime < DATEADD(hour, -24, GETDATE());", conn))
                         {
                             cmdCleanup.ExecuteNonQuery();
                         }
 
-                        // 1. Explicitly check if this email exists in the staff table
-                        bool isStaff = false;
-                        string staffCheckQuery = "SELECT COUNT(1) FROM staff WHERE emailAddress = @EmailCheck";
-                        using (SqlCommand cmdStaffCheck = new SqlCommand(staffCheckQuery, conn))
-                        {
-                            cmdStaffCheck.Parameters.AddWithValue("@EmailCheck", email);
-                            int count = Convert.ToInt32(cmdStaffCheck.ExecuteScalar());
-                            if (count > 0)
-                            {
-                                isStaff = true;
-                            }
-                        }
+                        bool isStaff = string.Equals(userType, "staff", StringComparison.OrdinalIgnoreCase);
 
-                        // 2. Build the insert query dynamically based on actual table membership
-                        string insertQuery;
-                        if (isStaff)
-                        {
-                            insertQuery = "INSERT INTO PasswordResets (StaffID, OTP, ExpiryTime) VALUES (@UserId, @Otp, DATEADD(minute, 5, GETDATE()))";
-                        }
-                        else
-                        {
-                            insertQuery = "INSERT INTO PasswordResets (ClientID, OTP, ExpiryTime) VALUES (@UserId, @Otp, DATEADD(minute, 5, GETDATE()))";
-                        }
+                        string insertQuery = isStaff
+                            ? "INSERT INTO PasswordResets (StaffID, OTP, ExpiryTime) VALUES (@UserId, @Otp, DATEADD(minute, 5, GETDATE()))"
+                            : "INSERT INTO PasswordResets (ClientID, OTP, ExpiryTime) VALUES (@UserId, @Otp, DATEADD(minute, 5, GETDATE()))";
 
                         using (SqlCommand cmd = new SqlCommand(insertQuery, conn))
                         {
@@ -116,28 +97,48 @@ namespace GiantGroupM3.Account
                         }
                     }
 
-                    // Dispatch via Google Apps Script Web App
+                    // Dispatch via Google Apps Script Web App (JSON is serialised, never string-built).
                     string webAppUrl = ConfigurationManager.AppSettings["EmailServiceUrl"];
-                    string jsonData = $"{{\"email\":\"{email}\", \"otp\":\"{otp}\", \"type\":\"reset\"}}";
+                    if (string.IsNullOrEmpty(webAppUrl)) throw new InvalidOperationException("EmailServiceUrl is not configured.");
+                    string jsonData = new JavaScriptSerializer().Serialize(new { email = email, otp = otp, type = "reset" });
 
                     ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-
                     using (WebClient client = new WebClient())
                     {
                         client.Encoding = Encoding.UTF8;
                         client.Headers[HttpRequestHeader.ContentType] = "application/json";
-                        string response = client.UploadString(webAppUrl, "POST", jsonData);
+                        client.UploadString(webAppUrl, "POST", jsonData);
                     }
                 }
                 catch (Exception ex)
                 {
-                    FailureText.Text = "Failed to process password reset: " + ex.Message;
+                    System.Diagnostics.Trace.TraceError("Password reset code failed: " + ex);
+                    FailureText.Text = "We couldn't send a reset code right now. Please try again shortly.";
                     ErrorMessage.Visible = true;
                     return;
                 }
 
+                // A fresh code starts with a fresh attempt count and no old reset grant.
+                Session["ResetOtpAttempts"] = 0;
+                Session.Remove("PwdResetUserId");
+                Session.Remove("PwdResetIsStaff");
+                Session.Remove("PwdResetExpiresUtc");
+
                 // Redirect to your verification screen
                 Response.Redirect($"~/Account/VerifyOtp?email={HttpUtility.UrlEncode(email)}&type={userType}");
+            }
+        }
+
+        /// <summary>Cryptographically secure 6-digit code (System.Random is predictable).</summary>
+        private static string GenerateOtp()
+        {
+            using (var rng = new RNGCryptoServiceProvider())
+            {
+                byte[] bytes = new byte[4];
+                uint limit = uint.MaxValue - (uint.MaxValue % 900000);
+                uint value;
+                do { rng.GetBytes(bytes); value = BitConverter.ToUInt32(bytes, 0); } while (value >= limit);
+                return (100000 + (value % 900000)).ToString();
             }
         }
     }
