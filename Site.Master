@@ -714,7 +714,7 @@ body.dark-mode .gg-msg.is-error { background: #3a1f1c; color: #f1948a; }
                     <!-- Public Gallery -->
                              <li class="nav-item">
                               <a class="nav-link" runat="server" href="~/Gallery/Gallery.aspx">
-                               <i class="bi bi-images me-1"></i> Gallery
+                                Gallery
                                   </a>
                                  </li>
 
