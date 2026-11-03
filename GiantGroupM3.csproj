@@ -224,6 +224,7 @@
     <Content Include="Default.aspx" />
     <Content Include="EditJobProgress.aspx" />
     <Content Include="favicon.ico" />
+    <Content Include="Gallery\Gallery.aspx" />
     <Content Include="Global.asax" />
     <Content Include="google0e84b456a6f12b15.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -274,6 +275,7 @@
     <Content Include="MobileApi.ashx" />
     <Content Include="PayFastITN.ashx" />
     <Content Include="PayFastCheckout.ashx" />
+    <Content Include="Gallery\GalleryImage.ashx" />
     <None Include="Properties\PublishProfiles\IST-WST-Group-1 - FTP.pubxml" />
     <None Include="Properties\PublishProfiles\IST-WST-Group-1 - Web Deploy.pubxml" />
     <None Include="Properties\PublishProfiles\IST-WST-Group-1 - Web Deploy1.pubxml" />
@@ -448,6 +450,13 @@
     </Compile>
     <Compile Include="EditJobProgress.aspx.designer.cs">
       <DependentUpon>EditJobProgress.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Gallery\Gallery.aspx.cs">
+      <DependentUpon>Gallery.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Gallery\Gallery.aspx.designer.cs">
+      <DependentUpon>Gallery.aspx</DependentUpon>
     </Compile>
     <Compile Include="Jobs_ManageJob.aspx.cs">
       <DependentUpon>Jobs_ManageJob.aspx</DependentUpon>
