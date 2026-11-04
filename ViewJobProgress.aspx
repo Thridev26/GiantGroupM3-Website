@@ -5,12 +5,12 @@
     CodeBehind="ViewJobProgress.aspx.cs"
     Inherits="GiantGroupM3.ViewJobProgress" %>
 
-<asp:Content ID="Content1" ContentPlaceHolderID="MainContent" runat="server">
+<asp:Content ID="Content1"
+    ContentPlaceHolderID="MainContent"
+    runat="server">
 
 <style>
-    /* VIEW JOB PROGRESS - GIANT GROUP THEME */
-
-    .vjp-wrap {
+    .vjp-page {
         max-width: 1140px;
         margin: 0 auto;
         padding: .5rem 0 2rem;
@@ -27,154 +27,106 @@
         color: #fff;
     }
 
-    .vjp-banner p {
-        max-width: 650px;
-        margin: 0;
+    .vjp-banner p,
+    .vjp-breadcrumb {
         color: #cfe5d9;
     }
 
     .vjp-breadcrumb {
-        color: #cfe5d9;
         font-size: .83rem;
         font-weight: 600;
-    }
-
-    /* Summary cards */
-
-    .vjp-stat-icon {
-        font-size: 1.25rem;
     }
 
     .vjp-stat-value {
         font-family: var(--gg-display);
         font-size: 2.4rem;
-        font-weight: 600;
-        line-height: 1.2;
+        font-weight: 700;
         color: var(--gg-text);
         margin: .7rem 0 .3rem;
     }
 
-    .vjp-stat-note {
-        font-size: .8rem;
+    .vjp-stat-note,
+    .vjp-description {
         color: var(--gg-muted);
+        font-size: .85rem;
+        line-height: 1.6;
     }
 
-    /* Section headings */
-
-    .vjp-section-heading {
+    .vjp-heading {
         display: flex;
         align-items: center;
         gap: .75rem;
         margin-bottom: 1.25rem;
     }
 
-    .vjp-section-heading h2 {
-        font-size: 1.08rem;
+    .vjp-heading h2 {
+        font-size: 1.1rem;
         font-weight: 700;
         color: var(--gg-text);
         margin: 0;
     }
-
-    .vjp-description {
-        color: var(--gg-muted);
-        font-size: .88rem;
-        line-height: 1.6;
-    }
-
-    /* Search and filters */
 
     .vjp-filters {
         display: grid;
         grid-template-columns: 2fr 1fr 1fr 1fr;
         gap: 1rem;
-        align-items: end;
     }
 
-    .vjp-filter-actions {
+    .vjp-actions {
         display: flex;
-        gap: .7rem;
+        gap: .75rem;
+        flex-wrap: wrap;
         margin-top: 1.2rem;
     }
 
-    .vjp-filter-control:disabled {
-        opacity: .7;
-        cursor: not-allowed;
-    }
-
-    /* Table */
-
-    .vjp-table-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        flex-wrap: wrap;
-        margin-bottom: 1rem;
-    }
-
-    .vjp-table-head h2 {
-        font-family: var(--gg-display);
-        font-size: 1.4rem;
-        font-weight: 600;
-        color: var(--gg-text);
-        margin: 0;
-    }
-
     .vjp-record-count {
-        display: inline-flex;
-        align-items: center;
-        gap: .4rem;
-        border: 1px solid var(--gg-border);
-        background: var(--gg-surface-2);
         color: var(--gg-muted);
-        border-radius: 999px;
-        padding: .35rem .75rem;
-        font-size: .78rem;
+        font-size: .85rem;
         font-weight: 600;
     }
 
-    .vjp-table-empty {
-        text-align: center;
-        padding: 3rem 1.25rem !important;
-        color: var(--gg-muted);
-    }
-
-    .vjp-table-empty h3 {
-        font-size: 1.15rem;
+    .vjp-status {
+        display: inline-block;
+        padding: .3rem .65rem;
+        border-radius: 999px;
+        font-size: .78rem;
         font-weight: 700;
-        color: var(--gg-text);
-        margin: 1rem 0 .5rem;
+        white-space: nowrap;
     }
 
-    .vjp-table-empty p {
-        color: var(--gg-muted);
-        font-size: .88rem;
-        margin: 0;
+    .vjp-pending {
+        background: #fff0cf;
+        color: #805700;
     }
 
-    /* Status legend */
-
-    .vjp-status-legend {
-        display: flex;
-        gap: .6rem;
-        flex-wrap: wrap;
+    .vjp-active {
+        background: #dcecff;
+        color: #145da0;
     }
 
-    /* Job details */
+    .vjp-completed {
+        background: #d9f1e1;
+        color: #17663a;
+    }
 
-    .vjp-details {
-        background: var(--gg-surface-2);
+    .vjp-archived {
+        background: #e9e9e9;
+        color: #555;
+    }
+
+    .vjp-detail-box {
         border: 1px solid var(--gg-border);
+        background: var(--gg-surface-2);
         border-radius: 12px;
-        padding: 1.2rem;
+        padding: 1.25rem;
     }
 
     .vjp-detail-row {
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
+        align-items: start;
         gap: 1rem;
-        padding: .8rem 0;
+        padding: .85rem 0;
         border-bottom: 1px solid var(--gg-border);
         font-size: .88rem;
     }
@@ -190,91 +142,88 @@
     .vjp-detail-row strong {
         color: var(--gg-text);
         text-align: right;
-        font-weight: 600;
+        overflow-wrap: anywhere;
     }
 
-    /* Progress tracker */
-
-    .vjp-timeline {
-        display: flex;
-        justify-content: space-between;
+    .vjp-track {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
         gap: .75rem;
-        position: relative;
-        margin: 2rem 0;
-    }
-
-    .vjp-timeline::before {
-        content: "";
-        position: absolute;
-        top: 20px;
-        left: 15%;
-        right: 15%;
-        height: 2px;
-        background: var(--gg-border);
+        margin: 1.5rem 0;
     }
 
     .vjp-stage {
-        flex: 1;
         text-align: center;
-        position: relative;
-        z-index: 1;
-    }
-
-    .vjp-stage-circle {
-        width: 42px;
-        height: 42px;
-        border-radius: 50%;
-        background: var(--gg-surface-2);
+        padding: 1.3rem .5rem;
         border: 2px solid var(--gg-border);
+        background: var(--gg-surface-2);
+        border-radius: 12px;
         color: var(--gg-muted);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto .8rem;
-        font-size: 1rem;
     }
 
-    .vjp-stage-title {
+    .vjp-stage i {
         display: block;
-        font-weight: 700;
+        font-size: 1.55rem;
+        margin-bottom: .65rem;
+    }
+
+    .vjp-stage strong {
+        display: block;
         font-size: .85rem;
-        color: var(--gg-text);
     }
 
-    .vjp-stage-sub {
+    .vjp-stage small {
         display: block;
-        font-size: .75rem;
-        color: var(--gg-muted);
+        font-size: .73rem;
         margin-top: .3rem;
     }
 
-    .vjp-no-selection {
-        text-align: center;
-        padding: 1.2rem;
+    .vjp-stage.is-current {
+        background: var(--gg-accent-soft);
+        border-color: var(--gg-600);
+        color: var(--gg-accent);
+    }
+
+    .vjp-stage.is-done {
+        border-color: var(--gg-600);
+        color: var(--gg-accent);
+    }
+
+    .vjp-evidence {
         background: var(--gg-surface-2);
         border: 1px dashed var(--gg-border);
         border-radius: 12px;
-        color: var(--gg-muted);
+        padding: 1.2rem;
+        margin-top: 1rem;
+    }
+
+    .vjp-table td,
+    .vjp-table th {
+        vertical-align: middle;
+    }
+
+    .vjp-table td {
         font-size: .86rem;
     }
 
-    .vjp-bottom-actions {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: .75rem;
-        padding-top: 1.3rem;
-        border-top: 1px solid var(--gg-border);
-        margin-top: 1.5rem;
+    .vjp-table a {
+        color: var(--gg-accent);
+        font-weight: 700;
     }
 
-    @media (max-width: 991px) {
+    .vjp-empty {
+        text-align: center;
+        padding: 2rem;
+        color: var(--gg-muted);
+    }
+
+    @media(max-width: 991px) {
         .vjp-filters {
             grid-template-columns: repeat(2, 1fr);
         }
     }
 
-    @media (max-width: 575px) {
+    @media(max-width: 575px) {
         .vjp-banner {
             padding: 1.5rem;
         }
@@ -283,30 +232,28 @@
             grid-template-columns: 1fr;
         }
 
-        .vjp-filter-actions {
+        .vjp-actions {
             flex-direction: column;
         }
 
-        .vjp-filter-actions .gg-btn {
+        .vjp-actions .gg-btn {
             width: 100%;
         }
 
-        .vjp-stage-title {
-            font-size: .74rem;
+        .vjp-stage {
+            padding: 1rem .35rem;
         }
 
-        .vjp-stage-sub {
-            font-size: .68rem;
+        .vjp-stage strong {
+            font-size: .72rem;
         }
     }
 </style>
 
-<div class="vjp-wrap">
+<div class="vjp-page">
 
-    <!-- ================= HEADER ================= -->
-
+    <!-- HEADER -->
     <div class="gg-banner vjp-banner">
-
         <div class="vjp-breadcrumb">
             <i class="bi bi-grid me-1"></i>
             Management / Jobs / Progress
@@ -318,41 +265,38 @@
         </h1>
 
         <p>
-            Track scheduled jobs, monitor operational progress,
-            and review job completion across all active sites.
+            Track scheduled jobs, monitor operational
+            progress and review completed work.
         </p>
-
     </div>
 
-    <!-- ================= PREVIEW NOTICE ================= -->
+    <!-- ERRORS -->
+    <asp:Panel ID="pnlError"
+        runat="server"
+        Visible="false"
+        CssClass="gg-msg is-error mb-4">
 
-    <div class="gg-msg is-info mb-4">
-        <i class="bi bi-info-circle me-2"></i>
-        <strong>Interface Preview:</strong>
-        Job records, totals and filters will become available
-        once this page is connected to the database.
-    </div>
+        <asp:Label
+            ID="lblError"
+            runat="server" />
 
-    <!-- ================= SUMMARY CARDS ================= -->
+    </asp:Panel>
 
+    <!-- SUMMARY CARDS -->
     <div class="row g-3 mb-4">
 
-        <!-- TOTAL JOBS -->
         <div class="col-sm-6 col-xl-3">
             <div class="gg-kpi gg-surface h-100">
 
-                <div class="d-flex justify-content-between align-items-start">
-                    <span class="gg-kpi-label">
-                        Total Jobs
-                    </span>
-
-                    <span class="gg-tile">
-                        <i class="bi bi-briefcase vjp-stat-icon"></i>
-                    </span>
-                </div>
+                <span class="gg-kpi-label">
+                    Total Jobs
+                </span>
 
                 <div class="vjp-stat-value">
-                    &mdash;
+                    <asp:Label
+                        ID="lblTotalJobs"
+                        runat="server"
+                        Text="0" />
                 </div>
 
                 <div class="vjp-stat-note">
@@ -362,22 +306,18 @@
             </div>
         </div>
 
-        <!-- NOT STARTED -->
         <div class="col-sm-6 col-xl-3">
             <div class="gg-kpi gg-surface is-amber h-100">
 
-                <div class="d-flex justify-content-between align-items-start">
-                    <span class="gg-kpi-label">
-                        Not Started
-                    </span>
-
-                    <span class="gg-tile is-amber">
-                        <i class="bi bi-calendar-event vjp-stat-icon"></i>
-                    </span>
-                </div>
+                <span class="gg-kpi-label">
+                    Not Started
+                </span>
 
                 <div class="vjp-stat-value">
-                    &mdash;
+                    <asp:Label
+                        ID="lblNotStarted"
+                        runat="server"
+                        Text="0" />
                 </div>
 
                 <div class="vjp-stat-note">
@@ -387,22 +327,18 @@
             </div>
         </div>
 
-        <!-- IN PROGRESS -->
         <div class="col-sm-6 col-xl-3">
             <div class="gg-kpi gg-surface is-blue h-100">
 
-                <div class="d-flex justify-content-between align-items-start">
-                    <span class="gg-kpi-label">
-                        In Progress
-                    </span>
-
-                    <span class="gg-tile is-blue">
-                        <i class="bi bi-tools vjp-stat-icon"></i>
-                    </span>
-                </div>
+                <span class="gg-kpi-label">
+                    In Progress
+                </span>
 
                 <div class="vjp-stat-value">
-                    &mdash;
+                    <asp:Label
+                        ID="lblInProgress"
+                        runat="server"
+                        Text="0" />
                 </div>
 
                 <div class="vjp-stat-note">
@@ -412,26 +348,22 @@
             </div>
         </div>
 
-        <!-- COMPLETED -->
         <div class="col-sm-6 col-xl-3">
             <div class="gg-kpi gg-surface h-100">
 
-                <div class="d-flex justify-content-between align-items-start">
-                    <span class="gg-kpi-label">
-                        Completed
-                    </span>
-
-                    <span class="gg-tile">
-                        <i class="bi bi-check-circle vjp-stat-icon"></i>
-                    </span>
-                </div>
+                <span class="gg-kpi-label">
+                    Completed
+                </span>
 
                 <div class="vjp-stat-value">
-                    &mdash;
+                    <asp:Label
+                        ID="lblCompleted"
+                        runat="server"
+                        Text="0" />
                 </div>
 
                 <div class="vjp-stat-note">
-                    Successfully completed jobs
+                    Finished jobs
                 </div>
 
             </div>
@@ -439,12 +371,11 @@
 
     </div>
 
-    <!-- ================= SEARCH AND FILTERS ================= -->
-
+    <!-- SEARCH AND FILTER -->
     <div class="gg-panel mb-4">
         <div class="gg-panel-body">
 
-            <div class="vjp-section-heading">
+            <div class="vjp-heading">
                 <span class="gg-tile">
                     <i class="bi bi-funnel"></i>
                 </span>
@@ -453,220 +384,264 @@
             </div>
 
             <p class="vjp-description mb-4">
-                Find specific jobs using their ID, client,
-                site location, status or scheduled date.
+                Search by job number, client or site.
+                Filter by job status or scheduled date.
             </p>
 
             <div class="vjp-filters">
 
-                <!-- SEARCH -->
                 <div>
-                    <label for="vjpSearch" class="gg-field-label">
-                        Search Jobs
-                    </label>
+                    <asp:Label
+                        runat="server"
+                        AssociatedControlID="txtSearchJobs"
+                        CssClass="gg-field-label"
+                        Text="Search Jobs" />
 
-                    <div class="gg-search-box" style="max-width:none;">
-                        <i class="bi bi-search"></i>
-
-                        <input
-                            id="vjpSearch"
-                            type="search"
-                            class="gg-input vjp-filter-control"
-                            placeholder="Job ID, client or address..."
-                            disabled="disabled" />
-                    </div>
+                    <asp:TextBox
+                        ID="txtSearchJobs"
+                        runat="server"
+                        CssClass="gg-input"
+                        MaxLength="100"
+                        placeholder="Job ID, client, site..." />
                 </div>
 
-                <!-- STATUS FILTER -->
                 <div>
-                    <label for="vjpStatus" class="gg-field-label">
-                        Job Status
-                    </label>
+                    <asp:Label
+                        runat="server"
+                        AssociatedControlID="ddlStatusFilter"
+                        CssClass="gg-field-label"
+                        Text="Job Status" />
 
-                    <select
-                        id="vjpStatus"
-                        class="gg-select vjp-filter-control"
-                        disabled="disabled">
+                    <asp:DropDownList
+                        ID="ddlStatusFilter"
+                        runat="server"
+                        CssClass="gg-select">
 
-                        <option value="">All Statuses</option>
-                        <option value="Not Started">Not Started</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Archived">Archived</option>
+                        <asp:ListItem Text="All Statuses"
+                            Value="All" />
 
-                    </select>
+                        <asp:ListItem Text="Not Started"
+                            Value="Not Started" />
+
+                        <asp:ListItem Text="In Progress"
+                            Value="In Progress" />
+
+                        <asp:ListItem Text="Completed"
+                            Value="Completed" />
+
+                        <asp:ListItem Text="Archived"
+                            Value="Archived" />
+
+                    </asp:DropDownList>
                 </div>
 
-                <!-- FROM DATE -->
                 <div>
-                    <label for="vjpFromDate" class="gg-field-label">
-                        From Date
-                    </label>
+                    <asp:Label
+                        runat="server"
+                        AssociatedControlID="txtFromDate"
+                        CssClass="gg-field-label"
+                        Text="From Date" />
 
-                    <input
-                        id="vjpFromDate"
-                        type="date"
-                        class="gg-input vjp-filter-control"
-                        disabled="disabled" />
+                    <asp:TextBox
+                        ID="txtFromDate"
+                        runat="server"
+                        TextMode="Date"
+                        CssClass="gg-input" />
                 </div>
 
-                <!-- TO DATE -->
                 <div>
-                    <label for="vjpToDate" class="gg-field-label">
-                        To Date
-                    </label>
+                    <asp:Label
+                        runat="server"
+                        AssociatedControlID="txtToDate"
+                        CssClass="gg-field-label"
+                        Text="To Date" />
 
-                    <input
-                        id="vjpToDate"
-                        type="date"
-                        class="gg-input vjp-filter-control"
-                        disabled="disabled" />
+                    <asp:TextBox
+                        ID="txtToDate"
+                        runat="server"
+                        TextMode="Date"
+                        CssClass="gg-input" />
                 </div>
 
             </div>
 
-            <div class="vjp-filter-actions">
+            <div class="vjp-actions">
+                <asp:Button
+                    ID="btnApplyFilters"
+                    runat="server"
+                    Text="Apply Filters"
+                    CssClass="gg-btn gg-btn-primary"
+                    CausesValidation="false"
+                    OnClick="btnApplyFilters_Click" />
 
-                <button
-                    type="button"
-                    class="gg-btn gg-btn-primary"
-                    disabled="disabled">
-                    <i class="bi bi-search"></i>
-                    Apply Filters
-                </button>
-
-                <button
-                    type="button"
-                    class="gg-btn gg-btn-outline"
-                    disabled="disabled">
-                    <i class="bi bi-arrow-counterclockwise"></i>
-                    Clear Filters
-                </button>
-
+                <asp:Button
+                    ID="btnClearFilters"
+                    runat="server"
+                    Text="Clear Filters"
+                    CssClass="gg-btn gg-btn-outline"
+                    CausesValidation="false"
+                    OnClick="btnClearFilters_Click" />
             </div>
 
         </div>
     </div>
 
-    <!-- ================= JOB RECORDS TABLE ================= -->
-
-    <div class="vjp-table-head">
-
-        <div>
-            <span class="gg-label mb-2">
-                <i class="bi bi-list-task"></i>
-                Job Records
-            </span>
-
-            <h2>All Jobs</h2>
-
-            <p class="vjp-description mt-1 mb-0">
-                View the current progress of recorded jobs.
-            </p>
-        </div>
-
-        <div class="vjp-record-count">
-            <i class="bi bi-database"></i>
-            Records not loaded
-        </div>
-
-    </div>
-
-    <!-- STATUS LEGEND -->
-    <div class="vjp-status-legend mb-3">
-
-        <span class="gg-chip is-pending">
-            Not Started
-        </span>
-
-        <span class="gg-chip is-active">
-            In Progress
-        </span>
-
-        <span class="gg-chip is-done">
-            Completed
-        </span>
-
-        <span class="gg-chip">
-            Archived
-        </span>
-
-    </div>
-
-    <div class="gg-panel mb-4">
-
-        <div class="gg-table-wrap">
-            <table class="table gg-table">
-
-                <thead>
-                    <tr>
-                        <th>Job ID</th>
-                        <th>Client Name</th>
-                        <th>Site Address</th>
-                        <th>Start Date</th>
-                        <th>Time Slots</th>
-                        <th>Job Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-
-                    <tr>
-                        <td colspan="7" class="vjp-table-empty">
-
-                            <span class="gg-tile is-lg">
-                                <i class="bi bi-inbox"></i>
-                            </span>
-
-                            <h3>
-                                No Job Records Loaded
-                            </h3>
-
-                            <p>
-                                Your jobs will appear here once
-                                the page is connected to the
-                                SQL Server database.
-                            </p>
-
-                        </td>
-                    </tr>
-
-                </tbody>
-
-            </table>
-        </div>
-
-    </div>
-
-    <!-- ================= JOB DETAILS ================= -->
-
+    <!-- JOB TABLE -->
     <div class="gg-panel mb-4">
 
         <div class="gg-panel-body">
 
-            <div class="vjp-section-heading">
+            <div class="d-flex justify-content-between
+                        align-items-center flex-wrap gap-3 mb-3">
 
+                <div>
+                    <span class="gg-label">
+                        <i class="bi bi-list-task"></i>
+                        Job Records
+                    </span>
+
+                    <h2 class="gg-section-title mt-2">
+                        All Jobs
+                    </h2>
+                </div>
+
+                <div class="vjp-record-count">
+                    <i class="bi bi-database me-1"></i>
+
+                    <asp:Label
+                        ID="lblRecordCount"
+                        runat="server"
+                        Text="0 records" />
+                </div>
+
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <span class="vjp-status vjp-pending">
+                    Not Started
+                </span>
+
+                <span class="vjp-status vjp-active">
+                    In Progress
+                </span>
+
+                <span class="vjp-status vjp-completed">
+                    Completed
+                </span>
+
+                <span class="vjp-status vjp-archived">
+                    Archived
+                </span>
+            </div>
+
+        </div>
+
+        <div class="gg-table-wrap">
+
+            <asp:GridView
+                ID="gvJobs"
+                runat="server"
+                AutoGenerateColumns="false"
+                DataKeyNames="jobID"
+                CssClass="table gg-table vjp-table"
+                GridLines="None"
+                AllowPaging="true"
+                PageSize="10"
+                EmptyDataText="No jobs match the selected filters."
+                OnSelectedIndexChanged="gvJobs_SelectedIndexChanged"
+                OnPageIndexChanging="gvJobs_PageIndexChanging">
+
+                <Columns>
+
+                    <asp:BoundField
+                        DataField="jobID"
+                        HeaderText="Job ID" />
+
+                    <asp:BoundField
+                        DataField="ClientName"
+                        HeaderText="Client Name" />
+
+                    <asp:BoundField
+                        DataField="siteAddress"
+                        HeaderText="Site Address" />
+
+                    <asp:BoundField
+                        DataField="ScheduledDateDisplay"
+                        HeaderText="Start Date" />
+
+                    <asp:BoundField
+                        DataField="TimeSlots"
+                        HeaderText="Time Slots" />
+
+                    <asp:TemplateField
+                        HeaderText="Job Status">
+
+                        <ItemTemplate>
+                            <span class='<%# StatusCss(Eval("jobStatus")) %>'>
+                                <%#: Eval("jobStatus") %>
+                            </span>
+                        </ItemTemplate>
+
+                    </asp:TemplateField>
+
+                    <asp:CommandField
+                        ShowSelectButton="true"
+                        SelectText="View Details"
+                        HeaderText="Action" />
+
+                </Columns>
+
+                <PagerStyle CssClass="gg-pager" />
+
+            </asp:GridView>
+
+        </div>
+    </div>
+
+    <!-- EMPTY SELECTION -->
+    <asp:Panel ID="pnlNoSelection"
+        runat="server"
+        CssClass="gg-panel mb-4">
+
+        <div class="gg-panel-body vjp-empty">
+
+            <i class="bi bi-clipboard-data fs-2"></i>
+
+            <h3 class="mt-3">
+                No Job Selected
+            </h3>
+
+            <p>
+                Select View Details on any job
+                to inspect its progress.
+            </p>
+
+        </div>
+
+    </asp:Panel>
+
+    <!-- SELECTED JOB DETAILS -->
+    <asp:Panel ID="pnlJobDetails"
+        runat="server"
+        Visible="false"
+        CssClass="gg-panel mb-4">
+
+        <div class="gg-panel-body">
+
+            <div class="vjp-heading">
                 <span class="gg-tile">
                     <i class="bi bi-clipboard-data"></i>
                 </span>
 
                 <h2>Selected Job Details</h2>
-
             </div>
-
-            <p class="vjp-description mb-4">
-                Select a job from the records table to
-                view its scheduling information and
-                current operational status.
-            </p>
 
             <div class="row g-4">
 
-                <!-- LEFT: JOB INFORMATION -->
+                <!-- LEFT COLUMN -->
                 <div class="col-lg-5">
 
-                    <div class="vjp-details">
+                    <div class="vjp-detail-box">
 
                         <h3 class="gg-section-title mb-3">
                             Job Information
@@ -674,116 +649,163 @@
 
                         <div class="vjp-detail-row">
                             <span>Job ID</span>
-                            <strong>Not selected</strong>
+                            <strong>
+                                <asp:Label ID="lblJobID"
+                                    runat="server" />
+                            </strong>
                         </div>
 
                         <div class="vjp-detail-row">
                             <span>Client</span>
-                            <strong>Not selected</strong>
+                            <strong>
+                                <asp:Label ID="lblClientName"
+                                    runat="server" />
+                            </strong>
                         </div>
 
                         <div class="vjp-detail-row">
                             <span>Quotation ID</span>
-                            <strong>&mdash;</strong>
+                            <strong>
+                                <asp:Label ID="lblQuoteID"
+                                    runat="server" />
+                            </strong>
                         </div>
 
                         <div class="vjp-detail-row">
                             <span>Site Address</span>
-                            <strong>&mdash;</strong>
+                            <strong>
+                                <asp:Label ID="lblSiteAddress"
+                                    runat="server" />
+                            </strong>
                         </div>
 
                         <div class="vjp-detail-row">
                             <span>Scheduled Date</span>
-                            <strong>&mdash;</strong>
+                            <strong>
+                                <asp:Label ID="lblStartDate"
+                                    runat="server" />
+                            </strong>
                         </div>
 
                         <div class="vjp-detail-row">
                             <span>Time Slots</span>
-                            <strong>&mdash;</strong>
+                            <strong>
+                                <asp:Label ID="lblTimeSlots"
+                                    runat="server" />
+                            </strong>
+                        </div>
+
+                        <div class="vjp-detail-row">
+                            <span>Fuel / Travel Cost</span>
+                            <strong>
+                                <asp:Label ID="lblFuelCost"
+                                    runat="server" />
+                            </strong>
+                        </div>
+
+                        <div class="vjp-detail-row">
+                            <span>Dumping Cost</span>
+                            <strong>
+                                <asp:Label ID="lblDumpingCost"
+                                    runat="server" />
+                            </strong>
                         </div>
 
                         <div class="vjp-detail-row">
                             <span>Current Status</span>
-                            <strong>&mdash;</strong>
+                            <strong>
+                                <asp:Label ID="lblCurrentStatus"
+                                    runat="server" />
+                            </strong>
                         </div>
 
                     </div>
 
                 </div>
 
-                <!-- RIGHT: PROGRESS TRACKER -->
+                <!-- RIGHT COLUMN -->
                 <div class="col-lg-7">
 
-                    <div class="vjp-details h-100">
+                    <div class="vjp-detail-box h-100">
 
                         <h3 class="gg-section-title mb-2">
                             Job Progress Tracker
                         </h3>
 
                         <p class="vjp-description">
-                            Follow the job through each stage
-                            of the operational workflow.
+                            Current operational stage
+                            of the selected job.
                         </p>
 
-                        <div class="vjp-timeline">
+                        <div class="vjp-track">
 
-                            <!-- STAGE 1 -->
-                            <div class="vjp-stage">
+                            <asp:Panel
+                                ID="pnlStageNotStarted"
+                                runat="server"
+                                CssClass="vjp-stage">
 
-                                <div class="vjp-stage-circle">
-                                    <i class="bi bi-calendar-check"></i>
-                                </div>
+                                <i class="bi bi-calendar-check"></i>
+                                <strong>Not Started</strong>
+                                <small>Scheduled</small>
 
-                                <span class="vjp-stage-title">
-                                    Not Started
-                                </span>
+                            </asp:Panel>
 
-                                <span class="vjp-stage-sub">
-                                    Job scheduled
-                                </span>
+                            <asp:Panel
+                                ID="pnlStageInProgress"
+                                runat="server"
+                                CssClass="vjp-stage">
 
-                            </div>
+                                <i class="bi bi-gear"></i>
+                                <strong>In Progress</strong>
+                                <small>Work underway</small>
 
-                            <!-- STAGE 2 -->
-                            <div class="vjp-stage">
+                            </asp:Panel>
 
-                                <div class="vjp-stage-circle">
-                                    <i class="bi bi-gear"></i>
-                                </div>
+                            <asp:Panel
+                                ID="pnlStageCompleted"
+                                runat="server"
+                                CssClass="vjp-stage">
 
-                                <span class="vjp-stage-title">
-                                    In Progress
-                                </span>
+                                <i class="bi bi-check-circle"></i>
+                                <strong>Completed</strong>
+                                <small>Work finished</small>
 
-                                <span class="vjp-stage-sub">
-                                    Work underway
-                                </span>
-
-                            </div>
-
-                            <!-- STAGE 3 -->
-                            <div class="vjp-stage">
-
-                                <div class="vjp-stage-circle">
-                                    <i class="bi bi-check-lg"></i>
-                                </div>
-
-                                <span class="vjp-stage-title">
-                                    Completed
-                                </span>
-
-                                <span class="vjp-stage-sub">
-                                    Work finished
-                                </span>
-
-                            </div>
+                            </asp:Panel>
 
                         </div>
 
-                        <div class="vjp-no-selection">
-                            <i class="bi bi-info-circle me-2"></i>
-                            Select a job to view its current
-                            progress and completion information.
+                        <p class="vjp-description">
+                            <asp:Label
+                                ID="lblProgressNote"
+                                runat="server" />
+                        </p>
+
+                        <!-- COMPLETION EVIDENCE -->
+                        <div class="vjp-evidence">
+
+                            <h4 class="gg-section-title mb-3">
+                                <i class="bi bi-camera me-2"></i>
+                                Completion Evidence
+                            </h4>
+
+                            <div class="vjp-detail-row">
+                                <span>Saved Completion Photos</span>
+                                <strong>
+                                    <asp:Label
+                                        ID="lblPhotoCount"
+                                        runat="server" />
+                                </strong>
+                            </div>
+
+                            <div class="vjp-detail-row">
+                                <span>Latest Photo Upload</span>
+                                <strong>
+                                    <asp:Label
+                                        ID="lblPhotoDate"
+                                        runat="server" />
+                                </strong>
+                            </div>
+
                         </div>
 
                     </div>
@@ -792,38 +814,34 @@
 
             </div>
 
-            <!-- ACTION BUTTONS -->
-            <div class="vjp-bottom-actions">
+            <!-- ACTIONS -->
+            <div class="vjp-actions mt-4">
 
-                <button
-                    type="button"
-                    class="gg-btn gg-btn-primary"
-                    disabled="disabled">
-                    <i class="bi bi-eye"></i>
-                    View Full Details
-                </button>
-
-                <button
-                    type="button"
-                    class="gg-btn gg-btn-outline"
-                    disabled="disabled">
-                    <i class="bi bi-pencil-square"></i>
-                    Edit Job Progress
-                </button>
-
-                <a
+                <asp:HyperLink
+                    ID="lnkEditProgress"
                     runat="server"
-                    href="~/ManagementPortal.aspx"
-                    class="gg-btn gg-btn-outline">
-                    <i class="bi bi-arrow-left"></i>
+                    CssClass="gg-btn gg-btn-primary"
+                    Visible="false">
+
+                    <i class="bi bi-pencil-square me-1"></i>
+                    Edit Job Progress
+
+                </asp:HyperLink>
+
+                <a runat="server"
+                   href="~/ManagementPortal.aspx"
+                   class="gg-btn gg-btn-outline">
+
+                    <i class="bi bi-arrow-left me-1"></i>
                     Back to Management
+
                 </a>
 
             </div>
 
         </div>
 
-    </div>
+    </asp:Panel>
 
 </div>
 
