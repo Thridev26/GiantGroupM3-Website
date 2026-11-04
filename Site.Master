@@ -758,6 +758,11 @@ body.dark-mode .gg-msg.is-error { background: #3a1f1c; color: #f1948a; }
                                 Gallery
                                   </a>
                                  </li>
+                            
+
+
+
+
 
 
                         <!-- Clients Tab -->
@@ -936,11 +941,19 @@ body.dark-mode .gg-msg.is-error { background: #3a1f1c; color: #f1948a; }
                         <% } %>
 
                         <!-- Reports Tab -->
-                        <% if (CanSeeReports()) { %>
-                        <li class="nav-item">
-                            <a class="nav-link" runat="server" href="~/Reports.aspx">Reports</a>
-                        </li>
-                        <% } %>
+                        
+<!-- Reports Tab -->
+<% if (CanSeeReports()) { %>
+    <li class="nav-item">
+        <a class="nav-link"
+           runat="server"
+           href="~/reports/ReportAnalytics.aspx">
+            <i class="bi bi-bar-chart-line me-1"></i>
+            Reports
+        </a>
+    </li>
+<% } %>
+
 
                         <li class="nav-item">
                             <a runat="server" href="~/Help.aspx" class="nav-link text-decoration-none">FAQ</a>

@@ -237,6 +237,7 @@
     <Content Include="NotFound.aspx" />
     <Content Include="PrintQuote.aspx" />
     <Content Include="Privacy.aspx" />
+    <Content Include="reports\ReportAnalytics.aspx" />
     <Content Include="RequestQuote.aspx" />
     <Content Include="Requests\EvaluateRequest.aspx" />
     <Content Include="Requests\ManageRequests.aspx" />
@@ -469,6 +470,13 @@
       <DependentUpon>MobileApi.ashx</DependentUpon>
     </Compile>
     <Compile Include="MobileApiV2.cs" />
+    <Compile Include="reports\ReportAnalytics.aspx.cs">
+      <DependentUpon>ReportAnalytics.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="reports\ReportAnalytics.aspx.designer.cs">
+      <DependentUpon>ReportAnalytics.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Scheduling.cs" />
     <Compile Include="AssignAsset.aspx.cs">
       <DependentUpon>AssignAsset.aspx</DependentUpon>
