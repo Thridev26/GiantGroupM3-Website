@@ -609,6 +609,8 @@
     <Compile Include="Requests\ViewRequests.aspx.designer.cs">
       <DependentUpon>ViewRequests.aspx</DependentUpon>
     </Compile>
+    <Compile Include="Services\AIService.cs" />
+    <Compile Include="Services\OakKnowledge.cs" />
     <Compile Include="Site.Master.cs">
       <DependentUpon>Site.Master</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>

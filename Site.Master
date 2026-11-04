@@ -299,15 +299,40 @@
            ===================================================================== */
         #scroll-progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #52b788, #95d5b2); width: 0; z-index: 1095; transition: width .1s ease; }
 
-        .gg-fab-wrap { position: fixed; right: 1.25rem; bottom: 5rem; z-index: 1060; display: flex; align-items: center; gap: .6rem; }
-        .gg-fab {
+        .gg-fab-wrap {  position: fixed; right: 1.25rem;bottom: 5rem; z-index: 1060;display: flex;flex-direction: column-reverse;             
+           align-items: center;gap: .6rem;}
+                       
+                      
+                      
+                         
+          
+                  
+                      
+                  
+      .gg-fab {
             height: 52px; border: 0; border-radius: 999px; color: #fff !important; text-decoration: none !important;
             background: var(--gg-700) !important; box-shadow: 0 10px 24px -8px rgba(15,45,30,.6);
             display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
             transition: background-color .15s ease, transform .15s ease;
         }
+        .contact-tooltip {position: absolute;right: 60px;bottom:56px;background: var(--gg-surface);color: var(--gg-text); padding: 12px 16px;
+                     border-radius: 12px;box-shadow: var(--gg-shadow-md);border: 1px solid var(--gg-border);
+                      width: 220px; font-size: 13px;z-index: 1080; opacity: 0; visibility: hidden;transition: opacity .3s ease;
+                      }
+          .contact-tooltip.show {
+         opacity: 1;
+           visibility: visible;
+          }         
+   
+    
+   
+   
+    
+
+
+
         .gg-fab:hover { background: var(--gg-800) !important; transform: translateY(-2px); }
-        .gg-fab.is-round { width: 52px; padding: 0; }
+        .gg-fab.is-round { width: 48px; height: 48px;border-radius: 50%; padding: 0; display: flex;align-items: center; justify-content: center; }
         .gg-fab.is-pill { padding: 0 1.2rem; font-weight: 600; font-size: .92rem; }
         .gg-fab img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; }
 
@@ -335,7 +360,7 @@
 
         /* Guest notice */
         .gg-notice {
-            z-index: 1050; bottom: 7rem; max-width: 400px; display: none;
+            z-index: 1050; bottom: 190px; max-width: 400px; display: none;
             background: var(--gg-surface); color: var(--gg-text);
             border: 1px solid var(--gg-border) !important; border-left: 5px solid var(--gg-600) !important;
             border-radius: 14px; box-shadow: var(--gg-shadow-md);
@@ -347,7 +372,7 @@
            OAK CHAT
            ===================================================================== */
         #chatbotPopup {
-            position: fixed; right: 1.25rem; bottom: 10rem; z-index: 1070;
+            position: fixed; right: 1.25rem; bottom: 30px; z-index: 1070;
             width: 370px; max-width: calc(100vw - 2rem); height: 540px; max-height: calc(100vh - 8rem);
             display: none; border-radius: 22px; overflow: hidden;
             background: var(--gg-surface); border: 1px solid var(--gg-border);
@@ -360,8 +385,12 @@
         }
         #chatbotPopup .oak-chat-icon { display: block; margin: 0 auto .5rem; width: 84px; height: 84px; object-fit: contain; background: transparent; }
         #chatbotPopup .oak-chat-close {
-            position: absolute; top: 8px; right: 12px; width: 32px; height: 32px; border-radius: 50%;
-            background: rgba(255,255,255,.12); border: none; color: #fff; font-size: 1.3rem; line-height: 1; cursor: pointer;
+            position: absolute; top: 10px; right: 10px; width: 40px; height: 40px;padding: 0; margin: 0; border-radius: 50%;
+            background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.3); color: #fff; font-size: 24px; line-height: 1; cursor: pointer;display: flex;align-items: center;justify-content: center;
+            z-index: 100;box-sizing: border-box;
+            #chatbotPopup .oak-chat-head {
+            overflow: visible;
+}
         }
         #chatbotPopup .oak-chat-close:hover { background: rgba(255,255,255,.25); }
         #chatbotPopup .oak-chat-body { flex: 1 1 auto; overflow-y: auto; padding: 1rem; background: var(--gg-bg); }
@@ -384,6 +413,9 @@
         body.dark-mode #chatbotPopup .btn-outline-success { color: #52b788 !important; border-color: #52b788 !important; }
         body.dark-mode #chatbotPopup .btn-outline-success:hover { background-color: #2d6a4f !important; color: #fff !important; }
         body.dark-mode #chatbotPopup .oak-dots span { background: #52b788; }
+
+        @keyframes oakBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+         #chatbotPopup .oak-chat-icon.is-thinking { animation: oakBob 1s ease-in-out infinite; }
 
         /* =====================================================================
            FOOTER
@@ -641,16 +673,25 @@ body.dark-mode .gg-msg.is-error { background: #3a1f1c; color: #f1948a; }
     <button id="backToTopBtn" class="btn btn-success" type="button" title="Back to top" aria-label="Back to top"><i class="bi bi-arrow-up"></i></button>
 
     <!-- Bottom-right floating buttons -->
-    <div class="gg-fab-wrap">
+    <div class="gg-fab-wrap d-flex flex-column-reverse align-items-center gap-2">
         <!-- 1. Chatbot trigger -->
         <button type="button" class="gg-fab is-round" title="Open quick chat with Oak" aria-label="Open quick chat with Oak" onclick="toggleChatbot()">
             <img src="<%= ResolveUrl("~/Content/oak-icon.png") %>" alt="Oak" />
         </button>
 
         <!-- 2. Contact page link -->
-        <a id="floatingContactBtn" runat="server" href="~/Contact.aspx" class="gg-fab is-pill" title="Contact Us">
-            <i class="bi bi-chat-dots"></i><span>Contact Us</span>
-        </a>
+        <div id="contactTooltip" class="contact-tooltip">
+    Need assistance? Contact The Giant Group here.
+</div>
+        <a id="floatingContactBtn" runat="server"
+   href="~/Contact.aspx"
+   class="gg-fab is-round"
+   title="Contact Us"
+   aria-label="Contact us">
+
+    <i class="bi bi-telephone-fill"></i>
+
+</a>
     </div>
 
     <!-- Cookie Consent Banner -->
@@ -963,7 +1004,7 @@ body.dark-mode .gg-msg.is-error { background: #3a1f1c; color: #f1948a; }
                 <!-- Header -->
                 <div class="oak-chat-head">
                     <button type="button" class="oak-chat-close" aria-label="Close chat" onclick="toggleChatbot()">&times;</button>
-                    <img src="<%= ResolveUrl("~/Content/oak-icon.png") %>" alt="Oak" class="oak-chat-icon" />
+                    <img src="<%= ResolveUrl("~/Content/oak-icon.png") %>" alt="Oak" class="oak-chat-icon" id="oakHeaderIcon" />
                     <h6 class="fw-bold mb-0">Oak</h6>
                     <small style="opacity: .85;">Giant Group Assistant</small>
                 </div>
@@ -1319,6 +1360,10 @@ body.dark-mode .gg-msg.is-error { background: #3a1f1c; color: #f1948a; }
         var LOGIN_URL = '<%= ResolveUrl("~/Account/Login.aspx") %>';
         var REGISTER_URL = '<%= ResolveUrl("~/Account/Register.aspx") %>';
         var OAK_IS_GUEST = ('<%= IsLoggedIn() ? "false" : "true" %>' === 'true');
+        var CHAT_URL = '<%= ResolveUrl("~/ChatHandler.ashx") %>';
+        var oakHistory = [];
+        var oakBusy = false;
+
 
         function toggleChatbot() {
             var chatPopup = document.getElementById("chatbotPopup");
@@ -1355,43 +1400,96 @@ body.dark-mode .gg-msg.is-error { background: #3a1f1c; color: #f1948a; }
                 '<div class="p-3 bg-white rounded-3 shadow-sm text-dark small gg-bubble" style="max-width: 80%;">' + html + '</div>';
             chatBody.appendChild(row);
             chatBody.scrollTop = chatBody.scrollHeight;
+            setOakMood(mood);
             return row;
-        }
+            }
 
-        function sendChatMessage() {
-            var input = document.getElementById("chatInput");
+            function addOakText(text, mood) {
             var chatBody = document.getElementById("chatBody");
-            var userText = input.value.trim();
-            if (userText === "") return;
+          var row = document.createElement("div");
+          row.className = "d-flex align-items-start mb-3";
+         var img = document.createElement("img");
+        img.src = OAK_ICONS[mood] || OAK_ICONS.happy;
+         img.alt = "";
+         img.className = "me-2 flex-shrink-0";
+         img.style.cssText = "width: 36px; height: 36px; object-fit: contain;";
+         var bubble = document.createElement("div");
+         bubble.className = "p-3 bg-white rounded-3 shadow-sm text-dark small gg-bubble";
+         bubble.style.maxWidth = "80";
+          bubble.style.whiteSpace = "pre-wrap";
+          bubble.textContent = text;
+          row.appendChild(img);
+           row.appendChild(bubble);
+          chatBody.appendChild(row);
+          chatBody.scrollTop = chatBody.scrollHeight;
+           setOakMood(mood);
+       }
 
-            var userMsgDiv = document.createElement("div");
-            userMsgDiv.className = "d-flex justify-content-end mb-3";
-            userMsgDiv.innerHTML = '<div class="p-3 bg-success text-white rounded-3 shadow-sm small gg-bubble" style="max-width: 80%;">' + escapeHtml(userText) + '</div>';
-            chatBody.appendChild(userMsgDiv);
-            input.value = "";
-            chatBody.scrollTop = chatBody.scrollHeight;
+       function sendChatMessage() {
 
-            var thinkingRow = addOakMessage('<span class="oak-dots"><span></span><span></span><span></span></span>', 'thinking');
+          var input = document.getElementById("chatInput");
+         var chatBody = document.getElementById("chatBody");
+         var userText = input.value.trim();
+            if (userText === "" || oakBusy) return;
 
-            setTimeout(function () {
-                thinkingRow.remove();
-                var reply = getSmartFAQResponse(userText);
-                if (reply) {
-                    addOakMessage(reply, 'happy');
-                } else if (OAK_IS_GUEST) {
-                    addOakMessage(
-                        "Sorry, to access me fully, please " +
-                        '<a href="' + LOGIN_URL + '" class="fw-bold text-success">log in</a> or ' +
-                        '<a href="' + REGISTER_URL + '" class="fw-bold text-success">create an account</a>.',
-                        'confused');
-                } else {
-                    addOakMessage(
-                        "Sorry, I'm not sure about that one. You can call our team on <strong>0848 331 373</strong> or " +
-                        '<a href="' + CONTACT_URL + '" class="fw-bold text-success">send us a message on our Contact page</a>, and we will help you.',
-                        'confused');
-                }
-            }, 1200);
+          var userMsgDiv = document.createElement("div");
+          userMsgDiv.className = "d-flex justify-content-end mb-3";
+          userMsgDiv.innerHTML = '<div class="p-3 bg-success text-white rounded-3 shadow-sm small gg-bubble" style="max-width: 80%;">' + escapeHtml(userText) + '</div>';
+          chatBody.appendChild(userMsgDiv);
+          input.value = "";
+          chatBody.scrollTop = chatBody.scrollHeight;
+
+         oakBusy = true;
+         var thinkingRow = addOakMessage('<span class="oak-dots"><span></span><span></span><span></span></span>', 'thinking');
+
+         var controller = ('AbortController' in window) ? new AbortController() : null;
+         var timer = setTimeout(function () { if (controller) controller.abort(); }, 45000);
+
+          fetch(CHAT_URL, {
+           method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+           credentials: 'same-origin',
+           body: JSON.stringify({ message: userText, history: oakHistory.slice(-6),page:location.pathname }),
+           signal: controller ? controller.signal : undefined
+        })
+           .then(function (r) { return r.json(); })
+           .then(function (data) {
+         clearTimeout(timer);
+          thinkingRow.remove();
+          if (data && data.ok && data.reply) {
+            addOakText(data.reply, data.mood || 'happy');
+            oakHistory.push({ role: 'user', text: userText }, { role: 'model', text: data.reply });
+            if (oakHistory.length > 12) oakHistory = oakHistory.slice(-12);
+        } else if (data && data.reason === 'limit') {
+            addOakText("I'm getting a lot of questions right now. Please try again in a few minutes, or call us on 0848 331 373.", 'confused');
+        } else {
+            fallbackReply(userText);
         }
+    })
+    .catch(function () {
+        clearTimeout(timer);
+        thinkingRow.remove();
+        fallbackReply(userText);
+    })
+    .then(function () { oakBusy = false; });
+}
+        function fallbackReply(userText) {
+            var reply = getSmartFAQResponse(userText);
+            if (reply) {
+            addOakMessage(reply, 'happy');
+           } else if (OAK_IS_GUEST) {
+            addOakMessage(
+            "Sorry, to access me fully, please " +
+            '<a href="' + LOGIN_URL + '" class="fw-bold text-success">log in</a> or ' +
+            '<a href="' + REGISTER_URL + '" class="fw-bold text-success">create an account</a>.',
+            'confused');
+           } else {
+            addOakMessage(
+            "Sorry, I'm not sure about that one. You can call our team on <strong>0848 331 373</strong> or " +
+            '<a href="' + CONTACT_URL + '" class="fw-bold text-success">send us a message on our Contact page</a>, and we will help you.',
+            'confused');
+    }
+}
 
         // Press Enter to send
         (function () {
@@ -1414,6 +1512,24 @@ body.dark-mode .gg-msg.is-error { background: #3a1f1c; color: #f1948a; }
             }
             return null;
         }
+
+        var oakMoodTimer = null;
+
+          function setOakMood(mood) {
+           var icon = document.getElementById("oakHeaderIcon");
+             if (!icon || !OAK_ICONS[mood]) return;
+             icon.src = OAK_ICONS[mood];
+        icon.classList.toggle("is-thinking", mood === 'thinking');
+
+    clearTimeout(oakMoodTimer);
+    if (mood === 'confused') {
+        // after a few seconds, go back to the happy face
+        oakMoodTimer = setTimeout(function () { setOakMood('happy'); }, 6000);
+    }
+}
+
+// load all the faces now so there's no flicker when they swap
+for (var m in OAK_ICONS) { new Image().src = OAK_ICONS[m]; }
     </script>
     <script>
         window.addEventListener('pageshow', function (event) {

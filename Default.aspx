@@ -957,9 +957,30 @@
              var engaged = false;
              if (chatEl) {
                  ['mouseenter', 'mousedown', 'touchstart', 'keydown', 'focusin'].forEach(function (ev) {
-                     chatEl.addEventListener(ev, function () { engaged = true; });
+                     chatEl.addEventListener(ev, function() { engaged = true; });
                  });
-                 setTimeout(function () { if (!engaged) chatEl.style.display = 'none'; }, CHAT_MS);
+                 setTimeout(function() {
+                     // Only close Oak automatically if the visitor hasn't interacted
+                     if (!engaged) {
+                         chatEl.style.display = 'none';
+                     }
+
+                     // Show Contact Us tooltip regardless of interaction
+                     var contactTooltip = document.getElementById('contactTooltip');
+
+                     if (contactTooltip) {
+                         setTimeout(function() {
+                             contactTooltip.classList.add('show');
+
+                             // Hide tooltip after 5 seconds
+                             setTimeout(function() {
+                                 contactTooltip.classList.remove('show');
+                             }, 5000);
+
+                         }, 1000);
+                     }
+
+                 }, CHAT_MS);
              }
          }
 
