@@ -934,25 +934,79 @@ body.dark-mode .gg-msg.is-error { background: #3a1f1c; color: #f1948a; }
                         </li>
                         <% } %>
 
-                        <!-- Jobs Tab -->
-                        <% if (CanSeeJobsTab()) { %>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Jobs</a>
-                            <div class="dropdown-menu">
-                                <% if (CanSeeAddEditJobDetails()) { %>
-                                <h6 class="dropdown-header">Actions</h6>
-                                <a class="dropdown-item" runat="server" href="~/Jobs/ManageJob.aspx"><i class="bi bi-gear me-2"></i>Add/Edit Job Details</a>
-                                <div class="dropdown-divider my-1"></div>
-                                <% } %>
+                       
+<!-- ================= JOBS TAB ================= -->
+<% if (CanSeeJobsTab()) { %>
 
-                                <h6 class="dropdown-header">Progress</h6>
-                                <a class="dropdown-item" runat="server" href="~/ClientJobProgress.aspx"><i class="bi bi-graph-up-arrow me-2"></i>View Job Progress</a>
-                                <% if (CanSeeEditJobProgress()) { %>
-                                <a class="dropdown-item" runat="server" href="~/Jobs/EditProgress.aspx"><i class="bi bi-pencil-square me-2"></i>Edit Job Progress</a>
-                                <% } %>
-                            </div>
-                        </li>
-                        <% } %>
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle"
+       data-bs-toggle="dropdown"
+       href="#"
+       role="button"
+       aria-expanded="false">
+        Jobs
+    </a>
+
+    <div class="dropdown-menu">
+
+        <!-- ADD / EDIT JOB DETAILS -->
+        <% if (CanSeeAddEditJobDetails()) { %>
+
+            <h6 class="dropdown-header">Actions</h6>
+
+            <a class="dropdown-item"
+               runat="server"
+               href="~/Jobs_ManageJob.aspx">
+                <i class="bi bi-gear me-2"></i>
+                Add/Edit Job Details
+            </a>
+
+            <div class="dropdown-divider my-1"></div>
+
+        <% } %>
+
+        <h6 class="dropdown-header">Progress</h6>
+
+        <!-- CLIENT PROGRESS -->
+        <% if (IsClient()) { %>
+
+            <a class="dropdown-item"
+               runat="server"
+               href="~/ClientJobProgress.aspx">
+                <i class="bi bi-graph-up-arrow me-2"></i>
+                View My Job Progress
+            </a>
+
+        <% } else if (CanSeeAddEditJobDetails()) { %>
+
+            <!-- MANAGEMENT PROGRESS -->
+            <a class="dropdown-item"
+               runat="server"
+               href="~/ViewJobProgress.aspx">
+                <i class="bi bi-graph-up-arrow me-2"></i>
+                View Job Progress
+            </a>
+
+        <% } %>
+
+        <!-- EDIT PROGRESS -->
+        <% if (CanSeeEditJobProgress()) { %>
+
+            <a class="dropdown-item"
+               runat="server"
+               href="~/EditJobProgress.aspx">
+                <i class="bi bi-pencil-square me-2"></i>
+                Edit Job Progress
+            </a>
+
+        <% } %>
+
+    </div>
+</li>
+
+<% } %>
+<!-- ================= END JOBS TAB ================= -->
+
 
                         <!-- Invoicing Tab -->
                         <% if (CanSeeInvoicingTab()) { %>

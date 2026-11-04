@@ -222,7 +222,9 @@
     <Content Include="Content\Slideshow\slide-photo-8.jpg" />
     <Content Include="Content\The Giant Group Logo .png" />
     <Content Include="Default.aspx" />
+    <Content Include="EditJobProgress.aspx" />
     <Content Include="favicon.ico" />
+    <Content Include="Gallery\Gallery.aspx" />
     <Content Include="Global.asax" />
     <Content Include="google0e84b456a6f12b15.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -230,6 +232,7 @@
     <Content Include="Help.aspx" />
     <Content Include="HomeRouter.aspx" />
     <Content Include="invoicing\Payments.aspx" />
+    <Content Include="Jobs_ManageJob.aspx" />
     <Content Include="ManagementPortal.aspx" />
     <Content Include="NotFound.aspx" />
     <Content Include="PrintQuote.aspx" />
@@ -272,7 +275,7 @@
     <Content Include="MobileApi.ashx" />
     <Content Include="PayFastITN.ashx" />
     <Content Include="PayFastCheckout.ashx" />
-    <Content Include="ChatHandler.ashx" />
+    <Content Include="Gallery\GalleryImage.ashx" />
     <None Include="Properties\PublishProfiles\IST-WST-Group-1 - FTP.pubxml" />
     <None Include="Properties\PublishProfiles\IST-WST-Group-1 - Web Deploy.pubxml" />
     <None Include="Properties\PublishProfiles\IST-WST-Group-1 - Web Deploy1.pubxml" />
@@ -309,6 +312,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="ViewAssetAllocation.aspx" />
+    <Content Include="ViewJobProgress.aspx" />
     <Content Include="ViewQuote.aspx" />
     <Content Include="ViewStaffAllocation.aspx" />
     <Content Include="ViewSwitcher.ascx" />
@@ -440,8 +444,26 @@
     <Compile Include="App_Start\IdentityConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="App_Start\Startup.Auth.cs" />
-    <Compile Include="ChatHandler.ashx.cs">
-      <DependentUpon>ChatHandler.ashx</DependentUpon>
+    <Compile Include="EditJobProgress.aspx.cs">
+      <DependentUpon>EditJobProgress.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="EditJobProgress.aspx.designer.cs">
+      <DependentUpon>EditJobProgress.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Gallery\Gallery.aspx.cs">
+      <DependentUpon>Gallery.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Gallery\Gallery.aspx.designer.cs">
+      <DependentUpon>Gallery.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Jobs_ManageJob.aspx.cs">
+      <DependentUpon>Jobs_ManageJob.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Jobs_ManageJob.aspx.designer.cs">
+      <DependentUpon>Jobs_ManageJob.aspx</DependentUpon>
     </Compile>
     <Compile Include="MobileApi.ashx.cs">
       <DependentUpon>MobileApi.ashx</DependentUpon>
@@ -610,6 +632,13 @@
     </Compile>
     <Compile Include="ViewAssetAllocation.aspx.designer.cs">
       <DependentUpon>ViewAssetAllocation.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="ViewJobProgress.aspx.cs">
+      <DependentUpon>ViewJobProgress.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="ViewJobProgress.aspx.designer.cs">
+      <DependentUpon>ViewJobProgress.aspx</DependentUpon>
     </Compile>
     <Compile Include="ViewQuote.aspx.cs">
       <DependentUpon>ViewQuote.aspx</DependentUpon>

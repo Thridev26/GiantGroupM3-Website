@@ -147,6 +147,15 @@
                     </div>
 
                     <div class="cp-action gg-surface">
+                        <span class="gg-tile is-lg"><i class="bi bi-images"></i></span>
+                        <div>
+                            <h3>Manage Requests &amp; Site Photos</h3>
+                            <p>Cancel eligible requests and add, view or remove BEFORE site photos for your service requests.</p>
+                            <a runat="server" href="~/Requests/ViewRequests.aspx" class="gg-btn gg-btn-outline gg-btn-arrow">Manage My Requests</a>
+                        </div>
+                    </div>
+
+                    <div class="cp-action gg-surface">
                         <span class="gg-tile is-lg"><i class="bi bi-clock-history"></i></span>
                         <div>
                             <h3>Request &amp; Job History</h3>

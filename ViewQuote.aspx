@@ -181,10 +181,8 @@
                     <div class="col-md-4 mb-3">
                         <asp:Label runat="server" AssociatedControlID="ddlQuoteStatus" CssClass="form-label fw-bold small text-muted" Text="Quote Status:" />
                         <asp:DropDownList ID="ddlQuoteStatus" runat="server" CssClass="form-select">
-                            <asp:ListItem Text="Pending" Value="Pending" />
                             <asp:ListItem Text="Sent" Value="Sent" />
                             <asp:ListItem Text="Accepted" Value="Accepted" />
-                            <asp:ListItem Text="Declined" Value="Declined" />
                             <asp:ListItem Text="Rejected" Value="Rejected" />
                         </asp:DropDownList>
                     </div>

@@ -244,6 +244,76 @@
                 <button type="button" id="heroNext" aria-label="Next slide">&#8594;</button>
             </div>
         </div>
+        
+<!-- ================= GALLERY SECTION ================= -->
+<section class="container my-5">
+
+    <div class="text-center mb-4">
+        <span class="gg-label">
+            <i class="bi bi-images"></i>
+            OUR WORK
+        </span>
+
+        <h2 class="gg-display mt-2">
+            See the Transformation
+        </h2>
+
+        <p class="gg-muted mx-auto"
+           style="max-width: 600px;">
+            Discover the difference professional tree
+            felling and vegetation management can make.
+            Explore real before-and-after transformations
+            from our completed projects.
+        </p>
+    </div>
+
+    <div class="row g-4 align-items-center">
+
+        <div class="col-lg-6">
+            <div class="gg-surface overflow-hidden">
+                <img
+                    src='<%= ResolveUrl("~/Content/The Giant Group Logo .png") %>'
+                    alt="The Giant Group"
+                    class="img-fluid w-100"
+                    style="height: 300px; object-fit: contain;
+                           padding: 30px;" />
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="gg-surface p-4 p-lg-5">
+
+                <span class="gg-label">
+                    <i class="bi bi-stars"></i>
+                    QUALITY RESULTS
+                </span>
+
+                <h3 class="gg-display mt-3">
+                    From Before to After
+                </h3>
+
+                <p class="gg-muted mt-3">
+                    Every project tells a story of
+                    transformation. See how our team
+                    improves outdoor spaces through
+                    professional, reliable work.
+                </p>
+
+                <a runat="server"
+                   href="~/Gallery/Gallery.aspx"
+                   class="gg-btn gg-btn-primary mt-3">
+                    <i class="bi bi-camera"></i>
+                    Explore Our Gallery
+                </a>
+
+            </div>
+        </div>
+
+    </div>
+
+</section>
+<!-- ================= END GALLERY SECTION ================= -->
+
 
         <!-- 2. PERFORMANCE METRICS -->
         <div class="gg-stats gg-surface">

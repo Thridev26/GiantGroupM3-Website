@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="ResetPassword.aspx.cs" Inherits="GiantGroupM3.Account.ResetPassword" %>
+<%@ Page Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="ResetPassword.aspx.cs" Inherits="GiantGroupM3.Account.ResetPassword" %>
 
 <asp:Content runat="server" ID="BodyContent" ContentPlaceHolderID="MainContent">
     <!-- Bootstrap Icons Stylesheet -->
@@ -55,7 +55,7 @@
 
                     <!-- Submit Button -->
                     <div class="d-grid mt-4">
-                        <asp:Button runat="server" OnClick="Reset_Click" Text="Save New Password" CssClass="btn text-white py-2.5 fw-semibold rounded-3 shadow-sm border-0" Style="background-color: #2e7d32; transition: all 0.2s;" />
+                        <asp:Label runat="server" ID="lblPasswordPolicy" Visible="false" CssClass="text-danger small mt-1 d-block fw-light" /> <asp:Button runat="server" OnClick="Reset_Click" Text="Save New Password" CssClass="btn text-white py-2.5 fw-semibold rounded-3 shadow-sm border-0" Style="background-color: #2e7d32; transition: all 0.2s;" />
                     </div>
                 </asp:Panel>
 
