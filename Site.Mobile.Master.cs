@@ -80,34 +80,6 @@ namespace GiantGroupM3
             }
         }
 
-        protected void lnkLogoHome_Click(object sender, EventArgs e)
-        {
-            // 1. Check if user is logged in as Staff (check integer values, string representations, or session names)
-            bool isStaff = Session["UserLevel"] != null ||
-                           Session["StaffName"] != null ||
-                           Session["Staff"] != null ||
-                           Session["UserName"] != null ||
-                           Session["User"] != null ||
-                           Session["Role"]?.ToString().ToLower() == "staff" ||
-                           Session["UserRole"]?.ToString().ToLower() == "staff";
-
-            if (isStaff)
-            {
-                // Level 1 staff or any logged-in staff member goes to Management Portal
-                Response.Redirect("~/ManagementPortal.aspx");
-                return;
-            }
-
-            // 2. Check if logged in as Client
-            if (Session["ClientID"] != null || Session["Role"]?.ToString().ToLower() == "client")
-            {
-                Response.Redirect("~/ClientPortal.aspx");
-                return;
-            }
-
-            // 3. Guest / Not logged in
-            Response.Redirect("~/Default.aspx");
-        }
         protected void BtnLogout_Click(object sender, EventArgs e)
         {
             // 1. Clear session variables and abandon session
@@ -232,6 +204,32 @@ namespace GiantGroupM3
             }
 
             return 0;
+        }
+
+        // --- Owner grouping and "Return to Portal" helpers ---
+
+        // The owner is management Level 6, never a client. The owner gets Clients and
+        // Job Requests grouped into one menu. Everyone else keeps them as separate tabs.
+        public bool IsOwner()
+        {
+            if (!IsLoggedIn() || IsClient()) return false;
+            return GetUserLevel() == 6;
+        }
+
+        // The two portal dashboards and the router. A "Return to Portal" link is pointless there.
+        public bool IsPortalPage()
+        {
+            var current = HttpContext.Current?.Request.AppRelativeCurrentExecutionFilePath ?? string.Empty;
+            return current.Equals("~/ManagementPortal.aspx", StringComparison.OrdinalIgnoreCase)
+                || current.Equals("~/ClientPortal.aspx", StringComparison.OrdinalIgnoreCase)
+                || current.Equals("~/HomeRouter.aspx", StringComparison.OrdinalIgnoreCase);
+        }
+
+        // Shown at the bottom of every logged-in page. It links to HomeRouter.aspx, the same
+        // destination as the logo, so staff and clients each land in their own portal.
+        public bool ShowReturnToPortal()
+        {
+            return IsLoggedIn() && !IsPortalPage();
         }
 
         // --- Tab & Feature Visibility Rules ---

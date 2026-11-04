@@ -150,15 +150,6 @@
             <!-- Quick access (shown according to staff level) -->
             <div class="col-lg-7 order-lg-1">
                 <div class="row g-3">
-                    <% if (ShowClients) { %>
-                    <div class="col-sm-6">
-                        <a runat="server" href="~/Clients/ViewClients.aspx" class="mp-tile gg-surface">
-                            <span class="gg-tile"><i class="bi bi-people"></i></span>
-                            <div><strong>Clients</strong><span class="sub">View and update client records</span></div>
-                            <i class="bi bi-chevron-right chev"></i>
-                        </a>
-                    </div>
-                    <% } %>
                     <% if (ShowQuotes) { %>
                     <div class="col-sm-6">
                         <a runat="server" href="~/ViewQuote.aspx" class="mp-tile gg-surface">
@@ -204,7 +195,7 @@
                     <% } %>
                     <% if (ShowReports) { %>
                     <div class="col-sm-6">
-                        <a runat="server" href="~/Reports.aspx" class="mp-tile gg-surface">
+                        <a runat="server" href="~/reports/ReportAnalytics.aspx" class="mp-tile gg-surface">
                             <span class="gg-tile"><i class="bi bi-bar-chart-line"></i></span>
                             <div><strong>Reports</strong><span class="sub">Business performance</span></div>
                             <i class="bi bi-chevron-right chev"></i>
