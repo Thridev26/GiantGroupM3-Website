@@ -18,7 +18,7 @@
             background: var(--gg-accent-soft); color: var(--gg-accent);
         }
         .cp-step strong { display: block; font-size: .95rem; color: var(--gg-text); }
-        .cp-step span { font-size: .84rem; color: var(--gg-muted); line-height: 1.5; display: block; margin-top: .2rem; }
+        .cp-step span:not(.cp-step-n) { font-size: .84rem; color: var(--gg-muted); line-height: 1.5; display: block; margin-top: .2rem; }
 
         /* Action cards */
         .cp-action { padding: 1.75rem; display: flex; gap: 1.25rem; align-items: flex-start; transition: border-color .2s ease; }
