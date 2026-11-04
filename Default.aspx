@@ -820,7 +820,7 @@
                             <span class="gg-tile is-lg"><i class="bi bi-people"></i></span>
                             <h3>Client Portals</h3>
                             <p>Add, update, and manage all organizational client information in one place.</p>
-                            <a runat="server" href="~/Clients/ViewClients.aspx" class="stretched-link">Client Portal<i class="bi bi-arrow-right ms-2"></i></a>
+                            <a runat="server" href="~/ClientProfile.aspx" class="stretched-link">Client Portal<i class="bi bi-arrow-right ms-2"></i></a>
                         </div>
                     </div>
                     <div class="col-md-4">

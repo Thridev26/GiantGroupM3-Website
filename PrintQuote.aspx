@@ -172,6 +172,11 @@
                 </div>
             </div>
         </asp:Panel>
+        <% if (User.Identity.IsAuthenticated) { %>
+        <div class="d-print-none text-center my-4">
+            <a class="btn btn-success px-4" href="<%= ResolveUrl("~/HomeRouter.aspx") %>">&larr; Return to Portal</a>
+        </div>
+        <% } %>
     </form>
 </body>
 </html>
