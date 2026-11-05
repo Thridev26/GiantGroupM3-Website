@@ -185,7 +185,59 @@
             .gg-about { padding: 1.5rem; }
         }
         
-    </style>
+            /* ===== SLIDESHOW POLISH (visual only; IDs, data-attributes and JS are unchanged) ===== */
+        #hero .dark {
+            background:
+                radial-gradient(900px 520px at 88% 12%, rgba(82, 183, 136, .22), transparent 60%),
+                radial-gradient(700px 420px at 0% 100%, rgba(82, 183, 136, .10), transparent 62%),
+                var(--sl-forest);
+        }
+        #hero .eyebrow { display: inline-flex; align-items: center; gap: .6rem; }
+        #hero .eyebrow::before { content: ""; width: 28px; height: 2px; border-radius: 2px; background: var(--sl-lime); }
+        #hero h1 { text-shadow: 0 2px 28px rgba(0, 0, 0, .25); }
+
+        /* photo slides: caption gets a lime accent rule */
+        #hero .sl-cap b::before { content: ""; display: block; width: 44px; height: 3px; border-radius: 3px; margin: 0 auto 12px; background: var(--sl-lime); }
+        #hero .pair .ph { box-shadow: 0 0 0 1px rgba(255, 255, 255, .06), 0 0 0 6px rgba(82, 183, 136, .08), 0 24px 50px rgba(0, 0, 0, .5); }
+
+        /* controls: a little more presence */
+        #hero .ctrl { background: rgba(10, 31, 20, .72); border: 1px solid rgba(255, 255, 255, .12); box-shadow: 0 10px 28px rgba(0, 0, 0, .35); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+        #hero .ctrl button { width: 40px; height: 40px; }
+        #hero .bar { background: rgba(255, 255, 255, .08); }
+
+        /* closing slide: blurred team photo behind a green wash, with an invitation above the buttons */
+        #hero .final-bg {
+            position: absolute; inset: -2%; width: 104%; height: 104%; z-index: 0;
+            object-fit: cover; display: block; filter: blur(3px) saturate(1.05); transform: scale(1.05);
+        }
+        #hero .final-shade {
+            position: absolute; inset: 0; z-index: 1; pointer-events: none;
+            background:
+                radial-gradient(120% 90% at 50% 40%, rgba(15, 45, 30, .45) 0%, rgba(10, 31, 20, .93) 78%),
+                linear-gradient(180deg, rgba(15, 45, 30, .15), rgba(10, 31, 20, .85));
+        }
+        #hero .slide.final > .center { position: relative; z-index: 2; }
+        #hero .slide.final.active .final-bg { animation: slKb calc(var(--interval) + var(--fade) + 500ms) ease-out forwards; }
+        #hero .final-title {
+            margin: 0 0 12px; font-family: var(--gg-display, inherit); font-weight: 700; color: #fff;
+            font-size: clamp(1.9rem, 4.2vw, 3.1rem); line-height: 1.08; letter-spacing: -.02em;
+            text-shadow: 0 2px 24px rgba(0, 0, 0, .3);
+        }
+        #hero .final-lead { margin: 0 auto 26px; max-width: 46ch; text-align: center; }
+        #hero .final .eyebrow { display: flex; width: 100%; justify-content: center; }
+        #hero .final .sl-logo { box-shadow: 0 14px 40px rgba(0, 0, 0, .45), 0 0 0 6px rgba(255, 255, 255, .07); margin-bottom: 26px; }
+        #hero .sl-btn { min-width: 160px; justify-content: center; }
+        #hero .sl-btn-light { box-shadow: 0 10px 26px -8px rgba(82, 183, 136, .6); }
+        #hero .sl-btn-ghost { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+
+        @media (prefers-reduced-motion: reduce) {
+            #hero .slide.final.active .final-bg { animation: none; }
+        }
+        @media (max-width: 820px) {
+            #hero .final-title { font-size: clamp(1.7rem, 7vw, 2.3rem); }
+            #hero .final .sl-logo { margin-bottom: 20px; }
+        }
+        </style>
 
     <div class="container my-4">
         <!-- 1. HERO SLIDESHOW -->
@@ -219,12 +271,18 @@
                 <div class="ph land" data-photo="6" data-alt="Two Giant Group team members smiling as they carry a log" data-in="true" style="--d:1"></div>
             </div>
  
-            <!-- 5 (last): logo and calls to action only -->
-            <div class="slide dark final"><div class="center">
+            <!-- 5 (last): logo, a short invitation and the calls to action -->
+            <div class="slide dark final">
+                <img runat="server" class="final-bg" src="~/Content/Slideshow/slide-photo-8.jpg" alt="" aria-hidden="true" />
+                <div class="final-shade"></div>
+                <div class="center">
                 <div class="sl-logo" data-in="true" style="--d:0">
                     <img runat="server" src="~/Content/The Giant Group Logo .png" alt="The Giant Group" />
                 </div>
-                <div class="sl-actions" data-in="true" style="--d:1">
+                <p class="eyebrow" data-in="true" style="--d:1">Ready when you are</p>
+                <h2 class="final-title" data-in="true" style="--d:2">Let's clear the way</h2>
+                <p class="sl-lead final-lead" data-in="true" style="--d:3">Free quotes and 24/7 emergency field response for estates, municipalities and homeowners.</p>
+                <div class="sl-actions" data-in="true" style="--d:4">
                     <% if (IsClient) { %>
                     <a runat="server" href="~/Requests/SubmitRequest.aspx" class="sl-btn sl-btn-light">Submit Job Request</a>
                     <% } else if (IsStaff) { %>
