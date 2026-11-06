@@ -1461,14 +1461,16 @@ body.dark-mode .gg-msg.is-error { background: #3a1f1c; color: #f1948a; }
             oakHistory.push({ role: 'user', text: userText }, { role: 'model', text: data.reply });
             if (oakHistory.length > 12) oakHistory = oakHistory.slice(-12);
         } else if (data && data.reason === 'limit') {
-            addOakText("I'm getting a lot of questions right now. Please try again in a few minutes, or call us on 0848 331 373.", 'confused');
-        } else {
+              addOakText("I'm getting a lot of questions right now. Please try again in a few minutes, or call us on 0848 331 373.", 'confused');
+          } else {
+              
             fallbackReply(userText);
         }
     })
     .catch(function () {
         clearTimeout(timer);
         thinkingRow.remove();
+ 
         fallbackReply(userText);
     })
     .then(function () { oakBusy = false; });

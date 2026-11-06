@@ -276,6 +276,7 @@
     <Content Include="PayFastITN.ashx" />
     <Content Include="PayFastCheckout.ashx" />
     <Content Include="Gallery\GalleryImage.ashx" />
+    <Content Include="ChatHandler.ashx" />
     <None Include="Properties\PublishProfiles\IST-WST-Group-1 - FTP.pubxml" />
     <None Include="Properties\PublishProfiles\IST-WST-Group-1 - Web Deploy.pubxml" />
     <None Include="Properties\PublishProfiles\IST-WST-Group-1 - Web Deploy1.pubxml" />
@@ -444,6 +445,9 @@
     <Compile Include="App_Start\IdentityConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="App_Start\Startup.Auth.cs" />
+    <Compile Include="ChatHandler.ashx.cs">
+      <DependentUpon>ChatHandler.ashx</DependentUpon>
+    </Compile>
     <Compile Include="EditJobProgress.aspx.cs">
       <DependentUpon>EditJobProgress.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
