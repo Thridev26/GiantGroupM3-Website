@@ -75,7 +75,7 @@ namespace GiantGroupM3.Invoicing
                     pnlPaymentMessage.Visible = true;
                     lblPaymentMessage.Text =
                         "You have returned from PayFast. Your payment will appear " +
-                        "once PayFast has confirmed it.";
+                        "once PayFast has confirmed it. A receipt has been sent to yout email.";
                 }
                 else if (string.Equals(
                     paymentStatus, "cancel", StringComparison.OrdinalIgnoreCase))

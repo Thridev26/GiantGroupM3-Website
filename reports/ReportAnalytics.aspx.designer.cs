@@ -114,6 +114,24 @@ namespace GiantGroupM3
         protected global::System.Web.UI.WebControls.HiddenField hfClientData;
 
         /// <summary>
+        /// hfAreaData control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hfAreaData;
+
+        /// <summary>
+        /// hfWebsiteData control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hfWebsiteData;
+
+        /// <summary>
         /// hfActiveReport control.
         /// </summary>
         /// <remarks>

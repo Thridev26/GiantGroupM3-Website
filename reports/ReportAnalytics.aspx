@@ -61,7 +61,7 @@
 
         .analytics-tabs {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 12px;
             margin-bottom: 24px;
         }
@@ -116,6 +116,23 @@
             margin-top: 18px;
             font-size: 13px;
             color: #5a6f64;
+        }
+
+        .analytics-kpi {
+            background: #f2f7f4;
+            border: 1px solid #d8e8dd;
+            border-radius: 10px;
+            padding: 15px;
+            color: #456253;
+            font-size: 13px;
+            min-height: 105px;
+        }
+        .analytics-kpi strong {
+            display: block;
+            margin-top: 10px;
+            font-size: 21px;
+            color: #1b4332;
+            overflow-wrap: anywhere;
         }
 
         @media (max-width: 767px) {
@@ -215,6 +232,12 @@
         <asp:HiddenField ID="hfClientData"
             runat="server" ClientIDMode="Static" />
 
+        <asp:HiddenField ID="hfAreaData"
+            runat="server" ClientIDMode="Static" />
+
+        <asp:HiddenField ID="hfWebsiteData"
+            runat="server" ClientIDMode="Static" />
+
         <asp:HiddenField ID="hfActiveReport"
             runat="server" ClientIDMode="Static"
             Value="income" />
@@ -251,6 +274,11 @@
                 data-report="clients">
                 Client Value Analysis
             </button>
+
+            <button type="button" class="analytics-tab"
+                data-report="areas">Popular Areas</button>
+            <button type="button" class="analytics-tab"
+                data-report="website">Website Impact</button>
 
         </div>
 
@@ -341,9 +369,122 @@
             </div>
         </div>
 
+        <!-- POPULAR AREAS -->
+        <div class="report-panel" id="panel-areas">
+            <div class="analytics-card">
+                <h3>Most Popular Service Areas</h3>
+                <p class="report-description">
+                    Top 10 areas by number of job requests received during
+                    the selected period. Areas are derived from the last
+                    comma-separated part of the site address.
+                </p>
+                <div class="row g-3">
+                    <div class="col-lg-6">
+                        <h4>Requests by Area</h4>
+                        <div class="analytics-chart">
+                            <canvas id="areaRequestsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <h4>Estimated Profit from Completed Jobs</h4>
+                        <div class="analytics-chart">
+                            <canvas id="areaProfitChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <p class="analytics-note">Profit estimate: recorded payments
+                    minus fuel and dumping costs for completed jobs. This is
+                    not full accounting profit.</p>
+            </div>
+            <div class="analytics-card">
+                <h4>Area Summary</h4>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Area</th><th>Requests</th>
+                                <th>Completed Jobs</th>
+                                <th>Payments Received</th>
+                                <th>Estimated Profit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="areaResultsBody"></tbody>
+                    </table>
+                </div>
+                <p class="analytics-note">Payments include all payments
+                    recorded to date for jobs associated with requests
+                    submitted in the selected date range.</p>
+            </div>
+        </div>
+
+        <!-- WEBSITE IMPACT -->
+        <div class="report-panel" id="panel-website">
+            <div class="analytics-card">
+                <h3>Website Request &amp; Revenue Impact</h3>
+                <p class="report-description">
+                    Compares job requests marked Website against all other
+                    request sources. Helps assess how much recorded business
+                    originates through the website.
+                </p>
+                <div class="row g-3" id="websiteSummaryKpis">
+                    <div class="col-md-3">
+                        <div class="analytics-kpi">
+                            <div>Website Requests</div>
+                            <strong id="websiteRequestsKpi">0</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="analytics-kpi">
+                            <div>Website Request Share</div>
+                            <strong id="websiteShareKpi">0%</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="analytics-kpi">
+                            <div>Payments from Website Requests</div>
+                            <strong id="websitePaymentsKpi">R 0.00</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="analytics-kpi">
+                            <div>Estimated Completed-Job Profit</div>
+                            <strong id="websiteProfitKpi">R 0.00</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3 mt-2">
+                    <div class="col-lg-6">
+                        <h4>Website vs Other Requests</h4>
+                        <div class="analytics-chart">
+                            <canvas id="websiteRequestsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <h4>Payments Received by Request Source</h4>
+                        <div class="analytics-chart">
+                            <canvas id="websitePaymentsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <h4>Monthly Website-Originated Requests</h4>
+                        <div class="analytics-chart">
+                            <canvas id="websiteMonthlyChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <p class="analytics-note">
+                    A request is considered online when its requestSource is
+                    Website. Payments are all recorded payments to date for
+                    jobs linked to requests from the selected period.
+                    This measures recorded website-originated business,
+                    not proof that marketing caused the requests.
+                </p>
+            </div>
+        </div>
+
         <p class="analytics-note">
             Figures are retrieved from GroupWst1.
-            Date filters apply to all six reports;
+            Date filters apply to all eight reports;
             Client Type applies to Client Value Analysis only.
         </p>
 
@@ -371,6 +512,8 @@
             var services = readData("hfServiceData");
             var quotes = readData("hfQuoteData");
             var clients = readData("hfClientData");
+            var areas = readData("hfAreaData");
+            var website = readData("hfWebsiteData");
 
             var green = "#2d6a4f";
             var dark = "#1b4332";
@@ -563,6 +706,147 @@
                 }
             );
 
+
+            // 7. Most popular areas — requests and completed-job cash profit
+            charts.areas = new Chart(
+                document.getElementById("areaRequestsChart"),
+                {
+                    type: "bar",
+                    data: {
+                        labels: areas.labels || [],
+                        datasets: [dataset("Requests", areas.requests || [], green)]
+                    },
+                    options: {
+                        indexAxis: "y",
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (ctx) { return "Requests: " + ctx.parsed.x; }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: { beginAtZero: true, ticks: { precision: 0 } },
+                            y: { beginAtZero: true }
+                        }
+                    }
+                }
+            );
+
+            var areaProfits = new Chart(
+                document.getElementById("areaProfitChart"),
+                {
+                    type: "bar",
+                    data: {
+                        labels: areas.labels || [],
+                        datasets: [{
+                            label: "Estimated Profit",
+                            data: areas.profit || [],
+                            backgroundColor: (areas.profit || []).map(
+                                function (v) { return v < 0 ? "#c95b5b" : green; }
+                            )
+                        }]
+                    },
+                    options: commonOptions(true, false)
+                }
+            );
+
+            // Accessible summary table: use textContent, not HTML interpolation
+            var areaBody = document.getElementById("areaResultsBody");
+            (areas.labels || []).forEach(function (label, i) {
+                var tr = document.createElement("tr");
+                [
+                    label,
+                    (areas.requests || [])[i] || 0,
+                    (areas.completedJobs || [])[i] || 0,
+                    money((areas.payments || [])[i]),
+                    money((areas.profit || [])[i])
+                ].forEach(function (value) {
+                    var td = document.createElement("td");
+                    td.textContent = String(value);
+                    tr.appendChild(td);
+                });
+                areaBody.appendChild(tr);
+            });
+            if (!(areas.labels || []).length) {
+                var tr = document.createElement("tr");
+                var td = document.createElement("td");
+                td.colSpan = 5;
+                td.textContent = "No requests found for the selected period.";
+                tr.appendChild(td);
+                areaBody.appendChild(tr);
+            }
+
+            // 8. Website source impact
+            document.getElementById("websiteRequestsKpi").textContent =
+                ((website.requests || [])[0] || 0).toLocaleString("en-ZA");
+            document.getElementById("websiteShareKpi").textContent =
+                Number(website.websiteRequestShare || 0).toFixed(1) + "%";
+            document.getElementById("websitePaymentsKpi").textContent =
+                money((website.payments || [])[0]);
+            document.getElementById("websiteProfitKpi").textContent =
+                money((website.profit || [])[0]);
+
+            charts.website = new Chart(
+                document.getElementById("websiteRequestsChart"),
+                {
+                    type: "bar",
+                    data: {
+                        labels: website.labels || ["Website", "Other Sources"],
+                        datasets: [dataset("Requests", website.requests || [0, 0], green)]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                    }
+                }
+            );
+
+            var sourcePaymentsChart = new Chart(
+                document.getElementById("websitePaymentsChart"),
+                {
+                    type: "bar",
+                    data: {
+                        labels: website.labels || ["Website", "Other Sources"],
+                        datasets: [
+                            dataset("Payments Received", website.payments || [0, 0], light),
+                            dataset("Estimated Completed-Job Profit", website.profit || [0, 0], green)
+                        ]
+                    },
+                    options: commonOptions(false, false)
+                }
+            );
+
+            var websiteMonthlyChart = new Chart(
+                document.getElementById("websiteMonthlyChart"),
+                {
+                    type: "line",
+                    data: {
+                        labels: website.websiteMonthlyLabels || [],
+                        datasets: [{
+                            label: "Website Requests",
+                            data: website.websiteMonthlyRequests || [],
+                            borderColor: green,
+                            backgroundColor: light,
+                            pointRadius: 5,
+                            tension: 0.25,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: "bottom" } },
+                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                    }
+                }
+            );
+
             // Tab switching
             function showReport(name) {
                 var panels =
@@ -590,6 +874,16 @@
                     charts[name].resize();
                     charts[name].update();
                 }
+                if (name === "areas") {
+                    areaProfits.resize();
+                    areaProfits.update();
+                }
+                if (name === "website") {
+                    sourcePaymentsChart.resize();
+                    sourcePaymentsChart.update();
+                    websiteMonthlyChart.resize();
+                    websiteMonthlyChart.update();
+                }
             }
 
             document.querySelectorAll(".analytics-tab")
@@ -606,7 +900,8 @@
 
             var allowed = [
                 "income", "expenses", "profits",
-                "services", "quotes", "clients"
+                "services", "quotes", "clients",
+                "areas", "website"
             ];
 
             showReport(
