@@ -20,7 +20,7 @@ namespace GiantGroupM3
     {
         // ---- limits: adjust once you see your real quota on the AI Studio rate-limit page ----
         private const int MaxMessageLength = 300;
-        private const int MaxHistoryTurns = 6;
+        private const int MaxHistoryTurns = 12;
         private const int MaxTurnLength = 600;
         private const int GuestPerTenMinutes = 8;
         private const int MemberPerTenMinutes = 20;
@@ -55,7 +55,7 @@ namespace GiantGroupM3
                 {
                     body = reader.ReadToEnd();
                 }
-                if (body.Length > 10000)
+                if (body.Length > 20000)
                 {
                     Send(context, false);
                     return;
