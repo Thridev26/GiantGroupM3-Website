@@ -162,6 +162,8 @@ namespace GiantGroupM3
                 LoadServiceProfitability(start, end);
                 LoadQuoteConversion(start, end);
                 LoadClientValue(start, end, clientType);
+                LoadPopularAreas(start, end);
+                LoadWebsiteImpact(start, end);
             }
             catch (Exception ex)
             {
@@ -186,6 +188,8 @@ namespace GiantGroupM3
             hfServiceData.Value = EmptyJson;
             hfQuoteData.Value = EmptyJson;
             hfClientData.Value = EmptyJson;
+            hfAreaData.Value = "{}";
+            hfWebsiteData.Value = "{}";
         }
 
         // ==================================================
@@ -812,5 +816,259 @@ namespace GiantGroupM3
             hfClientData.Value =
                 ChartJson(labels, values);
         }
+
+        // Popular areas: request-date cohort, 1 row per request before aggregation.
+        // Address grouping uses the last comma-separated component of siteAddress.
+        // Payments are total recorded to date for jobs linked to these requests.
+        // Estimated contribution uses completed jobs only (payments minus fuel/dumping).
+        private void LoadPopularAreas(DateTime start, DateTime end)
+        {
+            string sql = @"
+                WITH PaymentsPerJob AS
+                (
+                    SELECT p.jobID,
+                           SUM(CONVERT(decimal(19,2), p.amountPaid)) AS Received
+                    FROM dbo.Payment p
+                    GROUP BY p.jobID
+                ),
+                JobsPerRequest AS
+                (
+                    SELECT q.jobRequestID,
+                           SUM(ISNULL(pp.Received, 0)) AS Received,
+                           SUM(CASE WHEN j.jobStatus = 'Completed'
+                               THEN ISNULL(pp.Received,0)
+                                    - ISNULL(j.totalFuelCost,0)
+                                    - ISNULL(j.dumpingCost,0)
+                               ELSE 0 END) AS CompletedContribution,
+                           SUM(CASE WHEN j.jobStatus = 'Completed'
+                               THEN 1 ELSE 0 END) AS CompletedJobs
+                    FROM dbo.Job j
+                    INNER JOIN dbo.Quote q ON q.QuoteID = j.quoteID
+                    LEFT JOIN PaymentsPerJob pp ON pp.jobID = j.jobID
+                    GROUP BY q.jobRequestID
+                ),
+                RequestPeriod AS
+                (
+                    SELECT jr.jobRequestID,
+                           jr.dateRecieved,
+                           CASE WHEN UPPER(LTRIM(RTRIM(jr.requestSource))) = 'WEBSITE'
+                                THEN 'Website' ELSE 'Other Sources' END AS SourceChannel,
+                           CASE WHEN CHARINDEX(',', jr.siteAddress) > 0
+                                THEN COALESCE(NULLIF(LTRIM(RTRIM(
+                                    RIGHT(jr.siteAddress,
+                                          CHARINDEX(',', REVERSE(jr.siteAddress)) - 1)
+                                )), ''), '(Area not specified)')
+                                ELSE '(Area not specified)' END AS Area
+                    FROM dbo.JobRequest jr
+                    WHERE jr.dateRecieved >= @StartDate
+                      AND jr.dateRecieved < DATEADD(day, 1, @EndDate)
+                )
+
+                SELECT TOP (10)
+                    rp.Area,
+                    COUNT(*) AS RequestCount,
+                    SUM(ISNULL(jpr.Received, 0)) AS PaymentsReceived,
+                    SUM(ISNULL(jpr.CompletedContribution, 0)) AS EstimatedProfit,
+                    SUM(ISNULL(jpr.CompletedJobs, 0)) AS CompletedJobs
+                FROM RequestPeriod rp
+                LEFT JOIN JobsPerRequest jpr ON jpr.jobRequestID = rp.jobRequestID
+                GROUP BY rp.Area
+                ORDER BY COUNT(*) DESC, SUM(ISNULL(jpr.Received,0)) DESC, rp.Area;";
+
+            DataTable dt = Query(sql, start, end);
+            List<string> labels = new List<string>();
+            List<int> requests = new List<int>();
+            List<decimal> payments = new List<decimal>();
+            List<decimal> profit = new List<decimal>();
+            List<int> completed = new List<int>();
+
+            foreach (DataRow row in dt.Rows)
+            {
+                labels.Add(TextValue(row, "Area"));
+                requests.Add(Convert.ToInt32(row["RequestCount"]));
+                payments.Add(Money(row, "PaymentsReceived"));
+                profit.Add(Money(row, "EstimatedProfit"));
+                completed.Add(Convert.ToInt32(row["CompletedJobs"]));
+            }
+
+            hfAreaData.Value = Json(new
+            {
+                labels = labels,
+                requests = requests,
+                payments = payments,
+                profit = profit,
+                completedJobs = completed
+            });
+        }
+
+
+        // Website source comparison is based on requestSource, not tracking analytics.
+        // Payment totals are collected-to-date for requests created in the selected range.
+        private void LoadWebsiteImpact(DateTime start, DateTime end)
+        {
+            string sql = @"
+                WITH PaymentsPerJob AS
+                (
+                    SELECT p.jobID,
+                           SUM(CONVERT(decimal(19,2), p.amountPaid)) AS Received
+                    FROM dbo.Payment p
+                    GROUP BY p.jobID
+                ),
+                JobsPerRequest AS
+                (
+                    SELECT q.jobRequestID,
+                           SUM(ISNULL(pp.Received, 0)) AS Received,
+                           SUM(CASE WHEN j.jobStatus = 'Completed'
+                               THEN ISNULL(pp.Received,0)
+                                    - ISNULL(j.totalFuelCost,0)
+                                    - ISNULL(j.dumpingCost,0)
+                               ELSE 0 END) AS CompletedContribution,
+                           SUM(CASE WHEN j.jobStatus = 'Completed'
+                               THEN 1 ELSE 0 END) AS CompletedJobs
+                    FROM dbo.Job j
+                    INNER JOIN dbo.Quote q ON q.QuoteID = j.quoteID
+                    LEFT JOIN PaymentsPerJob pp ON pp.jobID = j.jobID
+                    GROUP BY q.jobRequestID
+                ),
+                RequestPeriod AS
+                (
+                    SELECT jr.jobRequestID,
+                           jr.dateRecieved,
+                           CASE WHEN UPPER(LTRIM(RTRIM(jr.requestSource))) = 'WEBSITE'
+                                THEN 'Website' ELSE 'Other Sources' END AS SourceChannel,
+                           CASE WHEN CHARINDEX(',', jr.siteAddress) > 0
+                                THEN COALESCE(NULLIF(LTRIM(RTRIM(
+                                    RIGHT(jr.siteAddress,
+                                          CHARINDEX(',', REVERSE(jr.siteAddress)) - 1)
+                                )), ''), '(Area not specified)')
+                                ELSE '(Area not specified)' END AS Area
+                    FROM dbo.JobRequest jr
+                    WHERE jr.dateRecieved >= @StartDate
+                      AND jr.dateRecieved < DATEADD(day, 1, @EndDate)
+                )
+
+                SELECT rp.SourceChannel,
+                       COUNT(*) AS RequestCount,
+                       SUM(ISNULL(jpr.Received,0)) AS PaymentsReceived,
+                       SUM(ISNULL(jpr.CompletedContribution,0)) AS EstimatedProfit,
+                       SUM(ISNULL(jpr.CompletedJobs,0)) AS CompletedJobs
+                FROM RequestPeriod rp
+                LEFT JOIN JobsPerRequest jpr ON jpr.jobRequestID = rp.jobRequestID
+                GROUP BY rp.SourceChannel;";
+
+            DataTable dt = Query(sql, start, end);
+            int webRequests = 0, otherRequests = 0;
+            decimal webPayments = 0, otherPayments = 0;
+            decimal webProfit = 0, otherProfit = 0;
+            int webCompleted = 0, otherCompleted = 0;
+
+            foreach (DataRow row in dt.Rows)
+            {
+                bool isWebsite = TextValue(row, "SourceChannel") == "Website";
+                int count = Convert.ToInt32(row["RequestCount"]);
+                decimal received = Money(row, "PaymentsReceived");
+                decimal contribution = Money(row, "EstimatedProfit");
+                int completed = Convert.ToInt32(row["CompletedJobs"]);
+                if (isWebsite)
+                {
+                    webRequests = count;
+                    webPayments = received;
+                    webProfit = contribution;
+                    webCompleted = completed;
+                }
+                else
+                {
+                    otherRequests = count;
+                    otherPayments = received;
+                    otherProfit = contribution;
+                    otherCompleted = completed;
+                }
+            }
+
+            // Monthly breakdown of website-originated requests from the same cohort.
+            string monthSql = @"
+                WITH PaymentsPerJob AS
+                (
+                    SELECT p.jobID,
+                           SUM(CONVERT(decimal(19,2), p.amountPaid)) AS Received
+                    FROM dbo.Payment p
+                    GROUP BY p.jobID
+                ),
+                JobsPerRequest AS
+                (
+                    SELECT q.jobRequestID,
+                           SUM(ISNULL(pp.Received, 0)) AS Received,
+                           SUM(CASE WHEN j.jobStatus = 'Completed'
+                               THEN ISNULL(pp.Received,0)
+                                    - ISNULL(j.totalFuelCost,0)
+                                    - ISNULL(j.dumpingCost,0)
+                               ELSE 0 END) AS CompletedContribution,
+                           SUM(CASE WHEN j.jobStatus = 'Completed'
+                               THEN 1 ELSE 0 END) AS CompletedJobs
+                    FROM dbo.Job j
+                    INNER JOIN dbo.Quote q ON q.QuoteID = j.quoteID
+                    LEFT JOIN PaymentsPerJob pp ON pp.jobID = j.jobID
+                    GROUP BY q.jobRequestID
+                ),
+                RequestPeriod AS
+                (
+                    SELECT jr.jobRequestID,
+                           jr.dateRecieved,
+                           CASE WHEN UPPER(LTRIM(RTRIM(jr.requestSource))) = 'WEBSITE'
+                                THEN 'Website' ELSE 'Other Sources' END AS SourceChannel,
+                           CASE WHEN CHARINDEX(',', jr.siteAddress) > 0
+                                THEN COALESCE(NULLIF(LTRIM(RTRIM(
+                                    RIGHT(jr.siteAddress,
+                                          CHARINDEX(',', REVERSE(jr.siteAddress)) - 1)
+                                )), ''), '(Area not specified)')
+                                ELSE '(Area not specified)' END AS Area
+                    FROM dbo.JobRequest jr
+                    WHERE jr.dateRecieved >= @StartDate
+                      AND jr.dateRecieved < DATEADD(day, 1, @EndDate)
+                )
+
+                SELECT YEAR(rp.dateRecieved) AS Y,
+                       MONTH(rp.dateRecieved) AS M,
+                       COUNT(*) AS RequestCount,
+                       SUM(ISNULL(jpr.Received,0)) AS PaymentsReceived
+                FROM RequestPeriod rp
+                LEFT JOIN JobsPerRequest jpr ON jpr.jobRequestID = rp.jobRequestID
+                WHERE rp.SourceChannel = 'Website'
+                GROUP BY YEAR(rp.dateRecieved), MONTH(rp.dateRecieved)
+                ORDER BY Y, M;";
+
+            DataTable months = Query(monthSql, start, end);
+            List<string> monthLabels = new List<string>();
+            List<int> monthRequests = new List<int>();
+            List<decimal> monthPayments = new List<decimal>();
+            foreach (DataRow row in months.Rows)
+            {
+                monthLabels.Add(new DateTime(
+                    Convert.ToInt32(row["Y"]),
+                    Convert.ToInt32(row["M"]), 1).ToString("MMM yyyy"));
+                monthRequests.Add(Convert.ToInt32(row["RequestCount"]));
+                monthPayments.Add(Money(row, "PaymentsReceived"));
+            }
+
+            int totalRequests = webRequests + otherRequests;
+            decimal totalPayments = webPayments + otherPayments;
+
+            hfWebsiteData.Value = Json(new
+            {
+                labels = new[] { "Website", "Other Sources" },
+                requests = new[] { webRequests, otherRequests },
+                payments = new[] { webPayments, otherPayments },
+                profit = new[] { webProfit, otherProfit },
+                completedJobs = new[] { webCompleted, otherCompleted },
+                websiteRequestShare = totalRequests == 0 ? 0 :
+                    Math.Round((decimal)webRequests / totalRequests * 100m, 1),
+                websitePaymentShare = totalPayments == 0 ? 0 :
+                    Math.Round(webPayments / totalPayments * 100m, 1),
+                websiteMonthlyLabels = monthLabels,
+                websiteMonthlyRequests = monthRequests,
+                websiteMonthlyPayments = monthPayments
+            });
+        }
+
     }
 }

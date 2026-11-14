@@ -143,6 +143,9 @@ namespace GiantGroupM3
                     throw new InvalidOperationException(
                         "Payment did not match a pending checkout.");
 
+                // Payment is committed before attempting any receipt delivery.
+                PaymentReceiptService.TrySend(checkoutToken);
+
                 context.Response.StatusCode = 200;
                 context.Response.Write("OK");
             }
@@ -295,6 +298,7 @@ namespace GiantGroupM3
                                     "Could not complete checkout.");
                         }
 
+                        PaymentReceiptService.Queue(conn, transaction, token, jobId, transactionId, grossAmount);
                         transaction.Commit();
                         return true;
                     }

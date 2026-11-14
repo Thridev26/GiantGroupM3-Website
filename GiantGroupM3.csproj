@@ -474,6 +474,8 @@
       <DependentUpon>MobileApi.ashx</DependentUpon>
     </Compile>
     <Compile Include="MobileApiV2.cs" />
+    <Compile Include="PaymentReceiptRetry.ashx.cs" />
+    <Compile Include="PaymentReceiptService.cs" />
     <Compile Include="reports\ReportAnalytics.aspx.cs">
       <DependentUpon>ReportAnalytics.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
