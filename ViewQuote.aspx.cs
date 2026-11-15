@@ -334,17 +334,19 @@ namespace GiantGroupM3
                         if (item != null) item.Selected = true;
                     }
 
-                    // Clients can only answer a quote that is still 'Sent' and not past its expiry date.
-                    bool isOpen = status.Equals("Sent", StringComparison.OrdinalIgnoreCase);
+                    // Clients can respond/change response if the quote is Sent, Accepted, or Rejected, and not expired.
+                    bool isEligibleStatus = status.Equals("Sent", StringComparison.OrdinalIgnoreCase) ||
+                                            status.Equals("Accepted", StringComparison.OrdinalIgnoreCase) ||
+                                            status.Equals("Rejected", StringComparison.OrdinalIgnoreCase);
                     bool expired = expiry.HasValue && expiry.Value.Date < DateTime.Today;
 
-                    pnlClientResponse.Visible = IsClientView && isOpen && !expired;
+                    pnlClientResponse.Visible = IsClientView && isEligibleStatus && !expired;
                     pnlClientReadOnly.Visible = IsClientView && !pnlClientResponse.Visible;
 
                     if (pnlClientReadOnly.Visible)
                     {
-                        lblClientReadOnly.Text = !isOpen
-                            ? Server.HtmlEncode($"This quote has already been responded to (status: {status}).")
+                        lblClientReadOnly.Text = !isEligibleStatus
+                            ? Server.HtmlEncode($"This quote cannot be modified (status: {status}).")
                             : Server.HtmlEncode("This quote has expired. Please contact us if you would still like to go ahead.");
                     }
                 }
@@ -490,7 +492,7 @@ namespace GiantGroupM3
                                 JOIN JobRequest jr ON jr.jobRequestID = q.jobRequestID
                                 WHERE q.QuoteID = @QuoteID
                                   AND jr.clientID = @ClientID
-                                  AND q.quoteStatus = 'Sent'
+                                  AND q.quoteStatus IN ('Sent', 'Accepted', 'Rejected')
                                   AND (q.expiryDate IS NULL OR q.expiryDate >= CAST(GETDATE() AS date))";
 
                             int changed;
