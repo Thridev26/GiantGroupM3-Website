@@ -53,6 +53,5 @@
             </ItemTemplate></asp:Repeater></div>
             <asp:Label ID="lblNoPhotos" runat="server" Visible="false" CssClass="text-muted" Text="No website-uploaded photos yet. Older desktop photos may not be accessible through the website." />
         </asp:Panel>
-        <div class="mt-3"><a href="~/ClientPortal.aspx" runat="server" class="btn btn-outline-secondary">Back to Client Portal</a></div>
     </div>
 </asp:Content>

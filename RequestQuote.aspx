@@ -446,8 +446,8 @@
                         <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
                     </svg>
                 </div>
-                <h4 class="fw-bold text-dark mb-2">No Pending Job Requests Found</h4>
-                <p class="text-muted mb-4">There are currently no job requests eligible for quote generation. Already-quoted requests can be found under your quotes.</p>
+                <h4 class="fw-bold text-dark mb-2">No Site Evaluated Job Requests Found</h4>
+                <p class="text-muted mb-4">A quote can only be requested once a job request has the status Site Evaluated. Already-quoted requests can be found under your quotes.</p>
                 <a runat="server" href="~/Requests/SubmitRequest.aspx" class="btn btn-success px-4 py-2 fw-semibold me-2">
                     Submit New Job Request
                 </a>

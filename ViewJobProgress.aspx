@@ -828,15 +828,6 @@
 
                 </asp:HyperLink>
 
-                <a runat="server"
-                   href="~/ManagementPortal.aspx"
-                   class="gg-btn gg-btn-outline">
-
-                    <i class="bi bi-arrow-left me-1"></i>
-                    Back to Management
-
-                </a>
-
             </div>
 
         </div>

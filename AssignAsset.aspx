@@ -8,6 +8,18 @@
         .gg-slotlist li { display: inline-flex; align-items: center; gap: .4rem; padding: .35rem .75rem; border: 1px solid var(--gg-border); border-radius: 999px; background: var(--gg-surface); font-size: .9rem; }
         .gg-slotlist input { accent-color: var(--gg-700); }
         .gg-slotlist label { margin: 0; cursor: pointer; }
+        /* In-page confirmation dialog (replaces the browser's built-in confirm box) */
+        .gg-modal-overlay { position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(8, 20, 14, .55); animation: ggModalFade .15s ease; }
+        .gg-modal { width: 100%; max-width: 440px; background: var(--gg-surface); color: var(--gg-text); border: 1px solid var(--gg-border); border-radius: 16px; padding: 1.5rem; box-shadow: 0 24px 60px rgba(0, 0, 0, .35); animation: ggModalPop .18s ease; }
+        .gg-modal h3 { font-size: 1.15rem; font-weight: 700; margin: 0 0 .4rem; color: var(--gg-text); }
+        .gg-modal p { margin: 0 0 .9rem; color: var(--gg-muted); }
+        .gg-modal-details { margin: 0 0 1.1rem; padding: .75rem .9rem; border: 1px solid var(--gg-border); border-radius: 10px; background: var(--gg-bg); font-size: .9rem; }
+        .gg-modal-details div + div { margin-top: .6rem; }
+        .gg-modal-details span { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: var(--gg-muted); }
+        .gg-modal-actions { display: flex; justify-content: flex-end; gap: .6rem; }
+        @keyframes ggModalFade { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes ggModalPop { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+        @media (prefers-reduced-motion: reduce) { .gg-modal-overlay, .gg-modal { animation: none; } }
     </style>
 
     <div class="gg-page">
@@ -107,7 +119,7 @@
                             </div>
                             <div class="col-md-9">
                                 <span class="gg-sub d-block mb-1">Time slots to book (this assignment only)</span>
-                               <asp:RadioButtonList ID="cblSlots" runat="server" RepeatLayout="UnorderedList"
+                               <asp:CheckBoxList ID="cblSlots" runat="server" RepeatLayout="UnorderedList"
     CssClass="gg-slotlist" DataTextField="Label" DataValueField="timeSlotID" />
                             </div>
                         </div>
@@ -174,7 +186,7 @@
                                 <asp:TemplateField HeaderText="Action" ItemStyle-Width="140px" ItemStyle-CssClass="text-end">
                                     <ItemTemplate>
                                         <asp:LinkButton ID="btnAssignAsset" runat="server" CommandName="AssignAssetToJob"
-                                            OnClientClick="return confirm('Assign this asset to the selected job?');"
+                                            OnClientClick="return ggConfirmAction(this, 'Assign asset to job?', 'Please confirm this assignment.', 1);"
                                             CommandArgument='<%# Eval("SourceType") + ":" + Eval("AssetID") %>' CssClass="gg-btn gg-btn-primary gg-btn-sm">
                                             <i class="bi bi-plus-lg"></i> Assign
                                         </asp:LinkButton>
@@ -206,6 +218,122 @@
             </ContentTemplate>
         </asp:UpdatePanel>
     </div>
+
+    <!-- Confirmation dialog for the Assign buttons (replaces the browser's built-in confirm box) -->
+    <script type="text/javascript">
+        function ggConfirmAction(el, title, message, nameCellIndex) {
+            // Second pass: the person confirmed in our dialog, so let the original postback run.
+            if (el.getAttribute('data-gg-confirmed') === '1') {
+                el.removeAttribute('data-gg-confirmed');
+                return true;
+            }
+
+            var details = [];
+            var row = el.closest ? el.closest('tr') : null;
+            if (row && row.cells.length > nameCellIndex) {
+                var what = (row.cells[nameCellIndex].innerText || '').replace(/\s*[\r\n]+\s*/g, ' \u00B7 ').trim();
+                if (what) details.push({ label: 'Selected', value: what });
+            }
+            var job = document.querySelector('#<%= pnlSelectedJob.ClientID %> strong');
+            if (job && job.textContent.trim()) details.push({ label: 'Job', value: job.textContent.trim() });
+            var sched = document.getElementById('<%= lblScheduleSummary.ClientID %>');
+            if (sched && sched.textContent.trim()) details.push({ label: 'Date & time slots', value: sched.textContent.replace(/^\s*Checking\s*/, '').trim() });
+
+            ggOpenConfirm({
+                title: title,
+                message: message,
+                details: details,
+                okText: 'Assign',
+                onConfirm: function () {
+                    // Run the button's own postback directly (LinkButtons use a javascript: href).
+                    var href = el.getAttribute('href') || '';
+                    if (href.indexOf('javascript:') === 0) {
+                        (new Function(href.substring(11)))();
+                    } else {
+                        el.setAttribute('data-gg-confirmed', '1');
+                        el.click();
+                    }
+                }
+            });
+            return false;
+        }
+
+        function ggOpenConfirm(opts) {
+            if (document.querySelector('.gg-modal-overlay')) return;
+            var lastFocus = document.activeElement;
+
+            var overlay = document.createElement('div');
+            overlay.className = 'gg-modal-overlay';
+
+            var box = document.createElement('div');
+            box.className = 'gg-modal';
+            box.setAttribute('role', 'alertdialog');
+            box.setAttribute('aria-modal', 'true');
+            box.setAttribute('aria-labelledby', 'ggModalTitle');
+            box.setAttribute('aria-describedby', 'ggModalMsg');
+
+            var h = document.createElement('h3');
+            h.id = 'ggModalTitle';
+            h.textContent = opts.title;
+            var p = document.createElement('p');
+            p.id = 'ggModalMsg';
+            p.textContent = opts.message;
+            box.appendChild(h);
+            box.appendChild(p);
+
+            if (opts.details && opts.details.length) {
+                var list = document.createElement('div');
+                list.className = 'gg-modal-details';
+                opts.details.forEach(function (d) {
+                    var item = document.createElement('div');
+                    var label = document.createElement('span');
+                    label.textContent = d.label;
+                    item.appendChild(label);
+                    item.appendChild(document.createTextNode(d.value));
+                    list.appendChild(item);
+                });
+                box.appendChild(list);
+            }
+
+            var actions = document.createElement('div');
+            actions.className = 'gg-modal-actions';
+            var cancelBtn = document.createElement('button');
+            cancelBtn.type = 'button';
+            cancelBtn.className = 'gg-btn gg-btn-outline';
+            cancelBtn.textContent = 'Cancel';
+            var okBtn = document.createElement('button');
+            okBtn.type = 'button';
+            okBtn.className = 'gg-btn gg-btn-primary';
+            okBtn.textContent = opts.okText || 'OK';
+            actions.appendChild(cancelBtn);
+            actions.appendChild(okBtn);
+            box.appendChild(actions);
+            overlay.appendChild(box);
+
+            function close(confirmed) {
+                document.removeEventListener('keydown', onKey, true);
+                if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+                if (lastFocus && lastFocus.focus && document.body.contains(lastFocus)) lastFocus.focus();
+                if (confirmed) opts.onConfirm();
+            }
+            function onKey(e) {
+                if (e.key === 'Escape') { e.preventDefault(); close(false); return; }
+                if (e.key === 'Tab') {
+                    // keep keyboard focus inside the dialog
+                    e.preventDefault();
+                    (document.activeElement === okBtn ? cancelBtn : okBtn).focus();
+                }
+            }
+
+            cancelBtn.addEventListener('click', function () { close(false); });
+            okBtn.addEventListener('click', function () { close(true); });
+            overlay.addEventListener('mousedown', function (e) { if (e.target === overlay) close(false); });
+            document.addEventListener('keydown', onKey, true);
+
+            document.body.appendChild(overlay);
+            okBtn.focus();
+        }
+    </script>
 
     <!-- Debounce script for type-as-you-go postbacks -->
     <script type="text/javascript">

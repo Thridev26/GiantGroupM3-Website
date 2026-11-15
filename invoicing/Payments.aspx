@@ -36,10 +36,9 @@
 
     <div class="payments-wrap px-3">
         <div class="mb-4">
-            <h1>My Payments</h1>
+            <h1><%= PageHeading %></h1>
             <p class="text-muted mb-0">
-                View your job invoices, recorded payments, and remaining balances.
-                You can pay the full outstanding amount or make a partial payment.
+                <%= PageIntro %>
             </p>
         </div>
 
@@ -66,10 +65,12 @@
             <asp:Label ID="lblPaymentMessage" runat="server" />
         </asp:Panel>
 
+        <% if (ShowPayNote) { %>
         <div class="alert alert-secondary payments-note" role="note">
             Select an amount to pay for each outstanding job. The minimum online payment
             is R5.00. Your payment is recorded as received only after PayFast confirms it.
         </div>
+        <% } %>
 
         <div class="payments-scroll">
             <asp:GridView ID="gvPayments" runat="server"

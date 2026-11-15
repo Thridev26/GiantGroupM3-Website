@@ -219,10 +219,29 @@ namespace GiantGroupM3
         // The two portal dashboards and the router. A "Return to Portal" link is pointless there.
         public bool IsPortalPage()
         {
-            var current = HttpContext.Current?.Request.AppRelativeCurrentExecutionFilePath ?? string.Empty;
-            return current.Equals("~/ManagementPortal.aspx", StringComparison.OrdinalIgnoreCase)
-                || current.Equals("~/ClientPortal.aspx", StringComparison.OrdinalIgnoreCase)
-                || current.Equals("~/HomeRouter.aspx", StringComparison.OrdinalIgnoreCase);
+            var request = HttpContext.Current?.Request;
+            if (request == null) return false;
+
+            // FriendlyUrls serves pages without the ".aspx" extension (/ClientPortal), so an exact
+            // match on "~/ClientPortal.aspx" never succeeds. Compare on the page name only, for both
+            // the executing path and the path the browser asked for.
+            return IsPortalPageName(request.AppRelativeCurrentExecutionFilePath)
+                || IsPortalPageName(request.Path);
+        }
+
+        private static bool IsPortalPageName(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return false;
+
+            string name = path.Trim().TrimEnd('/');
+            int slash = name.LastIndexOf('/');
+            if (slash >= 0) name = name.Substring(slash + 1);
+            if (name.EndsWith(".aspx", StringComparison.OrdinalIgnoreCase))
+                name = name.Substring(0, name.Length - 5);
+
+            return name.Equals("ManagementPortal", StringComparison.OrdinalIgnoreCase)
+                || name.Equals("ClientPortal", StringComparison.OrdinalIgnoreCase)
+                || name.Equals("HomeRouter", StringComparison.OrdinalIgnoreCase);
         }
 
         // Shown at the bottom of every logged-in page. It links to HomeRouter.aspx, the same
@@ -274,6 +293,17 @@ namespace GiantGroupM3
             if (level < 6) return false;
 
             return true;
+        }
+
+        // Job Requests menu for staff: the Owner (Level 6) and the Operations Manager (Level 4).
+        // The client-only actions (submit a request, update client info) are not part of it.
+        public bool CanSeeStaffRequestsMenu()
+        {
+            if (!IsLoggedIn()) return false;
+            if (IsClient()) return false;
+
+            int level = GetUserLevel();
+            return level == 4 || level == 6;
         }
 
         public bool CanSeeQuotationsTab()
