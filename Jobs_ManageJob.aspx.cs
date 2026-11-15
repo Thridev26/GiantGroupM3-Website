@@ -1668,7 +1668,7 @@ namespace GiantGroupM3
                             // Recheck the quotation before saving.
                             //
                             // Rules:
-                            // - Quote must be Sent
+                            // - Quote must be Accepted
                             // - Quote must not be expired
                             // - Request must not be cancelled
                             // - Quote cannot already have a job
@@ -1685,7 +1685,7 @@ namespace GiantGroupM3
 
                         WHERE q.QuoteID = @quote
 
-                          AND q.quoteStatus = 'Sent'
+                          AND q.quoteStatus = 'Accepted'
 
                           AND q.expiryDate >=
                               CAST(GETDATE() AS DATE)
@@ -1715,7 +1715,7 @@ namespace GiantGroupM3
                                 throw new InvalidOperationException(
                                     "This quotation is no longer " +
                                     "eligible for scheduling. " +
-                                    "It must be Sent, unexpired, " +
+                                    "It must be Accepted, unexpired, " +
                                     "not cancelled and not " +
                                     "linked to another job.");
                             }
