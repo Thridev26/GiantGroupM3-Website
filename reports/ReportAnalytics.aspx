@@ -144,6 +144,46 @@
                 height: 320px;
             }
         }
+        @media print {
+    .analytics-tabs,
+    .analytics-button,
+    #btnOutstandingCsv,
+    #btnPrintAnalytics {
+        display: none !important;
+    }
+
+    .report-panel {
+        display: none !important;
+    }
+
+    .report-panel.active {
+        display: block !important;
+    }
+
+    .analytics-card {
+        box-shadow: none !important;
+        border: 1px solid #ddd;
+        break-inside: avoid;
+    }
+
+    .analytics-chart {
+        height: 340px !important;
+    }
+
+    .analytics-page {
+        padding: 5px;
+        max-width: 100%;
+    }
+
+    .table-responsive {
+        overflow: visible !important;
+    }
+
+    @page {
+        size: A4 landscape;
+        margin: 12mm;
+    }
+}
     </style>
 
     <div class="analytics-page">
@@ -152,6 +192,11 @@
             <i class="bi bi-graph-up-arrow me-2"></i>
             Giant Group Report Analytics
         </h2>
+        <button type="button"
+    id="btnPrintAnalytics"
+    class="analytics-button mb-3">
+    Print / Save as PDF
+</button>
 
         <p class="analytics-subtitle">
             Owner dashboard for financial performance,
@@ -237,7 +282,9 @@
 
         <asp:HiddenField ID="hfWebsiteData"
             runat="server" ClientIDMode="Static" />
-
+        <asp:HiddenField ID="hfOutstandingData"
+    runat="server"
+    ClientIDMode="Static" />
         <asp:HiddenField ID="hfActiveReport"
             runat="server" ClientIDMode="Static"
             Value="income" />
@@ -279,7 +326,10 @@
                 data-report="areas">Popular Areas</button>
             <button type="button" class="analytics-tab"
                 data-report="website">Website Impact</button>
-
+            <button type="button" class="analytics-tab"
+    data-report="outstanding">
+    Outstanding Payments
+</button>
         </div>
 
         <!-- INCOME -->
@@ -481,6 +531,103 @@
                 </p>
             </div>
         </div>
+        <!-- OUTSTANDING PAYMENTS REPORT -->
+<div class="report-panel" id="panel-outstanding">
+
+    <div class="analytics-card">
+
+        <h3>Outstanding Payments Analysis</h3>
+
+        <p class="report-description">
+            View all jobs with unpaid balances, including
+            jobs that have already been partially paid.
+            Figures reflect payments recorded to date.
+        </p>
+
+        <div class="row g-3 mb-4">
+
+            <div class="col-md-4">
+                <div class="analytics-kpi">
+                    Total Outstanding Balance
+                    <strong id="outstandingTotal">R 0.00</strong>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="analytics-kpi">
+                    Jobs with Outstanding Balances
+                    <strong id="outstandingCount">0</strong>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="analytics-kpi">
+                    Partially Paid Jobs
+                    <strong id="outstandingPartial">0</strong>
+                </div>
+            </div>
+
+        </div>
+
+        <h4>Top 10 Outstanding Job Balances</h4>
+
+        <div class="analytics-chart">
+            <canvas id="outstandingChart"></canvas>
+        </div>
+
+        <p class="analytics-note">
+            Outstanding balances are calculated using
+            the quoted job amount minus all recorded
+            payments. This report shows current balances
+            across all jobs, independent of the selected
+            date filter.
+        </p>
+
+    </div>
+
+    <div class="analytics-card">
+
+        <div class="d-flex justify-content-between
+                    align-items-center flex-wrap gap-2 mb-3">
+
+            <h4 class="mb-0">
+                Outstanding Payment Details
+            </h4>
+
+            <button type="button"
+                id="btnOutstandingCsv"
+                class="analytics-button">
+                Download CSV
+            </button>
+
+        </div>
+
+        <div class="table-responsive">
+
+            <table class="table table-striped table-hover">
+
+                <thead>
+                    <tr>
+                        <th>Job ID</th>
+                        <th>Client</th>
+                        <th>Site Address</th>
+                        <th>Job Status</th>
+                        <th>Quoted</th>
+                        <th>Paid</th>
+                        <th>Outstanding</th>
+                        <th>Payment Status</th>
+                    </tr>
+                </thead>
+
+                <tbody id="outstandingTableBody"></tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
 
         <p class="analytics-note">
             Figures are retrieved from GroupWst1.
@@ -514,6 +661,7 @@
             var clients = readData("hfClientData");
             var areas = readData("hfAreaData");
             var website = readData("hfWebsiteData");
+            var outstanding = readData("hfOutstandingData");
 
             var green = "#2d6a4f";
             var dark = "#1b4332";
@@ -847,6 +995,165 @@
                 }
             );
 
+            // ===============================================
+            // REPORT 9: OUTSTANDING PAYMENTS
+            // ===============================================
+
+            var outstandingRows = outstanding.rows || [];
+
+            document.getElementById("outstandingTotal")
+                .textContent = money(outstanding.total || 0);
+
+            document.getElementById("outstandingCount")
+                .textContent = outstanding.count || 0;
+
+            document.getElementById("outstandingPartial")
+                .textContent = outstanding.partialCount || 0;
+
+            charts.outstanding = new Chart(
+                document.getElementById("outstandingChart"),
+                {
+                    type: "bar",
+                    data: {
+                        labels: outstanding.labels || [],
+                        datasets: [{
+                            label: "Outstanding Balance (R)",
+                            data: outstanding.values || [],
+                            backgroundColor: "#2d6a4f",
+                            borderRadius: 5
+                        }]
+                    },
+                    options: commonOptions(true, false)
+                }
+            );
+
+            // Display detailed payment records
+            var outstandingBody =
+                document.getElementById("outstandingTableBody");
+
+            function addCell(row, value) {
+                var td = document.createElement("td");
+                td.textContent = String(
+                    value === null || value === undefined
+                        ? ""
+                        : value
+                );
+                row.appendChild(td);
+            }
+
+            outstandingRows.forEach(function (item) {
+
+                var tr = document.createElement("tr");
+
+                addCell(tr, item.jobId);
+                addCell(tr, item.client);
+                addCell(tr, item.site);
+                addCell(tr, item.jobStatus);
+                addCell(tr, money(item.quoted));
+                addCell(tr, money(item.paid));
+
+                var balanceCell = document.createElement("td");
+                balanceCell.textContent = money(item.balance);
+                balanceCell.style.fontWeight = "bold";
+                balanceCell.style.color = "#b45309";
+                tr.appendChild(balanceCell);
+
+                addCell(tr, item.paymentStatus);
+
+                outstandingBody.appendChild(tr);
+            });
+
+            if (outstandingRows.length === 0) {
+                var emptyRow = document.createElement("tr");
+                var emptyCell = document.createElement("td");
+
+                emptyCell.colSpan = 8;
+                emptyCell.textContent =
+                    "No outstanding job balances found.";
+
+                emptyRow.appendChild(emptyCell);
+                outstandingBody.appendChild(emptyRow);
+            }
+
+            // ===============================================
+            // DOWNLOAD OUTSTANDING PAYMENTS AS CSV
+            // ===============================================
+
+            function csvCell(value) {
+                var text = String(
+                    value === null || value === undefined
+                        ? "" : value
+                );
+
+                // Prevent spreadsheet formula execution.
+                if (/^[\s]*[=+\-@]/.test(text)) {
+                    text = "'" + text;
+                }
+
+                return '"' + text.replace(/"/g, '""') + '"';
+            }
+
+            document.getElementById("btnOutstandingCsv")
+                .addEventListener("click", function () {
+
+                    var data = [[
+                        "Job ID",
+                        "Client",
+                        "Site Address",
+                        "Job Status",
+                        "Quoted Amount",
+                        "Payments Received",
+                        "Outstanding Balance",
+                        "Payment Status"
+                    ]];
+
+                    outstandingRows.forEach(function (item) {
+                        data.push([
+                            item.jobId,
+                            item.client,
+                            item.site,
+                            item.jobStatus,
+                            item.quoted,
+                            item.paid,
+                            item.balance,
+                            item.paymentStatus
+                        ]);
+                    });
+
+                    var csv = data.map(function (row) {
+                        return row.map(csvCell).join(",");
+                    }).join("\r\n");
+
+                    var blob = new Blob(
+                        ["\uFEFF", csv],
+                        { type: "text/csv;charset=utf-8;" }
+                    );
+
+                    var url = URL.createObjectURL(blob);
+
+                    var link = document.createElement("a");
+                    link.href = url;
+                    link.download = "GiantGroup_OutstandingPayments.csv";
+
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    setTimeout(function () {
+                        URL.revokeObjectURL(url);
+                    }, 1000);
+                });
+
+            // ===============================================
+            // PRINT / SAVE SELECTED REPORT AS PDF
+            // ===============================================
+
+            document.getElementById("btnPrintAnalytics")
+                .addEventListener("click", function () {
+                    window.print();
+                });
+
+
             // Tab switching
             function showReport(name) {
                 var panels =
@@ -901,7 +1208,7 @@
             var allowed = [
                 "income", "expenses", "profits",
                 "services", "quotes", "clients",
-                "areas", "website"
+                "areas", "website", "outstanding"
             ];
 
             showReport(
