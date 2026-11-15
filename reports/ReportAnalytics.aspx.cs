@@ -164,6 +164,7 @@ namespace GiantGroupM3
                 LoadClientValue(start, end, clientType);
                 LoadPopularAreas(start, end);
                 LoadWebsiteImpact(start, end);
+                LoadOutstandingPayments();
             }
             catch (Exception ex)
             {
@@ -180,6 +181,171 @@ namespace GiantGroupM3
             }
         }
 
+        private void LoadOutstandingPayments()
+        {
+            // Retrieves all current outstanding balances.
+            // The date filter is deliberately not applied:
+            // older debts must remain visible.
+
+            string sql = @"
+        WITH PaymentTotals AS
+        (
+            SELECT
+                jobID,
+                SUM(
+                    CONVERT(decimal(19,2), amountPaid)
+                ) AS TotalPaid
+            FROM dbo.Payment
+            GROUP BY jobID
+        ),
+        JobBalances AS
+        (
+            SELECT
+                j.jobID AS JobID,
+                j.startDate AS JobStartDate,
+                j.jobStatus AS JobStatus,
+
+                jr.jobRequestID AS RequestID,
+                jr.siteAddress AS SiteAddress,
+
+                c.clientName + ' ' + c.clientSurname
+                    AS ClientName,
+
+                CONVERT(decimal(19,2), q.amount)
+                    AS QuotedAmount,
+
+                ISNULL(p.TotalPaid, 0)
+                    AS TotalPaid,
+
+                CONVERT(decimal(19,2), q.amount)
+                    - ISNULL(p.TotalPaid, 0)
+                    AS OutstandingBalance
+
+            FROM dbo.Job j
+
+            INNER JOIN dbo.Quote q
+                ON j.quoteID = q.QuoteID
+
+            INNER JOIN dbo.JobRequest jr
+                ON q.jobRequestID = jr.jobRequestID
+
+            INNER JOIN dbo.Client c
+                ON jr.clientID = c.clientID
+
+            LEFT JOIN PaymentTotals p
+                ON j.jobID = p.jobID
+        )
+
+        SELECT
+            JobID,
+            JobStartDate,
+            JobStatus,
+            RequestID,
+            SiteAddress,
+            ClientName,
+            QuotedAmount,
+            TotalPaid,
+            OutstandingBalance,
+
+            CASE
+                WHEN TotalPaid > 0
+                THEN 'Partially Paid'
+                ELSE 'Unpaid'
+            END AS PaymentStatus
+
+        FROM JobBalances
+
+        WHERE OutstandingBalance > 0
+
+        ORDER BY
+            OutstandingBalance DESC,
+            JobID;";
+
+            // The reusable Query method adds date parameters,
+            // but this particular SQL does not use them.
+            DataTable dt = Query(
+                sql,
+                DateTime.Today,
+                DateTime.Today
+            );
+
+            List<object> rows = new List<object>();
+
+            List<string> chartLabels = new List<string>();
+            List<decimal> chartValues = new List<decimal>();
+
+            decimal totalOutstanding = 0m;
+            int partialCount = 0;
+
+            foreach (DataRow row in dt.Rows)
+            {
+                int jobId = Convert.ToInt32(row["JobID"]);
+
+                string clientName =
+                    Convert.ToString(row["ClientName"]);
+
+                string siteAddress =
+                    Convert.ToString(row["SiteAddress"]);
+
+                string jobStatus =
+                    Convert.ToString(row["JobStatus"]);
+
+                string paymentStatus =
+                    Convert.ToString(row["PaymentStatus"]);
+
+                decimal quoted =
+                    Convert.ToDecimal(row["QuotedAmount"]);
+
+                decimal paid =
+                    Convert.ToDecimal(row["TotalPaid"]);
+
+                decimal balance =
+                    Convert.ToDecimal(row["OutstandingBalance"]);
+
+                totalOutstanding += balance;
+
+                if (paid > 0)
+                    partialCount++;
+
+                // Keep all records for the detailed table.
+                rows.Add(new
+                {
+                    jobId = jobId,
+                    client = clientName,
+                    site = siteAddress,
+                    jobStatus = jobStatus,
+                    quoted = quoted,
+                    paid = paid,
+                    balance = balance,
+                    paymentStatus = paymentStatus
+                });
+
+                // Show only the 10 largest balances in the graph.
+                if (chartLabels.Count < 10)
+                {
+                    chartLabels.Add(
+                        "Job #" + jobId + " | " + clientName
+                    );
+
+                    chartValues.Add(balance);
+                }
+            }
+
+            // Reuse the Json() helper already present
+            // in your existing ReportAnalytics.aspx.cs.
+            hfOutstandingData.Value = Json(new
+            {
+                labels = chartLabels,
+                values = chartValues,
+                rows = rows,
+
+                total = totalOutstanding,
+                count = dt.Rows.Count,
+                partialCount = partialCount
+            });
+        }
+
+
         private void ResetChartData()
         {
             hfIncomeData.Value = EmptyJson;
@@ -190,6 +356,7 @@ namespace GiantGroupM3
             hfClientData.Value = EmptyJson;
             hfAreaData.Value = "{}";
             hfWebsiteData.Value = "{}";
+            hfOutstandingData.Value = "{}";
         }
 
         // ==================================================
