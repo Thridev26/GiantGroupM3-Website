@@ -1711,22 +1711,134 @@ function saveOakChat() {
     })
     .then(function () { oakBusy = false; });
 }
-        function fallbackReply(userText) {
-            var reply = getSmartFAQResponse(userText);
-            if (reply) {
-            addOakMessage(reply, 'happy');
-           } else if (OAK_IS_GUEST) {
-            addOakMessage(
-            "Sorry, to access me fully, please " +
-            '<a href="' + LOGIN_URL + '" class="fw-bold text-success">log in</a> or ' +
-            '<a href="' + REGISTER_URL + '" class="fw-bold text-success">create an account</a>.',
-            'confused');
-           } else {
-            addOakMessage(
-            "Sorry, I'm not sure about that one. You can call our team on <strong>0848 331 373</strong> or " +
-            '<a href="' + CONTACT_URL + '" class="fw-bold text-success">send us a message on our Contact page</a>, and we will help you.',
-            'confused');
+// ---------------------------------------------------------------------------
+// Backup answers, used only when Gemini is unavailable.
+// To add a question: add one item below. keys = words or phrases to look for,
+// answer = plain text (no angle brackets). The item with the best match wins.
+// ---------------------------------------------------------------------------
+
+var OAK_FAQ = [
+        
+            
+
+    { keys: ['hello', 'hi', 'hey', 'howzit', 'good morning', 'good afternoon', 'good evening'],
+      answer: "Hi there! I'm Oak, The Giant Group's virtual assistant. I can help with our services, quotes, opening hours, creating an account or contacting the team. What would you like to know?" },
+
+    { keys: ['thanks', 'thank you', 'cheers', 'bye', 'goodbye', 'ok thanks'],
+      answer: "You're welcome! If you need anything else, just ask." },
+
+    { keys: ['who are you', 'are you a robot', 'are you ai', 'are you a bot', 'are you human', 'your name', 'what are you'],
+      answer: "I'm Oak, The Giant Group's virtual assistant, an AI. I can answer questions about our services and this website, and the team is on 0848 331 373 if you would like to speak to a person." },
+
+    { keys: ['what can you do', 'what can you help', 'help me', 'can you help', 'how can you help'],
+      answer: "I can help with our services, how quotes work, opening hours, contacting the team, creating an account, signing in, paying and tracking your requests. What would you like to know?" },
+
+    { keys: ['services', 'service', 'what do you do', 'what do you offer', 'offer', 'tree felling', 'felling', 'remove a tree', 'tree removal', 'stump', 'stump removal', 'grinding', 'site clearing', 'clearing', 'garden', 'maintenance', 'vegetation', 'tree', 'trees', 'oak'],
+      answer: "We offer tree felling and dismantling, stump and root removal, site clearing and vegetation management, and garden and property maintenance, for homes, estates, businesses and municipalities. Which service do you need?" },
+
+    { keys: ['prune', 'pruning', 'trim', 'trimming', 'hedge', 'hedges', 'branches', 'lawn', 'mowing'],
+      answer: "Our garden and property maintenance covers regular upkeep. For a specific job such as pruning or hedge trimming, please call 0848 331 373 or use the Contact page so the team can confirm it." },
+
+    { keys: ['quote', 'quotation', 'estimate', 'free quote', 'site visit', 'evaluation', 'how do i get a quote', 'request a quote'],
+      answer: "A quote starts with a free on-site visit. Contact us by phone or the Contact page, the team evaluates and measures your site, then sends a quote that is valid for one month, which you can accept. You don't need an account to ask for a quote." },
+
+    { keys: ['cost', 'price', 'prices', 'how much', 'rates', 'charge', 'expensive', 'cheap', 'afford'],
+      answer: "Pricing depends on the size and complexity of the job and the distance to your site, and a quote is built from the services needed plus travel plus VAT. The first step is a free on-site quote through the Contact page or by phone." },
+
+    { keys: ['hours', 'open', 'opening', 'closing', 'close', 'sunday', 'saturday', 'weekend', 'what time'],
+      answer: "Our normal hours are Monday to Saturday, 7:00 AM to 5:00 PM. For emergencies outside these hours, please phone 0848 331 373." },
+
+    { keys: ['contact', 'phone', 'call', 'number', 'whatsapp', 'email', 'instagram', 'reach', 'speak to', 'talk to', 'human', 'person'],
+      answer: "You can phone 0848 331 373, message the same number on WhatsApp, use the Contact page, or find us on Instagram at thegiantgroup_." },
+
+    { keys: ['emergency', 'storm', 'urgent', 'fallen', 'fell on', 'blocking', 'after hours'],
+      answer: "We offer emergency call-outs for storm damage and hazardous trees. Please phone 0848 331 373 straight away and keep people and vehicles clear of the danger." },
+
+    { keys: ['dangerous', 'leaning', 'unsafe', 'hazard', 'dying', 'dead tree', 'falling', 'is my tree'],
+      answer: "I can't judge a tree from here. If it looks unsafe, keep people and vehicles away from it and phone us on 0848 331 373. For a proper look, ask for a free on-site quote." },
+
+    { keys: ['insured', 'insurance', 'certified', 'certificate', 'qualified', 'licence', 'license', 'safety', 'safe'],
+      answer: "Our website states that our rigging and felling crews are fully insured and that we carry out certified hazard risk assessments. If you need documents, please ask the team on 0848 331 373." },
+
+    { keys: ['where', 'located', 'location', 'area', 'areas', 'cover', 'travel', 'address', 'service area', 'do you come to', 'durban', 'kzn', 'kwazulu', 'do you work in', 'near me', 'in my area'],
+      answer: "I don't have a full list of the areas we cover. Please call 0848 331 373 or use the Contact page and the team will tell you whether they can reach you." },
+
+    { keys: ['how long', 'when can', 'availability', 'available', 'schedule', 'turnaround', 'how soon'],
+      answer: "Timelines depend on the job. The team can give you a time frame after the on-site evaluation. For urgent jobs, please phone 0848 331 373." },
+
+    { keys: ['debris', 'clean up', 'cleanup', 'waste', 'rubbish', 'chip', 'chipping', 'mulch', 'leftover'],
+      answer: "Debris removal is part of our site clearing service, and our jobs run from the site quotation through to debris removal and safety sign-off. The team can confirm exactly what your quote includes." },
+
+    { keys: ['who do you work for', 'customers', 'clients', 'municipality', 'municipalities', 'estates', 'residential', 'commercial', 'homeowner', 'homeowners'],
+      answer: "We work for homeowners, estates, businesses and municipalities." },
+
+    { keys: ['permit', 'permission', 'legal', 'protected', 'council', 'municipal'],
+      answer: "Rules about permission to fell trees can differ by tree and by municipality, and I can't give legal advice. Please phone the team on 0848 331 373 to discuss your situation." },
+
+    { keys: ['register', 'sign up', 'signup', 'create an account', 'account', 'join'],
+      answer: "You don't need an account to ask for a free on-site quote. A client account lets you submit job requests with photos, track their status, review, print and accept quotes, and pay through PayFast. Use the Register link at the top of the page." },
+
+    { keys: ['log in', 'login', 'sign in', 'password', 'forgot', 'reset', 'locked out'],
+      answer: "Log in with your email and password, then enter the 6-digit code we email you. If you forgot your password, use the reset option on the login page." },
+
+    { keys: ['login code', 'verification code', 'code', 'otp', "didn't get", 'did not get', 'spam', 'expired'],
+      answer: "The code is emailed to you and lasts 5 minutes. Check your spam folder, and if it has expired, request a new one on the login page." },
+
+    { keys: ['pay', 'paying', 'payment', 'payfast', 'invoice', 'deposit', 'balance', 'eft'],
+      answer: "Clients pay through PayFast: log in, open Invoicing in the top menu and choose Manage and Make Payments. Part payments are allowed, and the smallest payment is R5.00." },
+
+    { keys: ['track', 'status', 'progress', 'my request', 'my job', 'update', 'site evaluated', 'quote sent'],
+      answer: "With a client account, your Client Portal shows the status of each request, such as Pending, Site Evaluated, Quote Sent and Quote Accepted. We don't send automatic emails about quote updates, so please check the portal." },
+
+    { keys: ['cancel', 'reschedule', 'change my booking', 'postpone'],
+      answer: "There is no self-service cancel or reschedule. Please phone 0848 331 373 to change or cancel a booking." },
+
+    { keys: ['notification', 'notified', 'sms', 'get an email', 'will i get an email'],
+      answer: "The website only emails one-time login codes. It doesn't send automatic emails or SMS about quotes or bookings, so please check your Client Portal for updates." },
+
+    { keys: ['hiring', 'vacancy', 'vacancies', 'career', 'careers', 'employment', 'work for you', 'job opening', 'internship'],
+      answer: "I don't have information about job openings. Please phone 0848 331 373 or send a message through the Contact page." },
+
+    { keys: ['complaint', 'complain', 'complaints', 'unhappy', 'bad service', 'refund', 'not happy', 'disappointed'],
+      answer: "I'm sorry to hear that. Please phone 0848 331 373 or use the Contact page so the team can look into it properly." },
+
+    { keys: ['privacy', 'popia', 'cookies', 'personal information', 'my data'],
+      answer: "Our Privacy Policy is linked in the footer of every page. Chat messages are handled by an AI service, so please don't share personal details such as ID numbers or passwords here." }
+];
+
+
+      function  SmartFAQResponse(input) {
+        var text = ( input || '').toLowerCase().replace(/[\u2018\u2019]/g, "'");
+        null, bestScore = 0;
+          OAK_FAQ.forEach (function (item) {
+        e = 0;
+    item.keys.forEach(function (k) {
+    var safe = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            if (new RegExp('(^|[^a-z])' + safe + 's?([^a-z]|$)').test(text)) score += k.length;
+        });
+        if (score > bestScore) { bestScore = score; best = item; }
+    });
+    return best ? best.answer : null;
+}
+ 
+// Shown when Gemini is unavailable AND no backup answer matches. It echoes the topic so it feels fitted to the question.
+function fallbackReply(userText) {
+    var reply = getSmartFAQResponse(userText);
+    if (reply) {
+        addOakMessage(reply, 'happy');
+        return;
+
+  }
+   var snippet = escapeHtml(userText.length > 60 ? userText.slice(0, 57) + '...' : userText);
+var text = "I don't have a specific answer about &ldquo;" + snippet + "&rdquo; right now. " +
+        "I can help with our services, how quotes work, opening hours, creating an account, signing in and paying. " +
+        "You can also call <strong>0848 331 373</strong> or " +
+        '<a href="' + CONTACT_URL + '" class="fw-bold text-success">send us a message on our Contact page</a>.';
+    if (OAK_IS_GUEST) {
+        text += ' A free account also lets you submit requests and track them online: ' +
+                '<a href="' + REGISTER_URL + '" class="fw-bold text-success">register here</a>.';
     }
+    addOakMessage(text, 'confused');
 }
 
         // Press Enter to send
@@ -1737,19 +1849,7 @@ function saveOakChat() {
             });
         })();
 
-        function getSmartFAQResponse(input) {
-            var text = input.toLowerCase();
-            if (text.includes('cost') || text.includes('rate') || text.includes('price') || text.includes('quote')) {
-                return "Our pricing depends on the size and complexity of the tree-felling job. Contact us for a free on-site quote!";
-            } else if (text.includes('hours') || text.includes('open') || text.includes('time') || text.includes('working')) {
-                return "We operate Monday to Saturday, from 7:00 AM to 5:00 PM.";
-            } else if (text.includes('contact') || text.includes('phone') || text.includes('call') || text.includes('email')) {
-                return "You can reach us directly via our Contact page or call our support line at 0848 331 373.";
-            } else if (text.includes('service') || text.includes('tree') || text.includes('felling') || text.includes('garden')) {
-                return "We specialise in professional tree-felling, stump removal, site clearance, and general garden maintenance.";
-            }
-            return null;
-        }
+       
 
         var oakMoodTimer = null;
 

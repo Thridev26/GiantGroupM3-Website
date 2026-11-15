@@ -22,7 +22,7 @@ namespace GiantGroupM3
         private const int MaxMessageLength = 300;
         private const int MaxHistoryTurns = 12;
         private const int MaxTurnLength = 600;
-        private const int GuestPerTenMinutes = 8;
+        private const int GuestPerTenMinutes = 12;
         private const int MemberPerTenMinutes = 20;
         private const int GlobalPerDay = 400;
 
@@ -120,7 +120,7 @@ namespace GiantGroupM3
                 return;
             }
 
-            if (reply.Length > 1200) reply = reply.Substring(0, 1200);
+            if (reply.Length > 2000) reply = reply.Substring(0, 2000);
             Send(context, true, reply, "happy", null);
         }
 
