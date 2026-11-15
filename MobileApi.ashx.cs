@@ -491,6 +491,9 @@ namespace GiantGroupM3
                     cmd.ExecuteNonQuery();
                 }
             }
+            // Same email as the website button: tell the client they can now request a quote (never throws).
+            if (canon == "Site Evaluated")
+                GiantGroupM3.Services.ClientNotifications.SiteEvaluated(_conn, id, ctx.Request);
             GetRequest(ctx, id);
         }
 
