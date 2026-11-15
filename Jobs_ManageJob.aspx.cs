@@ -1824,6 +1824,7 @@ namespace GiantGroupM3
                             // Save all changes together.
                             transaction.Commit();
                             transactionCommitted = true;
+                            GiantGroupM3.Services.ClientNotifications.JobScheduled(ConnectionString, createdJobId, Request);
                         }
                         catch
                         {

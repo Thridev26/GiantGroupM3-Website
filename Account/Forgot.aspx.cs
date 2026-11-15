@@ -100,7 +100,7 @@ namespace GiantGroupM3.Account
                     // Dispatch via Google Apps Script Web App (JSON is serialised, never string-built).
                     string webAppUrl = ConfigurationManager.AppSettings["EmailServiceUrl"];
                     if (string.IsNullOrEmpty(webAppUrl)) throw new InvalidOperationException("EmailServiceUrl is not configured.");
-                    string jsonData = new JavaScriptSerializer().Serialize(new { email = email, otp = otp, type = "reset" });
+                    string jsonData = new JavaScriptSerializer().Serialize(new { email = email, otp = otp, type = "reset", secret = ConfigurationManager.AppSettings["NotificationSecret"] });
 
                     ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
                     using (WebClient client = new WebClient())

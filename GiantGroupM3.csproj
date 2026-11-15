@@ -625,6 +625,7 @@
     </Compile>
     <Compile Include="Services\AIService.cs" />
     <Compile Include="Services\OakKnowledge.cs" />
+    <Compile Include="Services\ClientNotifications.cs" />
     <Compile Include="Site.Master.cs">
       <DependentUpon>Site.Master</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>

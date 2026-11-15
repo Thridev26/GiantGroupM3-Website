@@ -183,7 +183,8 @@ namespace GiantGroupM3
                     name,
                     email,
                     phone,
-                    message
+                    message,
+                    secret = ConfigurationManager.AppSettings["NotificationSecret"]
                 };
 
                 string jsonPayload = JsonConvert.SerializeObject(payload);

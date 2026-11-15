@@ -101,7 +101,7 @@ Paying:
 - To pay, open Invoicing in the top menu and choose Manage & Make Payments, which takes you to PayFast.
  
 Notifications:
-- The website only sends emails for one-time codes (login and password reset), and the contact form message. It does not send automatic emails or SMS for quotes, bookings, payments or job progress, so clients should check their Client Portal for updates.
+- The website emails clients at each step: when a request is received, when a site evaluation is scheduled and when it is complete, when a quote is ready (with a PDF copy), when a quote is updated, accepted or declined, and when a job is scheduled, starts and is complete. It also sends one-time codes for login and password reset, and contact form messages. It does not send automatic SMS messages.
  
 NOT available on the website (do not describe these as working): self-service cancelling or rescheduling; printable invoices, booking confirmations or payment receipts; automatic email or SMS notifications about quotes, bookings, invoices or jobs; reports; and any page not mentioned above.";
 

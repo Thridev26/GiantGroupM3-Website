@@ -289,7 +289,7 @@ namespace GiantGroupM3.Account
         {
             string webAppUrl = ConfigurationManager.AppSettings["EmailServiceUrl"];
             if (string.IsNullOrEmpty(webAppUrl)) throw new InvalidOperationException("EmailServiceUrl is not configured.");
-            string jsonData = new JavaScriptSerializer().Serialize(new { email = email, otp = otp, type = "login" });
+            string jsonData = new JavaScriptSerializer().Serialize(new { email = email, otp = otp, type = "login", secret = ConfigurationManager.AppSettings["NotificationSecret"] });
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             using (WebClient client = new WebClient())
             {

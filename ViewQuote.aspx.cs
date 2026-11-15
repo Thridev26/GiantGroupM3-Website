@@ -444,6 +444,7 @@ namespace GiantGroupM3
                 return;
             }
 
+            GiantGroupM3.Services.ClientNotifications.QuoteUpdatedByStaff(connString, quoteId, Request);
             ClearSelection();
             ShowMessage("Quote updated successfully!", true);
             LoadQuoteData();
@@ -536,6 +537,7 @@ namespace GiantGroupM3
                 return;
             }
 
+            GiantGroupM3.Services.ClientNotifications.QuoteResponded(connString, quoteId, Request);
             ClearSelection();
             ShowMessage(successMessage, true);
             LoadQuoteData();

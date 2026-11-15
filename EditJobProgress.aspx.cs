@@ -1094,6 +1094,7 @@ namespace GiantGroupM3
 
                             transaction.Commit();
                             committed = true;
+                            GiantGroupM3.Services.ClientNotifications.JobStatusChanged(ConnectionString, jobId, Request);
                         }
                         catch
                         {

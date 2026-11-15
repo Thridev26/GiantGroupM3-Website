@@ -373,6 +373,7 @@ namespace GiantGroupM3
                     catch (Exception) { try { tx.Rollback(); } catch (Exception) { } throw; }
                 }
             }
+                        GiantGroupM3.Services.ClientNotifications.RequestSubmitted(conn, newId, ctx.Request);
             ctx.Response.StatusCode = 201;
             Json(ctx, new JObject { { "jobRequestId", newId } });
         }
@@ -436,6 +437,7 @@ namespace GiantGroupM3
                 c.Open();
                 if (cmd.ExecuteNonQuery() != 1) throw new V2Error(409, "That request was not found or has been cancelled.");
             }
+            GiantGroupM3.Services.ClientNotifications.EvaluationScheduled(conn, id, ctx.Request);
             Json(ctx, new JObject { { "ok", true }, { "date", d.Value } });
         }
 
@@ -604,6 +606,7 @@ namespace GiantGroupM3
                     catch (Exception) { try { tx.Rollback(); } catch (Exception) { } throw; }
                 }
             }
+            GiantGroupM3.Services.ClientNotifications.QuoteReady(conn, requestId, ctx.Request, f.Services, f.Travel, f.Vat, f.Total);
             ctx.Response.StatusCode = 201;
             Json(ctx, LoadQuote(conn, quoteId));
         }
@@ -672,6 +675,7 @@ namespace GiantGroupM3
                     catch (Exception) { try { tx.Rollback(); } catch (Exception) { } throw; }
                 }
             }
+            GiantGroupM3.Services.ClientNotifications.QuoteUpdatedByStaff(conn, id, ctx.Request);
             Json(ctx, LoadQuote(conn, id));
         }
 
