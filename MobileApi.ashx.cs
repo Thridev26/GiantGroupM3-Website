@@ -364,7 +364,7 @@ namespace GiantGroupM3
             {
                 wc.Encoding = Encoding.UTF8;
                 wc.Headers[HttpRequestHeader.ContentType] = "application/json";
-                wc.UploadString(url, "POST", JsonConvert.SerializeObject(new { email = email, otp = otp, type = "login" }));
+                wc.UploadString(url, "POST", JsonConvert.SerializeObject(new { email = email, otp = otp, type = "login", secret = ConfigurationManager.AppSettings["NotificationSecret"] }));
             }
         }
 
@@ -621,6 +621,7 @@ namespace GiantGroupM3
                 c.Open();
                 if (cmd.ExecuteNonQuery() != 1) throw new ApiError(404, "Job not found or archived.");
             }
+            GiantGroupM3.Services.ClientNotifications.JobStatusChanged(_conn, id, ctx.Request);
             GetJob(ctx, id);
         }
 

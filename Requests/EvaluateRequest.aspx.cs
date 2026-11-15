@@ -324,6 +324,7 @@ namespace GiantGroupM3
                         btnSiteEvaluated.Text = "Site Evaluated ✓";
                         btnSiteEvaluated.Enabled = false;
                         ShowMessage("The request status is now Site Evaluated.");
+                        GiantGroupM3.Services.ClientNotifications.SiteEvaluated(_connString, _requestId, Request);
                     }
                     else
                     {

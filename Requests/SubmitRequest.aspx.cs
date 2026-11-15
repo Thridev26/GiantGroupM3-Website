@@ -192,6 +192,7 @@ namespace GiantGroupM3.Requests
                             }
 
                             transaction.Commit();
+                            GiantGroupM3.Services.ClientNotifications.RequestSubmitted(ConnectionString, newRequestId, Request);
                         }
                         catch
                         {

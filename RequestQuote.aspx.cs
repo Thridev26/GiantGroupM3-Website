@@ -589,6 +589,10 @@ END
                     ShowMessage("A quote for this job request already exists. A new quote cannot be created.", "alert alert-warning rounded-3 mb-4", true);
                     return;
                 }
+
+                // Quote is saved and committed: email the client the breakdown (never throws).
+                GiantGroupM3.Services.ClientNotifications.QuoteReady(connString, jobRequestId, Request,
+                    figures.Services, figures.Travel, figures.Vat, figures.Total);
             }
             catch (Exception ex)
             {
