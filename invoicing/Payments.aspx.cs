@@ -44,26 +44,82 @@ namespace GiantGroupM3.Invoicing
             }
         }
 
+        // Staff who can see the Invoicing menu (every level except 1, 4 and 5) get a read-only
+        // overview of all clients' payments. Making a payment stays a client-only action.
+        private bool IsStaffViewer
+        {
+            get
+            {
+                if (!Request.IsAuthenticated || ClientId > 0)
+                    return false;
+
+                if (string.Equals(
+                    Convert.ToString(Session["UserRole"]),
+                    "Client",
+                    StringComparison.OrdinalIgnoreCase))
+                    return false;
+
+                int level;
+
+                return int.TryParse(
+                    Convert.ToString(Session["UserLevel"], CultureInfo.InvariantCulture),
+                    out level) &&
+                    level >= 2 && level != 4 && level != 5;
+            }
+        }
+
+        protected string PageHeading
+        {
+            get { return IsStaffViewer ? "Client Payments" : "My Payments"; }
+        }
+
+        protected string PageIntro
+        {
+            get
+            {
+                return IsStaffViewer
+                    ? "Read-only overview of every client's job invoices, recorded payments and outstanding balances."
+                    : "View your job invoices, recorded payments, and remaining balances. " +
+                      "You can pay the full outstanding amount or make a partial payment.";
+            }
+        }
+
+        protected bool ShowPayNote
+        {
+            get { return !IsStaffViewer; }
+        }
+
         protected void Page_Load(object sender, EventArgs e)
         {
             Response.Cache.SetCacheability(HttpCacheability.NoCache);
             Response.Cache.SetNoStore();
 
-            // Only a signed-in client with a server-side ClientID may view this page.
-            if (!Request.IsAuthenticated ||
-                ClientId <= 0 ||
-                !string.Equals(
+            // A signed-in client with a server-side ClientID, or an authorised staff member
+            // (read-only), may view this page.
+            bool isClient =
+                Request.IsAuthenticated &&
+                ClientId > 0 &&
+                string.Equals(
                     Convert.ToString(Session["UserRole"]),
                     "Client",
-                    StringComparison.OrdinalIgnoreCase))
+                    StringComparison.OrdinalIgnoreCase);
+
+            if (!isClient && !IsStaffViewer)
             {
+                // Visitors who are not signed in go to the login page. A signed-in user who is
+                // not allowed here is sent back to their own portal instead of the login page.
                 Response.Redirect(
-                    ResolveUrl("~/Account/Login.aspx"),
+                    ResolveUrl(Request.IsAuthenticated
+                        ? "~/HomeRouter.aspx"
+                        : "~/Account/Login.aspx"),
                     false);
 
                 Context.ApplicationInstance.CompleteRequest();
                 return;
             }
+
+            if (IsStaffViewer)
+                Page.Title = "Client Payments";
 
             if (!IsPostBack)
             {
@@ -89,8 +145,101 @@ namespace GiantGroupM3.Invoicing
             }
         }
 
+        // Read-only list of every client's job invoices for authorised staff.
+        private void LoadAllClientPayments()
+        {
+            const string sql = @"
+                WITH PaymentTotals AS
+                (
+                    SELECT jobID, SUM(amountPaid) AS TotalPaid
+                    FROM dbo.Payment
+                    GROUP BY jobID
+                )
+                SELECT
+                    j.jobID,
+                    j.startDate,
+                    j.jobStatus,
+                    LTRIM(RTRIM(COALESCE(c.clientName, '') + ' ' + COALESCE(c.clientSurname, '')))
+                        AS ClientName,
+                    q.amount AS InvoiceTotal,
+                    CAST(COALESCE(pt.TotalPaid, 0) AS decimal(18, 2)) AS TotalPaid,
+                    CAST(q.amount - COALESCE(pt.TotalPaid, 0) AS decimal(18, 2))
+                        AS BalanceOutstanding
+                FROM dbo.Job AS j
+                INNER JOIN dbo.Quote AS q
+                    ON j.quoteID = q.QuoteID
+                INNER JOIN dbo.JobRequest AS jr
+                    ON q.jobRequestID = jr.jobRequestID
+                LEFT JOIN dbo.Client AS c
+                    ON jr.clientID = c.clientID
+                LEFT JOIN PaymentTotals AS pt
+                    ON j.jobID = pt.jobID
+                ORDER BY j.jobID DESC;";
+
+            try
+            {
+                var table = new DataTable();
+
+                using (var conn = new SqlConnection(ConnectionString))
+                using (var cmd = new SqlCommand(sql, conn))
+                using (var adapter = new SqlDataAdapter(cmd))
+                {
+                    adapter.Fill(table);
+                }
+
+                bool hasReview = false;
+
+                foreach (DataRow row in table.Rows)
+                {
+                    if (row["BalanceOutstanding"] != DBNull.Value &&
+                        Convert.ToDecimal(
+                            row["BalanceOutstanding"],
+                            CultureInfo.InvariantCulture) < -0.01m)
+                    {
+                        hasReview = true;
+                        break;
+                    }
+                }
+
+                pnlReviewNote.Visible = hasReview;
+
+                // Staff see who each invoice belongs to, and no payment controls.
+                gvPayments.Columns.Insert(0, new BoundField
+                {
+                    DataField = "ClientName",
+                    HeaderText = "Client"
+                });
+
+                foreach (DataControlField column in gvPayments.Columns)
+                {
+                    if (column.HeaderText == "Amount to Pay (R)" ||
+                        column.HeaderText == "Action")
+                    {
+                        column.Visible = false;
+                    }
+                }
+
+                gvPayments.EmptyDataText = "No job invoices were found.";
+                gvPayments.DataSource = table;
+                gvPayments.DataBind();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError(
+                    "Staff payments overview failed: {0}", ex);
+
+                pnlError.Visible = true;
+            }
+        }
+
         private void LoadPayments()
         {
+            if (IsStaffViewer)
+            {
+                LoadAllClientPayments();
+                return;
+            }
+
             const string sql = @"
                 WITH PaymentTotals AS
                 (
@@ -246,7 +395,7 @@ namespace GiantGroupM3.Invoicing
         protected void gvPayments_RowCommand(
             object sender, GridViewCommandEventArgs e)
         {
-            if (e.CommandName != "PayNow")
+            if (e.CommandName != "PayNow" || IsStaffViewer)
                 return;
 
             pnlError.Visible = false;

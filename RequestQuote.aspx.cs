@@ -22,6 +22,10 @@ namespace GiantGroupM3
         private const decimal FlatTravelFee = 850.00m;   // used when the job has no coordinates
         private const decimal VatRate = 0.15m;
 
+        // A quote can only be requested once the operations team has marked the request as evaluated.
+        // A site evaluation date being set is not enough on its own.
+        private const string QuoteReadyStatus = "Site Evaluated";
+
         private enum AccessRole { None, Management, Client }
         private AccessRole _role = AccessRole.None;
         private int _clientId;
@@ -76,7 +80,7 @@ namespace GiantGroupM3
             string query = @"SELECT jr.jobRequestID, jr.siteAddress, jr.urgencyLevel, jr.dateRecieved, jr.status, c.clientName
                              FROM JobRequest jr
                              LEFT JOIN Client c ON c.clientID = jr.clientID
-                             WHERE COALESCE(jr.status, 'Pending') NOT IN ('Cancelled', 'Quote Sent', 'Quote Accepted') ";
+                             WHERE jr.status = @EligibleStatus ";
 
             if (!IsManagementView)
                 query += "AND jr.clientID = @ClientID ";
@@ -89,6 +93,8 @@ namespace GiantGroupM3
             using (SqlConnection conn = new SqlConnection(connString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
             {
+                cmd.Parameters.Add("@EligibleStatus", SqlDbType.VarChar, 50).Value = QuoteReadyStatus;
+
                 if (!IsManagementView)
                     cmd.Parameters.Add("@ClientID", SqlDbType.Int).Value = _clientId;
 
@@ -240,6 +246,13 @@ namespace GiantGroupM3
             {
                 ResetForm();
                 ShowMessage("That job request could not be found.", "alert alert-warning rounded-3 mb-4", false);
+                return;
+            }
+
+            if (!string.Equals(job.Status, QuoteReadyStatus, StringComparison.OrdinalIgnoreCase))
+            {
+                ResetForm();
+                ShowMessage("A quote can only be requested once the request status is Site Evaluated.", "alert alert-warning rounded-3 mb-4", false);
                 return;
             }
 
@@ -461,6 +474,13 @@ END
                     ? "A quote for this job request already exists. A new quote cannot be created."
                     : "This job request has been cancelled, so a quote cannot be created.",
                     "alert alert-warning rounded-3 mb-4", alreadyQuoted);
+                return;
+            }
+
+            if (!status.Equals(QuoteReadyStatus, StringComparison.OrdinalIgnoreCase))
+            {
+                ShowMessage("A quote can only be requested once the request status is Site Evaluated.",
+                    "alert alert-warning rounded-3 mb-4", false);
                 return;
             }
 

@@ -28,13 +28,25 @@ namespace GiantGroupM3.Requests
                    (date == null || date == DBNull.Value || Convert.ToDateTime(date).Date > SouthAfricaToday());
         }
       
+        // Where a signed-in user who is not a client should go: Operations Managers and above
+        // use the staff Manage Requests page, anyone else goes back to their own portal.
+        private string SignedInRedirectTarget()
+        {
+            int level;
+            if (ClientId <= 0 && int.TryParse(Convert.ToString(Session["UserLevel"] ?? Session["AccessLevel"]), out level) && level >= 4)
+                return "~/Requests/ManageRequests.aspx";
+            return "~/HomeRouter.aspx";
+        }
+
         protected void Page_Load(object sender, EventArgs e)
         {
             Response.Cache.SetCacheability(HttpCacheability.NoCache);
             Response.Cache.SetNoStore();
             if (!Authorized)
             {
-                Response.Redirect(ResolveUrl("~/Account/Login.aspx"), false);
+                // Only visitors who are not signed in belong on the login page. A signed-in staff
+                // member (e.g. the Owner or Operations Manager) is sent to the staff page instead.
+                Response.Redirect(ResolveUrl(Request.IsAuthenticated ? SignedInRedirectTarget() : "~/Account/Login.aspx"), false);
                 Context.ApplicationInstance.CompleteRequest();
                 return;
             }

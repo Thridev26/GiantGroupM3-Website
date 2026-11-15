@@ -70,6 +70,5 @@
         </div>
 
         <p class="progress-note mt-3">Statuses shown here reflect the latest information saved by Giant Group. If you have questions about a status, please contact support.</p>
-        <a runat="server" href="~/ClientPortal.aspx" class="gg-btn gg-btn-outline mt-2">Back to client portal</a>
     </div>
 </asp:Content>

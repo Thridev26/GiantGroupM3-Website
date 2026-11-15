@@ -8,7 +8,9 @@
         .profile-field label { display:block; margin-bottom:.4rem; font-weight:600; color:var(--gg-text); }
         .profile-field .form-control, .profile-field .form-select { width:100%; }
         .profile-help { color:var(--gg-muted); font-size:.88rem; }
-        @media(max-width:600px) { .profile-grid { grid-template-columns:1fr; } }
+        .profile-field-wide { grid-column: 1 / -1; }
+        .profile-field-wide .form-control { max-width: calc(50% - .5rem); }
+        @media(max-width:600px) { .profile-grid { grid-template-columns:1fr; } .profile-field-wide .form-control { max-width: 100%; } }
     </style>
 
     <div class="profile-wrap my-4 px-lg-2">
@@ -60,7 +62,44 @@
             <div class="d-flex flex-wrap gap-2">
                 <asp:Button ID="btnSave" runat="server" Text="Save changes" CssClass="gg-btn gg-btn-primary"
                     ValidationGroup="Profile" OnClick="btnSave_Click" />
-                <a runat="server" href="~/ClientPortal.aspx" class="gg-btn gg-btn-outline">Back to portal</a>
+            </div>
+        </div>
+
+        <asp:Panel ID="pnlPasswordMessage" runat="server" Visible="false" CssClass="gg-msg mt-4 mb-3" role="status">
+            <asp:Literal ID="litPasswordMessage" runat="server" />
+        </asp:Panel>
+
+        <asp:ValidationSummary ID="vsPassword" runat="server" ValidationGroup="Password"
+            CssClass="gg-alert mt-4 mb-3" HeaderText="Please correct the following:" />
+
+        <div class="gg-surface profile-card mt-4">
+            <h2 class="h5 mb-1">Change your password</h2>
+            <p class="profile-help mb-3">For your security, enter your current password first. Your new password must be 8 to 72 characters long and include an uppercase letter, a lowercase letter and a number.</p>
+            <div class="profile-grid">
+                <div class="profile-field profile-field-wide">
+                    <label for="<%= txtCurrentPassword.ClientID %>">Current password</label>
+                    <asp:TextBox ID="txtCurrentPassword" runat="server" CssClass="form-control" TextMode="Password" MaxLength="72" autocomplete="current-password" />
+                    <asp:RequiredFieldValidator ID="rfvCurrentPassword" runat="server" ControlToValidate="txtCurrentPassword"
+                        ValidationGroup="Password" ErrorMessage="Enter your current password." Display="Dynamic" CssClass="text-danger" />
+                </div>
+                <div class="profile-field">
+                    <label for="<%= txtNewPassword.ClientID %>">New password</label>
+                    <asp:TextBox ID="txtNewPassword" runat="server" CssClass="form-control" TextMode="Password" MaxLength="72" autocomplete="new-password" />
+                    <asp:RequiredFieldValidator ID="rfvNewPassword" runat="server" ControlToValidate="txtNewPassword"
+                        ValidationGroup="Password" ErrorMessage="Enter a new password." Display="Dynamic" CssClass="text-danger" />
+                </div>
+                <div class="profile-field">
+                    <label for="<%= txtConfirmPassword.ClientID %>">Confirm new password</label>
+                    <asp:TextBox ID="txtConfirmPassword" runat="server" CssClass="form-control" TextMode="Password" MaxLength="72" autocomplete="new-password" />
+                    <asp:RequiredFieldValidator ID="rfvConfirmPassword" runat="server" ControlToValidate="txtConfirmPassword"
+                        ValidationGroup="Password" ErrorMessage="Confirm your new password." Display="Dynamic" CssClass="text-danger" />
+                    <asp:CompareValidator ID="cvConfirmPassword" runat="server" ControlToValidate="txtConfirmPassword" ControlToCompare="txtNewPassword"
+                        ValidationGroup="Password" ErrorMessage="The new passwords do not match." Display="Dynamic" CssClass="text-danger" />
+                </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-4">
+                <asp:Button ID="btnChangePassword" runat="server" Text="Update password" CssClass="gg-btn gg-btn-primary"
+                    ValidationGroup="Password" OnClick="btnChangePassword_Click" />
             </div>
         </div>
     </div>

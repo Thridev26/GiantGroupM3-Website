@@ -130,5 +130,60 @@ namespace GiantGroupM3
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Button btnSave;
+
+        /// <summary>
+        /// pnlPasswordMessage control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Panel pnlPasswordMessage;
+
+        /// <summary>
+        /// litPasswordMessage control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Literal litPasswordMessage;
+
+        /// <summary>
+        /// vsPassword control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.ValidationSummary vsPassword;
+
+        /// <summary>
+        /// txtCurrentPassword control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.TextBox txtCurrentPassword;
+
+        /// <summary>
+        /// rfvCurrentPassword control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvCurrentPassword;
+
+        /// <summary>
+        /// txtNewPassword control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.TextBox txtNewPassword;
+
+        /// <summary>
+        /// rfvNewPassword control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvNewPassword;
+
+        /// <summary>
+        /// txtConfirmPassword control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.TextBox txtConfirmPassword;
+
+        /// <summary>
+        /// rfvConfirmPassword control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvConfirmPassword;
+
+        /// <summary>
+        /// cvConfirmPassword control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.CompareValidator cvConfirmPassword;
+
+        /// <summary>
+        /// btnChangePassword control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Button btnChangePassword;
     }
 }

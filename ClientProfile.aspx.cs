@@ -2,7 +2,9 @@ using System;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.Text.RegularExpressions;
 using System.Web;
+using System.Web.Caching;
 using System.Web.UI;
 
 namespace GiantGroupM3
@@ -129,6 +131,160 @@ namespace GiantGroupM3
                     ShowMessage("We couldn't save your changes right now. Please try again later.", true);
                 }
             }
+        }
+
+        // ------------------------------------------------------------------
+        //  Change password
+        // ------------------------------------------------------------------
+        private const int MaxPasswordFailures = 5;   // wrong current password, per client, per 15 minutes
+
+        protected void btnChangePassword_Click(object sender, EventArgs e)
+        {
+            Page.Validate("Password");
+            if (!Page.IsValid)
+                return;
+
+            // Same trimming as the login and registration pages, so the saved password can always be typed back in.
+            string current = txtCurrentPassword.Text.Trim();
+            string newPassword = txtNewPassword.Text.Trim();
+            string confirm = txtConfirmPassword.Text.Trim();
+
+            // Brute-force protection: someone on an unattended signed-in session must not be able to guess the current password.
+            string throttleKey = "pwchange:" + CurrentClientID;
+            if (IsLockedOut(throttleKey))
+            {
+                ShowPasswordMessage("Too many unsuccessful attempts. Please wait 15 minutes and try again.", true);
+                return;
+            }
+
+            string problem = ValidateNewPassword(newPassword, confirm);
+            if (problem != null)
+            {
+                ShowPasswordMessage(problem, true);
+                return;
+            }
+
+            try
+            {
+                string storedHash;
+                string email;
+
+                const string selectSql = @"
+                    SELECT passwordHash, emailAddress
+                    FROM dbo.Client
+                    WHERE clientID = @clientID AND status = 'Active';";
+
+                using (var conn = new SqlConnection(_connString))
+                using (var cmd = new SqlCommand(selectSql, conn))
+                {
+                    cmd.Parameters.Add("@clientID", SqlDbType.Int).Value = CurrentClientID;
+                    conn.Open();
+                    using (var reader = cmd.ExecuteReader(CommandBehavior.SingleRow))
+                    {
+                        if (!reader.Read())
+                        {
+                            ShowPasswordMessage("We couldn't find an active client profile for this account. Please contact support.", true);
+                            return;
+                        }
+
+                        storedHash = reader["passwordHash"] == DBNull.Value ? null : Convert.ToString(reader["passwordHash"]);
+                        email = Convert.ToString(reader["emailAddress"]);
+                    }
+                }
+
+                // Accounts created through Google sign-in have no password to change.
+                if (string.IsNullOrEmpty(storedHash))
+                {
+                    ShowPasswordMessage("This account does not have a password yet. Use \"Forgot password\" on the sign-in page to set one.", true);
+                    return;
+                }
+
+                if (!SafeVerify(current, storedHash))
+                {
+                    RegisterFailure(throttleKey);
+                    ShowPasswordMessage("Your current password is incorrect.", true);
+                    return;
+                }
+
+                // The current password is right, so the attempt counter starts again.
+                HttpRuntime.Cache.Remove(throttleKey);
+
+                if (SafeVerify(newPassword, storedHash))
+                {
+                    ShowPasswordMessage("Your new password must be different from your current password.", true);
+                    return;
+                }
+
+                if (!string.IsNullOrEmpty(email) && string.Equals(newPassword, email, StringComparison.OrdinalIgnoreCase))
+                {
+                    ShowPasswordMessage("Your password cannot be the same as your email address.", true);
+                    return;
+                }
+
+                string newHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+
+                // Only update if the password is still the one we just verified (guards against a change made at the same moment elsewhere).
+                const string updateSql = @"
+                    UPDATE dbo.Client
+                    SET passwordHash = @newHash
+                    WHERE clientID = @clientID AND status = 'Active' AND passwordHash = @oldHash;";
+
+                using (var conn = new SqlConnection(_connString))
+                using (var cmd = new SqlCommand(updateSql, conn))
+                {
+                    cmd.Parameters.Add("@newHash", SqlDbType.VarChar, 255).Value = newHash;
+                    cmd.Parameters.Add("@oldHash", SqlDbType.VarChar, 255).Value = storedHash;
+                    cmd.Parameters.Add("@clientID", SqlDbType.Int).Value = CurrentClientID;
+
+                    conn.Open();
+                    if (cmd.ExecuteNonQuery() == 1)
+                        ShowPasswordMessage("Your password has been updated. Use your new password the next time you sign in.", false);
+                    else
+                        ShowPasswordMessage("Your password could not be updated because it was changed elsewhere. Please try again.", true);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Never log the passwords themselves.
+                System.Diagnostics.Trace.TraceError("ClientProfile password change failed: " + ex);
+                ShowPasswordMessage("We couldn't update your password right now. Please try again later.", true);
+            }
+        }
+
+        // Same rules as the registration page.
+        private static string ValidateNewPassword(string password, string confirm)
+        {
+            if (password.Length < 8) return "Your password must be at least 8 characters long.";
+            if (password.Length > 72) return "Your password can be at most 72 characters long.";
+            if (!Regex.IsMatch(password, "[A-Z]") || !Regex.IsMatch(password, "[a-z]") || !Regex.IsMatch(password, "[0-9]"))
+                return "Your password needs an uppercase letter, a lowercase letter and a number.";
+            if (!string.Equals(password, confirm, StringComparison.Ordinal)) return "The new passwords do not match.";
+            return null;
+        }
+
+        private static bool SafeVerify(string password, string hash)
+        {
+            try { return !string.IsNullOrEmpty(hash) && BCrypt.Net.BCrypt.Verify(password, hash); }
+            catch (Exception) { return false; }   // malformed hash in the database = no match
+        }
+
+        private static bool IsLockedOut(string key)
+        {
+            int? count = HttpRuntime.Cache[key] as int?;
+            return count.HasValue && count.Value >= MaxPasswordFailures;
+        }
+
+        private static void RegisterFailure(string key)
+        {
+            int count = (HttpRuntime.Cache[key] as int?) ?? 0;
+            HttpRuntime.Cache.Insert(key, count + 1, null, DateTime.UtcNow.AddMinutes(15), Cache.NoSlidingExpiration);
+        }
+
+        private void ShowPasswordMessage(string message, bool isError)
+        {
+            litPasswordMessage.Text = HttpUtility.HtmlEncode(message);
+            pnlPasswordMessage.Visible = true;
+            pnlPasswordMessage.CssClass = isError ? "gg-msg is-error mt-4 mb-3" : "gg-msg is-success mt-4 mb-3";
         }
 
         private void ShowMessage(string message, bool isError)
