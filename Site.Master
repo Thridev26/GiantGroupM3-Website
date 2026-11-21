@@ -1193,7 +1193,7 @@ body.dark-mode .gg-msg.is-error { background: #3a1f1c; color: #f1948a; }
                                     </span>
                                 </li>
                                 <li class="nav-item ms-lg-1">
-                                    <asp:LinkButton runat="server" ID="BtnLogout" OnClick="BtnLogout_Click" CssClass="btn btn-sm btn-outline-light rounded-pill px-3 py-2 small fw-semibold text-white text-nowrap" CausesValidation="false">
+                                    <asp:LinkButton runat="server" ID="BtnLogout" OnClick="BtnLogout_Click" OnClientClick="try { sessionStorage.removeItem('oakChat'); } catch (e) { }" CssClass="btn btn-sm btn-outline-light rounded-pill px-3 py-2 small fw-semibold text-white text-nowrap" CausesValidation="false">
                                         Log Out
                                     </asp:LinkButton>
                                 </li>
@@ -1582,22 +1582,30 @@ var OAK_IS_GUEST = ('<%= IsLoggedIn() ? "false" : "true" %>' === 'true');
 var CHAT_URL = '<%= ResolveUrl("~/ChatHandler.ashx") %>';
 var OAK_STORE = 'oakChat';
 var oakHistory = [];      // sent to Gemini
-var oakTranscript = [];   // what is shown in the window: { who: 'user' | 'oak', text: '...' }
+var oakTranscript = [];   // what is shown in the window
 
 try {
     var savedChat = JSON.parse(sessionStorage.getItem(OAK_STORE) || 'null');
-    if (savedChat) {
+
+    if (savedChat && savedChat.guest === OAK_IS_GUEST) {
         oakHistory = savedChat.history || [];
         oakTranscript = savedChat.transcript || [];
+    } else {
+        sessionStorage.removeItem(OAK_STORE);
     }
 } catch (e) { }
 
 function saveOakChat() {
     try {
-        sessionStorage.setItem(OAK_STORE, JSON.stringify({ history: oakHistory, transcript: oakTranscript.slice(-24) }));
-              } catch (e) { }
-          }
-        var oakBusy = false;
+        sessionStorage.setItem(OAK_STORE, JSON.stringify({
+            guest: OAK_IS_GUEST,
+            history: oakHistory,
+            transcript: oakTranscript.slice(-24)
+        }));
+    } catch (e) { }
+}
+
+          var oakBusy = false;
 
 
         function toggleChatbot() {
@@ -1784,17 +1792,24 @@ var OAK_FAQ = [
     { keys: ['login code', 'verification code', 'code', 'otp', "didn't get", 'did not get', 'spam', 'expired'],
       answer: "The code is emailed to you and lasts 5 minutes. Check your spam folder, and if it has expired, request a new one on the login page." },
 
-    { keys: ['pay', 'paying', 'payment', 'payfast', 'invoice', 'deposit', 'balance', 'eft'],
-      answer: "Clients pay through PayFast: log in, open Invoicing in the top menu and choose Manage and Make Payments. Part payments are allowed, and the smallest payment is R5.00." },
+    {
+        keys: ['pay', 'paying', 'payment', 'payfast', 'invoice', 'deposit', 'balance', 'eft'],
+        answer: "Clients pay through PayFast: log in, open Invoicing in the top menu and choose Manage and Make Payments. Part payments are allowed, and the smallest payment is R5.00."
+    },
 
-    { keys: ['track', 'status', 'progress', 'my request', 'my job', 'update', 'site evaluated', 'quote sent'],
-      answer: "With a client account, your Client Portal shows the status of each request, such as Pending, Site Evaluated, Quote Sent and Quote Accepted. We don't send automatic emails about quote updates, so please check the portal." },
+    {
+        keys: ['track', 'status', 'progress', 'my request', 'my job', 'update', 'site evaluated', 'quote sent', 'email update', 'quote update'],
+        answer: "With a client account, your Client Portal shows the status of each request, such as Pending, Site Evaluated, Quote Sent and Quote Accepted. You will also receive automatic email notifications at important stages, including when your request is received, an evaluation is scheduled, your quote is ready or updated, your quote is accepted or declined, your job is scheduled, work starts and your job is completed. A PDF copy of your quote is attached when it is ready."
+    },
 
     { keys: ['cancel', 'reschedule', 'change my booking', 'postpone'],
       answer: "There is no self-service cancel or reschedule. Please phone 0848 331 373 to change or cancel a booking." },
 
-    { keys: ['notification', 'notified', 'sms', 'get an email', 'will i get an email'],
-      answer: "The website only emails one-time login codes. It doesn't send automatic emails or SMS about quotes or bookings, so please check your Client Portal for updates." },
+
+    {
+        keys: ['notification', 'notified', 'sms', 'get an email', 'will i get an email', 'email notification', 'confirmation email'],
+        answer: "Yes. The website sends automatic email notifications when your request is received, an evaluation is scheduled, the site has been evaluated, your quote is ready or updated, your quote is accepted or declined, your job is scheduled, work starts and your job is completed. When your quote is ready, a PDF copy is also attached to the email. You can also check the progress of your request through your Client Portal."
+    },
 
     { keys: ['hiring', 'vacancy', 'vacancies', 'career', 'careers', 'employment', 'work for you', 'job opening', 'internship'],
       answer: "I don't have information about job openings. Please phone 0848 331 373 or send a message through the Contact page." },
