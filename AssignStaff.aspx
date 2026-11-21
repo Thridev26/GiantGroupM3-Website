@@ -106,6 +106,25 @@
                 </div>
 
                 <!-- STEP 2: Date & time slots -->
+                <asp:Panel ID="pnlCurrentStaff" runat="server" Visible="false" CssClass="gg-panel mb-4">
+                <h2 class="gg-step-title">Currently assigned to this job</h2>
+                <asp:Label ID="lblCurrentStaffNote" runat="server" CssClass="d-block mb-2 text-muted" />
+                <asp:GridView ID="gvCurrentStaff" runat="server" AutoGenerateColumns="False" CssClass="table table-sm mb-0"
+                    DataKeyNames="staffID" OnRowCommand="gvCurrentStaff_RowCommand" EmptyDataText="Nobody is assigned to this job yet.">
+                    <Columns>
+                        <asp:BoundField DataField="staffName" HeaderText="Staff member" />
+                        <asp:BoundField DataField="assignmentDate" HeaderText="Date" DataFormatString="{0:yyyy-MM-dd}" />
+                        <asp:BoundField DataField="slots" HeaderText="Time slots" />
+                        <asp:TemplateField>
+                            <ItemTemplate>
+                                <asp:Button ID="btnUnassignStaff" runat="server" Text="Unassign" CommandName="UnassignStaff"
+                                    CommandArgument='<%# Eval("staffID") %>' CssClass="btn btn-outline-danger btn-sm"
+                                    CausesValidation="false" OnClientClick="return confirm('Remove this person from the job?');" />
+                            </ItemTemplate>
+                        </asp:TemplateField>
+                    </Columns>
+                </asp:GridView>
+            </asp:Panel>
                 <asp:Panel ID="pnlSchedule" runat="server" Visible="false" CssClass="gg-panel mb-4">
                     <div class="gg-panel-body">
                         <div class="gg-panel-head">

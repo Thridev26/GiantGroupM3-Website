@@ -276,6 +276,44 @@ namespace GiantGroupM3.Services
         //  Quote helpers
         // ==================================================================
 
+        /// <summary>
+        /// A Systems Manager or Owner approved a quote that was waiting for review (status Not sent, now Sent).
+        /// This is the first time the client hears about the quote, so they get the full "quote ready" email with the PDF.
+        /// Call after the change is committed.
+        /// </summary>
+        public static void QuoteApproved(string connString, int quoteId, HttpRequest request)
+        {
+            Run("QuoteApproved", quoteId, () =>
+            {
+                QuoteInfo q = LoadQuote(connString, quoteId);
+                Recipient r = LoadByQuote(connString, quoteId);
+                if (q == null || r == null) return;
+
+                Mail m = new Mail
+                {
+                    Subject = "Your quote is ready - Request " + r.RequestId,
+                    HeaderTitle = "Your Quote Is Ready",
+                    Subtitle = "The Giant Group Quotations",
+                    ButtonText = "View My Quote",
+                    ButtonPath = "/ViewQuote.aspx",
+                    Footnote = "A PDF copy is attached. Quotes are valid until the date shown. If you have any questions, please contact us.",
+                    AttachPdf = true,
+                    PdfTitle = "Quotation",
+                    PdfReference = "Quote " + q.Id,
+                    PdfFileName = "Quote-" + q.Id + ".pdf"
+                };
+                m.Paragraphs.Add("Thank you for your patience. Your quote for the work you requested has been reviewed and is now ready.");
+                m.Paragraphs.Add("You can view the quote in your account and accept it there.");
+                m.Details.Add(Row("Quote number", q.Id));
+                m.Details.Add(Row("Request number", r.RequestId));
+                m.Details.Add(Row("Site address", r.Address));
+                m.Details.Add(Row("Total (incl. VAT)", Money(q.Amount)));
+                m.Details.Add(Row("Valid until", ShortDate(q.Expiry)));
+
+                Dispatch(connString, r, "QuoteApproved", "quoteapproved:" + q.Id, m, request);
+            });
+        }
+
         private static void SendQuoteAccepted(string connString, Recipient r, QuoteInfo q, HttpRequest request, bool byClient)
         {
             Mail m = new Mail

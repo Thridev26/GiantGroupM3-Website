@@ -45,6 +45,218 @@ namespace GiantGroupM3
             return ((TimeSpan)start).ToString(@"hh\:mm") + "–" + ((TimeSpan)end).ToString(@"hh\:mm");
         }
 
+        /// <summary>The time slots set on the job (JobTimeSlot). Only these can be booked for its staff and assets.</summary>
+        public static List<int> GetJobSlotIds(int jobId)
+        {
+            var ids = new List<int>();
+            using (var conn = new SqlConnection(ConnStr))
+            using (var cmd = new SqlCommand("SELECT timeSlotID FROM dbo.JobTimeSlot WHERE jobID = @j ORDER BY timeSlotID;", conn))
+            {
+                cmd.Parameters.Add("@j", SqlDbType.Int).Value = jobId;
+                conn.Open();
+                using (SqlDataReader r = cmd.ExecuteReader())
+                {
+                    while (r.Read()) ids.Add(Convert.ToInt32(r[0]));
+                }
+            }
+            return ids;
+        }
+
+        // ---------------------------------------------------------------- un-assign
+
+        /// <summary>True when the job is finished. Its staff and assets can no longer be changed.</summary>
+        public static bool IsJobClosed(int jobId)
+        {
+            using (var conn = new SqlConnection(ConnStr))
+            using (var cmd = new SqlCommand("SELECT jobStatus FROM dbo.Job WHERE jobID = @J;", conn))
+            {
+                cmd.Parameters.Add("@J", SqlDbType.Int).Value = jobId;
+                conn.Open();
+                string status = Convert.ToString(cmd.ExecuteScalar());
+                return status == "Completed" || status == "Archived";
+            }
+        }
+
+        /// <summary>Staff booked on a job, with their date and time slots.</summary>
+        public static DataTable GetJobStaffAssignments(int jobId)
+        {
+            const string sql = @"
+                SELECT jsa.staffID,
+                       s.firstName + ' ' + s.lastName AS staffName,
+                       jsa.assignmentDate,
+                       ISNULL(STUFF((
+                           SELECT ', ' + CONVERT(varchar(5), ts.startTime, 108) + '-' + CONVERT(varchar(5), ts.endTime, 108)
+                           FROM dbo.JobStaffAssignmentSlot sl
+                           INNER JOIN dbo.TimeSlot ts ON ts.timeSlotID = sl.timeSlotID
+                           WHERE sl.staffID = jsa.staffID AND sl.jobID = jsa.jobID
+                           ORDER BY ts.startTime
+                           FOR XML PATH(''), TYPE).value('.', 'nvarchar(max)'), 1, 2, ''), '') AS slots
+                FROM dbo.JobStaffAssignment jsa
+                INNER JOIN dbo.Staff s ON s.staffID = jsa.staffID
+                WHERE jsa.jobID = @J
+                ORDER BY s.firstName, s.lastName;";
+            return LoadJobTable(sql, jobId);
+        }
+
+        /// <summary>Assets booked on a job, with their date and time slots.</summary>
+        public static DataTable GetJobAssetAssignments(int jobId)
+        {
+            const string sql = @"
+                SELECT a.AssignmentID,
+                       CASE WHEN a.ownedAssetID IS NOT NULL
+                            THEN 'Owned asset #' + CAST(a.ownedAssetID AS varchar(20))
+                            ELSE 'Hired asset #' + CAST(a.hiredAssetID AS varchar(20)) END AS assetName,
+                       a.assignmentDate,
+                       ISNULL(STUFF((
+                           SELECT ', ' + CONVERT(varchar(5), ts.startTime, 108) + '-' + CONVERT(varchar(5), ts.endTime, 108)
+                           FROM dbo.JobAssetAssignmentSlot sl
+                           INNER JOIN dbo.TimeSlot ts ON ts.timeSlotID = sl.timeSlotID
+                           WHERE sl.assignmentID = a.AssignmentID
+                           ORDER BY ts.startTime
+                           FOR XML PATH(''), TYPE).value('.', 'nvarchar(max)'), 1, 2, ''), '') AS slots
+                FROM dbo.JobAssetAssignment a
+                WHERE a.jobID = @J
+                ORDER BY a.assignmentDate, a.AssignmentID;";
+            return LoadJobTable(sql, jobId);
+        }
+
+        /// <summary>
+        /// Removes a staff member from a job, together with their time slots.
+        /// Returns null on success, or the message to show. Refused once the job is Completed or Archived.
+        /// </summary>
+        public static string UnassignStaff(int staffId, int jobId)
+        {
+            using (var conn = new SqlConnection(ConnStr))
+            {
+                conn.Open();
+                using (SqlTransaction tx = conn.BeginTransaction(IsolationLevel.Serializable))
+                {
+                    try
+                    {
+                        if (JobClosedIn(conn, tx, jobId))
+                        {
+                            tx.Rollback();
+                            return "This job is completed, so its staff can't be removed.";
+                        }
+
+                        int found = TxScalarInt(conn, tx,
+                            "SELECT COUNT(*) FROM dbo.JobStaffAssignment WHERE staffID = @S AND jobID = @J;",
+                            "@S", staffId, "@J", jobId);
+                        if (found == 0)
+                        {
+                            tx.Rollback();
+                            return "That person is not assigned to this job.";
+                        }
+
+                        TxExecute(conn, tx, "DELETE FROM dbo.JobStaffAssignmentSlot WHERE staffID = @S AND jobID = @J;",
+                            "@S", staffId, "@J", jobId);
+                        TxExecute(conn, tx, "DELETE FROM dbo.JobStaffAssignment WHERE staffID = @S AND jobID = @J;",
+                            "@S", staffId, "@J", jobId);
+
+                        tx.Commit();
+                        return null;
+                    }
+                    catch
+                    {
+                        try { tx.Rollback(); } catch { }
+                        throw;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Removes an asset from a job, together with its time slots.
+        /// Returns null on success, or the message to show. Refused once the job is Completed or Archived.
+        /// </summary>
+        public static string UnassignAsset(int assignmentId, int jobId)
+        {
+            using (var conn = new SqlConnection(ConnStr))
+            {
+                conn.Open();
+                using (SqlTransaction tx = conn.BeginTransaction(IsolationLevel.Serializable))
+                {
+                    try
+                    {
+                        if (JobClosedIn(conn, tx, jobId))
+                        {
+                            tx.Rollback();
+                            return "This job is completed, so its assets can't be removed.";
+                        }
+
+                        int found = TxScalarInt(conn, tx,
+                            "SELECT COUNT(*) FROM dbo.JobAssetAssignment WHERE AssignmentID = @A AND jobID = @J;",
+                            "@A", assignmentId, "@J", jobId);
+                        if (found == 0)
+                        {
+                            tx.Rollback();
+                            return "That asset is not assigned to this job.";
+                        }
+
+                        TxExecute(conn, tx, "DELETE FROM dbo.JobAssetAssignmentSlot WHERE assignmentID = @A;",
+                            "@A", assignmentId);
+                        TxExecute(conn, tx, "DELETE FROM dbo.JobAssetAssignment WHERE AssignmentID = @A AND jobID = @J;",
+                            "@A", assignmentId, "@J", jobId);
+
+                        tx.Commit();
+                        return null;
+                    }
+                    catch
+                    {
+                        try { tx.Rollback(); } catch { }
+                        throw;
+                    }
+                }
+            }
+        }
+
+        private static DataTable LoadJobTable(string sql, int jobId)
+        {
+            var table = new DataTable();
+            using (var conn = new SqlConnection(ConnStr))
+            using (var cmd = new SqlCommand(sql, conn))
+            {
+                cmd.Parameters.Add("@J", SqlDbType.Int).Value = jobId;
+                conn.Open();
+                using (SqlDataReader rd = cmd.ExecuteReader())
+                {
+                    table.Load(rd);
+                }
+            }
+            return table;
+        }
+
+        private static bool JobClosedIn(SqlConnection conn, SqlTransaction tx, int jobId)
+        {
+            using (var cmd = new SqlCommand("SELECT jobStatus FROM dbo.Job WHERE jobID = @J;", conn, tx))
+            {
+                cmd.Parameters.Add("@J", SqlDbType.Int).Value = jobId;
+                string status = Convert.ToString(cmd.ExecuteScalar());
+                return status == "Completed" || status == "Archived";
+            }
+        }
+
+        // Name/value pairs: TxScalarInt(conn, tx, sql, "@S", staffId, "@J", jobId)
+        private static int TxScalarInt(SqlConnection conn, SqlTransaction tx, string sql, params object[] pairs)
+        {
+            using (var cmd = new SqlCommand(sql, conn, tx))
+            {
+                for (int i = 0; i < pairs.Length; i += 2)
+                    cmd.Parameters.Add(new SqlParameter((string)pairs[i], pairs[i + 1] ?? DBNull.Value));
+                return Convert.ToInt32(cmd.ExecuteScalar());
+            }
+        }
+
+        private static void TxExecute(SqlConnection conn, SqlTransaction tx, string sql, params object[] pairs)
+        {
+            using (var cmd = new SqlCommand(sql, conn, tx))
+            {
+                for (int i = 0; i < pairs.Length; i += 2)
+                    cmd.Parameters.Add(new SqlParameter((string)pairs[i], pairs[i + 1] ?? DBNull.Value));
+                cmd.ExecuteNonQuery();
+            }
+        }
+
         public static DataTable GetTimeSlots()
         {
             DataTable dt = new DataTable();

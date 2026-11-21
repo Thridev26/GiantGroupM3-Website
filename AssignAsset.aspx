@@ -106,6 +106,25 @@
                 </div>
 
                 <!-- STEP 2: Date & time slots -->
+                <asp:Panel ID="pnlCurrentAssets" runat="server" Visible="false" CssClass="gg-panel mb-4">
+                <h2 class="gg-step-title">Currently assigned to this job</h2>
+                <asp:Label ID="lblCurrentAssetsNote" runat="server" CssClass="d-block mb-2 text-muted" />
+                <asp:GridView ID="gvCurrentAssets" runat="server" AutoGenerateColumns="False" CssClass="table table-sm mb-0"
+                    DataKeyNames="AssignmentID" OnRowCommand="gvCurrentAssets_RowCommand" EmptyDataText="No assets are assigned to this job yet.">
+                    <Columns>
+                        <asp:BoundField DataField="assetName" HeaderText="Asset" />
+                        <asp:BoundField DataField="assignmentDate" HeaderText="Date" DataFormatString="{0:yyyy-MM-dd}" />
+                        <asp:BoundField DataField="slots" HeaderText="Time slots" />
+                        <asp:TemplateField>
+                            <ItemTemplate>
+                                <asp:Button ID="btnUnassignAsset" runat="server" Text="Unassign" CommandName="UnassignAsset"
+                                    CommandArgument='<%# Eval("AssignmentID") %>' CssClass="btn btn-outline-danger btn-sm"
+                                    CausesValidation="false" OnClientClick="return confirm('Remove this asset from the job?');" />
+                            </ItemTemplate>
+                        </asp:TemplateField>
+                    </Columns>
+                </asp:GridView>
+            </asp:Panel>
                 <asp:Panel ID="pnlSchedule" runat="server" Visible="false" CssClass="gg-panel mb-4">
                     <div class="gg-panel-body">
                         <div class="gg-panel-head">

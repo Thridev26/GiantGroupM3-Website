@@ -18,8 +18,8 @@ namespace GiantGroupM3
         private int _clientId;
 
         // Statuses a manager may set, and the filter options each role is offered.
-        private static readonly string[] EditableStatuses = { "Sent", "Accepted", "Rejected" };
-        private static readonly string[] ManagementFilters = { "All", "Sent", "Accepted", "Rejected" };
+        private static readonly string[] EditableStatuses = { "Not sent", "Sent", "Accepted", "Rejected" };
+        private static readonly string[] ManagementFilters = { "All", "Not sent", "Sent", "Accepted", "Rejected" };
         private static readonly string[] ClientFilters = { "All", "Sent", "Accepted", "Rejected" };
 
         /// <summary>
@@ -334,19 +334,17 @@ namespace GiantGroupM3
                         if (item != null) item.Selected = true;
                     }
 
-                    // Clients can respond/change response if the quote is Sent, Accepted, or Rejected, and not expired.
-                    bool isEligibleStatus = status.Equals("Sent", StringComparison.OrdinalIgnoreCase) ||
-                                            status.Equals("Accepted", StringComparison.OrdinalIgnoreCase) ||
-                                            status.Equals("Rejected", StringComparison.OrdinalIgnoreCase);
+                    // Clients can only answer a quote that is still 'Sent' and not past its expiry date.
+                    bool isOpen = status.Equals("Sent", StringComparison.OrdinalIgnoreCase);
                     bool expired = expiry.HasValue && expiry.Value.Date < DateTime.Today;
 
-                    pnlClientResponse.Visible = IsClientView && isEligibleStatus && !expired;
+                    pnlClientResponse.Visible = IsClientView && isOpen && !expired;
                     pnlClientReadOnly.Visible = IsClientView && !pnlClientResponse.Visible;
 
                     if (pnlClientReadOnly.Visible)
                     {
-                        lblClientReadOnly.Text = !isEligibleStatus
-                            ? Server.HtmlEncode($"This quote cannot be modified (status: {status}).")
+                        lblClientReadOnly.Text = !isOpen
+                            ? Server.HtmlEncode($"This quote has already been responded to (status: {status}).")
                             : Server.HtmlEncode("This quote has expired. Please contact us if you would still like to go ahead.");
                     }
                 }
@@ -379,6 +377,7 @@ namespace GiantGroupM3
             amount = Math.Round(amount, 2, MidpointRounding.AwayFromZero);
 
             string newStatus = ddlQuoteStatus.SelectedValue;
+            bool approving = false;
             if (Array.IndexOf(EditableStatuses, newStatus) < 0)
             {
                 ShowEditError("Choose a valid status.");
@@ -401,6 +400,14 @@ namespace GiantGroupM3
                                 object o = read.ExecuteScalar();
                                 if (o == null) { tx.Rollback(); ShowEditError("That quote no longer exists."); return; }
                                 oldStatus = Convert.ToString(o);
+                                // A quote waiting for review can only be approved (set to Sent), not accepted or rejected directly.
+                                if (oldStatus == "Not sent" && newStatus != "Not sent" && newStatus != "Sent")
+                                {
+                                    tx.Rollback();
+                                    ShowEditError("Approve the quote (set it to Sent) before accepting or rejecting it.");
+                                    return;
+                                }
+                                approving = oldStatus == "Not sent" && newStatus == "Sent";
                             }
 
                             using (SqlCommand cmd = new SqlCommand(
@@ -446,7 +453,8 @@ namespace GiantGroupM3
                 return;
             }
 
-            GiantGroupM3.Services.ClientNotifications.QuoteUpdatedByStaff(connString, quoteId, Request);
+            if (approving) GiantGroupM3.Services.ClientNotifications.QuoteApproved(connString, quoteId, Request);
+            else GiantGroupM3.Services.ClientNotifications.QuoteUpdatedByStaff(connString, quoteId, Request);
             ClearSelection();
             ShowMessage("Quote updated successfully!", true);
             LoadQuoteData();
@@ -492,7 +500,7 @@ namespace GiantGroupM3
                                 JOIN JobRequest jr ON jr.jobRequestID = q.jobRequestID
                                 WHERE q.QuoteID = @QuoteID
                                   AND jr.clientID = @ClientID
-                                  AND q.quoteStatus IN ('Sent', 'Accepted', 'Rejected')
+                                  AND q.quoteStatus = 'Sent'
                                   AND (q.expiryDate IS NULL OR q.expiryDate >= CAST(GETDATE() AS date))";
 
                             int changed;

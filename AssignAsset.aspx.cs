@@ -277,11 +277,65 @@ namespace GiantGroupM3
             set { ViewState["AppliedSlots"] = value == null ? null : value.ToArray(); }
         }
 
+        // ------------------------------------------------------------
+        //  Un-assign: see and remove the assets booked on this job
+        // ------------------------------------------------------------
+        private void BindCurrentAssets()
+        {
+            if (!SelectedJobId.HasValue)
+            {
+                pnlCurrentAssets.Visible = false;
+                return;
+            }
+
+            pnlCurrentAssets.Visible = true;
+            gvCurrentAssets.DataSource = Scheduling.GetJobAssetAssignments(SelectedJobId.Value);
+            gvCurrentAssets.DataBind();
+
+            bool closed = Scheduling.IsJobClosed(SelectedJobId.Value);
+            gvCurrentAssets.Columns[3].Visible = !closed;
+            lblCurrentAssetsNote.Text = closed
+                ? "This job is completed, so its assets can no longer be changed."
+                : "Remove an asset that is no longer needed. Its time slots become free for other bookings.";
+        }
+
+        protected void gvCurrentAssets_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            if (e.CommandName != "UnassignAsset") return;
+
+            if (!IsUserAuthorized())
+            {
+                Response.Redirect("~/Account/Login.aspx");
+                return;
+            }
+            if (!SelectedJobId.HasValue) return;
+
+            int assignmentId;
+            if (!int.TryParse(Convert.ToString(e.CommandArgument), out assignmentId)) return;
+
+            string error = Scheduling.UnassignAsset(assignmentId, SelectedJobId.Value);
+            if (error != null)
+                ShowMessage(error, "gg-msg is-warning");
+            else
+                ShowMessage("Asset removed from this job. Its time slots are now free.", "gg-msg is-success");
+
+            BindCurrentAssets();
+            BindAssetsGrid();
+        }
+
         private void InitSchedule(int jobId)
         {
+            BindCurrentAssets();
             cblSlots.DataSource = Scheduling.GetTimeSlots();
             cblSlots.DataBind();
-            foreach (ListItem li in cblSlots.Items) li.Selected = false;
+
+            // Only the slots set on this job can be booked. Remove the others, then tick the job's slots.
+            List<int> jobSlots = Scheduling.GetJobSlotIds(jobId);
+            for (int i = cblSlots.Items.Count - 1; i >= 0; i--)
+            {
+                if (!jobSlots.Contains(int.Parse(cblSlots.Items[i].Value))) cblSlots.Items.RemoveAt(i);
+            }
+            foreach (ListItem li in cblSlots.Items) li.Selected = true;
 
             DateTime date = Scheduling.GetJobStartDate(jobId) ?? DateTime.Today;
             txtWorkDate.Text = date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
@@ -290,6 +344,8 @@ namespace GiantGroupM3
             AppliedSlots = null;
             pnlSchedule.Visible = true;
             UpdateScheduleSummary();
+            if (jobSlots.Count == 0)
+                lblScheduleSummary.Text = "<strong>This job has no time slots yet.</strong> Set its time slots on Add/Edit Job, then select the job here again.";
         }
 
         private void UpdateScheduleSummary()
@@ -320,9 +376,10 @@ namespace GiantGroupM3
             }
 
             List<int> chosen = cblSlots.Items.Cast<ListItem>().Where(i => i.Selected).Select(i => int.Parse(i.Value)).ToList();
-            if (!Scheduling.AllSlotsExist(chosen))
+            List<int> allowed = Scheduling.GetJobSlotIds(SelectedJobId.Value);
+            if (!Scheduling.AllSlotsExist(chosen) || chosen.Any(s => !allowed.Contains(s)))
             {
-                ShowMessage("Tick at least one time slot.", "gg-msg is-warning");
+                ShowMessage("Tick at least one time slot. Only the time slots set on this job can be booked.", "gg-msg is-warning");
                 return;
             }
 
@@ -489,6 +546,13 @@ namespace GiantGroupM3
                         ShowMessage("Choose a date and time slots in step 2 first.", "gg-msg is-warning");
                         return;
                     }
+                    // Safety net: refuse any slot that is no longer set on this job
+                    List<int> jobSlotsNow = Scheduling.GetJobSlotIds(jobId);
+                    if (slots.Any(s => !jobSlotsNow.Contains(s)))
+                    {
+                        ShowMessage("These time slots are no longer set on this job. Apply the schedule again.", "gg-msg is-warning");
+                        return;
+                    }
                     DateTime date = AppliedDate.Value;
 
                     // Clash check + insert happen together in one serializable transaction
@@ -501,6 +565,7 @@ namespace GiantGroupM3
                     }
                 }
 
+                BindCurrentAssets();
                 ShowMessage("Asset assigned to Job #" + jobId + " on " + AppliedDate.Value.ToString("yyyy-MM-dd") + " (" + Scheduling.DescribeSlots(AppliedSlots) + ").", "gg-msg is-success");
                 BindAssetsGrid();
             }
