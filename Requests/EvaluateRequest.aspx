@@ -13,9 +13,15 @@
         .ev-item-title { font-weight: 750; color:#174d2b; font-size:1.05rem; margin-bottom:.9rem; }
         .ev-field { display:grid; grid-template-columns:minmax(150px, 1fr) minmax(200px, 2fr) minmax(160px,1.2fr); gap:.75rem; align-items:center; margin-bottom:.8rem; }
         .ev-field label { margin:0; font-weight:600; }
+        .ev-required { color:#b91c1c; font-weight:700; }
         .ev-hint { color:#637168; font-size:.82rem; font-style:italic; }
         .ev-message { display:block; padding:.75rem 1rem; margin-bottom:1rem; border-radius:8px; background:#edf7ef; color:#174d2b; }
         .ev-actions { display:flex; flex-wrap:wrap; gap:.7rem; align-items:center; }
+        .ev-error {
+    background: #f8d7da;
+    color: #b91c1c;
+    border: 1px solid #f5c2c7;
+}
         @media(max-width:760px) { .ev-meta { grid-template-columns:1fr; } .ev-field { grid-template-columns:1fr; gap:.35rem; } }
     </style>
 
@@ -43,7 +49,7 @@
 
             <div class="ev-card">
                 <h2>Requested items and measurements</h2>
-                <p class="text-muted">The fields below are loaded from the JobDetail definitions for each requested item. Leave a field blank if no value is available yet. Click Capture to save entered values; you can return and update them later.</p>
+                <p class="text-muted">The fields below are loaded from the JobDetail definitions for each requested item. Fields marked <span class="ev-required">*</span> are required for quotation pricing and must be positive numbers (use a decimal point). Other fields may be left blank. Click Capture details to save your measurements before marking the site evaluated.</p>
                 <asp:PlaceHolder ID="phDetails" runat="server" />
                 <div class="ev-actions mt-3">
                     <asp:Button ID="btnCapture" runat="server" Text="Capture details" CssClass="btn btn-success" OnClick="btnCapture_Click" />

@@ -14,7 +14,20 @@ namespace GiantGroupM3.Requests
     {
         private string ConnectionString { get { return ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString; } }
         private int ClientId { get { int v; return int.TryParse(Convert.ToString(Session["ClientID"]), out v) ? v : 0; } }
-        private bool Authorized { get { return Request.IsAuthenticated && ClientId > 0 && string.Equals(Convert.ToString(Session["UserRole"]), "Client", StringComparison.OrdinalIgnoreCase); } }
+        private bool IsClientUser { get { return Request.IsAuthenticated && ClientId > 0 && string.Equals(Convert.ToString(Session["UserRole"]), "Client", StringComparison.OrdinalIgnoreCase); } }
+        protected bool IsStaffManager
+        {
+            get
+            {
+                int level, staffId;
+                return Request.IsAuthenticated
+                    && string.Equals(Convert.ToString(Session["UserRole"]), "Staff", StringComparison.OrdinalIgnoreCase)
+                    && int.TryParse(Convert.ToString(Session["StaffID"]), out staffId) && staffId > 0
+                    && int.TryParse(Convert.ToString(Session["UserLevel"] ?? Session["AccessLevel"]), out level)
+                    && (level == 4 || level == 6);
+            }
+        }
+        private bool Authorized { get { return IsClientUser || IsStaffManager; } }
         private static DateTime SouthAfricaToday()
         {
             try { return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("South Africa Standard Time")).Date; }
@@ -27,7 +40,7 @@ namespace GiantGroupM3.Requests
                     string.Equals(status, "Evaluation date set", StringComparison.OrdinalIgnoreCase)) &&
                    (date == null || date == DBNull.Value || Convert.ToDateTime(date).Date > SouthAfricaToday());
         }
-      
+
         // Where a signed-in user who is not a client should go: Operations Managers and above
         // use the staff Manage Requests page, anyone else goes back to their own portal.
         private string SignedInRedirectTarget()
@@ -56,17 +69,19 @@ namespace GiantGroupM3.Requests
                 ServePhoto(photoId);
                 return;
             }
+            gvRequests.Columns[1].Visible = IsStaffManager;
+            if (IsStaffManager) Title = "All Service Requests - Site Photos";
             if (!IsPostBack) BindRequests();
         }
         private void BindRequests()
         {
-            const string sql = @"SELECT jr.jobRequestID,jr.dateRecieved,jr.siteAddress,jr.urgencyLevel,
+            const string sql = @"SELECT jr.jobRequestID, c.clientName + ' ' + c.clientSurname AS ClientName,jr.dateRecieved,jr.siteAddress,jr.urgencyLevel,
                 COALESCE(jr.status,'Pending') AS RequestStatus,jr.siteEvaluationDate,
                 STUFF((SELECT ', ' + jt.jobTypeName FROM dbo.RequestItem ri
                 INNER JOIN dbo.JobType jt ON jt.jobTypeID=ri.jobTypeID
                 WHERE ri.jobRequestID=jr.jobRequestID ORDER BY jt.jobTypeName
                 FOR XML PATH(''),TYPE).value('.','nvarchar(max)'),1,2,'') AS JobTypes
-                FROM dbo.JobRequest jr WHERE jr.clientID=@ClientID
+                FROM dbo.JobRequest jr LEFT JOIN dbo.Client c ON c.clientID=jr.clientID WHERE (@IsManager=1 OR jr.clientID=@ClientID)
                 ORDER BY jr.dateRecieved DESC,jr.jobRequestID DESC;";
             try
             {
@@ -75,6 +90,7 @@ namespace GiantGroupM3.Requests
                 using (var da = new SqlDataAdapter(cmd))
                 {
                     cmd.Parameters.Add("@ClientID", SqlDbType.Int).Value = ClientId;
+                    cmd.Parameters.Add("@IsManager", SqlDbType.Bit).Value = IsStaffManager;
                     var dt = new DataTable(); da.Fill(dt); gvRequests.DataSource = dt; gvRequests.DataBind();
                 }
             }
@@ -87,18 +103,20 @@ namespace GiantGroupM3.Requests
             if (b != null)
             {
                 var r = (DataRowView)e.Row.DataItem;
-                b.Visible = CanCancel(Convert.ToString(r["RequestStatus"]), r["siteEvaluationDate"]);
+                b.Visible = IsClientUser && CanCancel(Convert.ToString(r["RequestStatus"]), r["siteEvaluationDate"]);
             }
         }
         protected void gvRequests_RowCommand(object sender, GridViewCommandEventArgs e)
         {
             int id; if (!int.TryParse(Convert.ToString(e.CommandArgument), out id) || id <= 0) return;
-            if (e.CommandName == "CancelRequest") CancelRequest(id);
+            if (!Authorized) return;
+            if (e.CommandName == "CancelRequest" && IsClientUser) CancelRequest(id);
             if (e.CommandName == "Photos") OpenPhotos(id);
         }
         private void ShowMessage(string message) { pnlMessage.Visible = true; litMessage.Text = message; }
         private void CancelRequest(int requestId)
         {
+            if (!IsClientUser) return;
             const string sql = @"UPDATE dbo.JobRequest SET status='Cancelled'
                WHERE jobRequestID=@RequestID AND clientID=@ClientID
                AND status IN ('Pending','Evaluation date set')
@@ -120,6 +138,7 @@ namespace GiantGroupM3.Requests
                         {
                             cmd.Parameters.Add("@RequestID", SqlDbType.Int).Value = requestId;
                             cmd.Parameters.Add("@ClientID", SqlDbType.Int).Value = ClientId;
+                            cmd.Parameters.Add("@IsManager", SqlDbType.Bit).Value = IsStaffManager;
                             cmd.Parameters.Add("@Today", SqlDbType.Date).Value = SouthAfricaToday();
                             int updated = Convert.ToInt32(cmd.ExecuteScalar()); tx.Commit();
                             ShowMessage(updated == 1 ? "Request cancelled. The management team has been notified." : "This request cannot be cancelled (its status or evaluation date may have changed).");
@@ -134,10 +153,11 @@ namespace GiantGroupM3.Requests
         {
             status = null;
             using (var cn = new SqlConnection(ConnectionString))
-            using (var cmd = new SqlCommand("SELECT status FROM dbo.JobRequest WHERE jobRequestID=@ID AND clientID=@ClientID", cn))
+            using (var cmd = new SqlCommand("SELECT status FROM dbo.JobRequest WHERE jobRequestID=@ID AND (@IsManager=1 OR clientID=@ClientID)", cn))
             {
                 cmd.Parameters.Add("@ID", SqlDbType.Int).Value = id;
                 cmd.Parameters.Add("@ClientID", SqlDbType.Int).Value = ClientId;
+                cmd.Parameters.Add("@IsManager", SqlDbType.Bit).Value = IsStaffManager;
                 cn.Open(); var result = cmd.ExecuteScalar();
                 if (result == null) return false;
                 status = Convert.ToString(result); return true;
@@ -159,18 +179,20 @@ namespace GiantGroupM3.Requests
         }
         private void BindPhotos(int requestId, bool cancelled)
         {
-            const string sql = @"SELECT sp.photoID,sp.uploadDate,CAST(CASE WHEN @Cancelled=1 THEN 0 ELSE 1 END AS bit) AS CanDelete
+            const string sql = @"SELECT sp.photoID,sp.uploadDate,CAST(CASE WHEN @Cancelled=1 OR sc.UploadedByClient<>@UploaderIsClient THEN 0 ELSE 1 END AS bit) AS CanDelete
               FROM dbo.SitePhoto sp INNER JOIN dbo.SitePhotoContent sc ON sc.photoID=sp.photoID
               INNER JOIN dbo.JobRequest jr ON jr.jobRequestID=sp.jobRequestID
-              WHERE sp.jobRequestID=@ID AND jr.clientID=@ClientID AND sp.jobID IS NULL
-              AND sc.UploadedByClient=1 ORDER BY sp.photoID DESC";
+              WHERE sp.jobRequestID=@ID AND (@IsManager=1 OR jr.clientID=@ClientID) AND sp.jobID IS NULL
+              ORDER BY sp.photoID DESC";
             using (var cn = new SqlConnection(ConnectionString))
             using (var cmd = new SqlCommand(sql, cn))
             using (var da = new SqlDataAdapter(cmd))
             {
                 cmd.Parameters.Add("@ID", SqlDbType.Int).Value = requestId;
                 cmd.Parameters.Add("@ClientID", SqlDbType.Int).Value = ClientId;
+                cmd.Parameters.Add("@IsManager", SqlDbType.Bit).Value = IsStaffManager;
                 cmd.Parameters.Add("@Cancelled", SqlDbType.Bit).Value = cancelled;
+                cmd.Parameters.Add("@UploaderIsClient", SqlDbType.Bit).Value = IsClientUser;
                 var dt = new DataTable(); da.Fill(dt); rptPhotos.DataSource = dt; rptPhotos.DataBind(); lblNoPhotos.Visible = dt.Rows.Count == 0;
             }
         }
@@ -180,7 +202,7 @@ namespace GiantGroupM3.Requests
             const string sql = @"SELECT sc.MimeType,sc.ImageData FROM dbo.SitePhoto sp
                INNER JOIN dbo.SitePhotoContent sc ON sc.photoID=sp.photoID
                INNER JOIN dbo.JobRequest jr ON jr.jobRequestID=sp.jobRequestID
-               WHERE sp.photoID=@PhotoID AND jr.clientID=@ClientID AND sp.jobID IS NULL AND sc.UploadedByClient=1;";
+               WHERE sp.photoID=@PhotoID AND (@IsManager=1 OR jr.clientID=@ClientID) AND sp.jobID IS NULL ;";
             try
             {
                 using (var cn = new SqlConnection(ConnectionString))
@@ -188,6 +210,7 @@ namespace GiantGroupM3.Requests
                 {
                     cmd.Parameters.Add("@PhotoID", SqlDbType.Int).Value = photoId;
                     cmd.Parameters.Add("@ClientID", SqlDbType.Int).Value = ClientId;
+                    cmd.Parameters.Add("@IsManager", SqlDbType.Bit).Value = IsStaffManager;
                     cn.Open(); using (var rdr = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
                     {
                         if (!rdr.Read()) { Response.StatusCode = 404; Context.ApplicationInstance.CompleteRequest(); return; }
@@ -216,17 +239,17 @@ namespace GiantGroupM3.Requests
                 {
                     cn.Open(); using (var tx = cn.BeginTransaction(IsolationLevel.Serializable))
                     {
-                        using (var lockCmd = new SqlCommand("SELECT status FROM dbo.JobRequest WITH (UPDLOCK,HOLDLOCK) WHERE jobRequestID=@ID AND clientID=@ClientID", cn, tx))
+                        using (var lockCmd = new SqlCommand("SELECT status FROM dbo.JobRequest WITH (UPDLOCK,HOLDLOCK) WHERE jobRequestID=@ID AND (@IsManager=1 OR clientID=@ClientID)", cn, tx))
                         {
-                            lockCmd.Parameters.Add("@ID", SqlDbType.Int).Value = id; lockCmd.Parameters.Add("@ClientID", SqlDbType.Int).Value = ClientId;
+                            lockCmd.Parameters.Add("@ID", SqlDbType.Int).Value = id; lockCmd.Parameters.Add("@ClientID", SqlDbType.Int).Value = ClientId; lockCmd.Parameters.Add("@IsManager", SqlDbType.Bit).Value = IsStaffManager;
                             var locked = lockCmd.ExecuteScalar(); if (locked == null || string.Equals(Convert.ToString(locked), "Cancelled", StringComparison.OrdinalIgnoreCase)) { tx.Rollback(); ShowMessage("This request is no longer available for uploads."); return; }
                         }
                         int photoId;
                         using (var cmd = new SqlCommand(@"INSERT INTO dbo.SitePhoto(photoType,filePath,uploadDate,jobRequestID)
                       VALUES('BEFORE',@Path,GETDATE(),@ID); SELECT CAST(SCOPE_IDENTITY() AS int);", cn, tx))
-                        { cmd.Parameters.Add("@Path", SqlDbType.VarChar, 255).Value = "db-photo://client/" + Guid.NewGuid().ToString("N"); cmd.Parameters.Add("@ID", SqlDbType.Int).Value = id; photoId = Convert.ToInt32(cmd.ExecuteScalar()); }
-                        using (var cmd = new SqlCommand("INSERT INTO dbo.SitePhotoContent(photoID,MimeType,ImageData,UploadedByClient) VALUES(@ID,@Mime,@Data,1)", cn, tx))
-                        { cmd.Parameters.Add("@ID", SqlDbType.Int).Value = photoId; cmd.Parameters.Add("@Mime", SqlDbType.VarChar, 20).Value = mime; cmd.Parameters.Add("@Data", SqlDbType.VarBinary, -1).Value = bytes; cmd.ExecuteNonQuery(); }
+                        { cmd.Parameters.Add("@Path", SqlDbType.VarChar, 255).Value = (IsStaffManager ? "db-photo://staff/" : "db-photo://client/") + Guid.NewGuid().ToString("N"); cmd.Parameters.Add("@ID", SqlDbType.Int).Value = id; photoId = Convert.ToInt32(cmd.ExecuteScalar()); }
+                        using (var cmd = new SqlCommand("INSERT INTO dbo.SitePhotoContent(photoID,MimeType,ImageData,UploadedByClient) VALUES(@ID,@Mime,@Data,@UploaderIsClient)", cn, tx))
+                        { cmd.Parameters.Add("@ID", SqlDbType.Int).Value = photoId; cmd.Parameters.Add("@UploaderIsClient", SqlDbType.Bit).Value = IsClientUser; cmd.Parameters.Add("@Mime", SqlDbType.VarChar, 20).Value = mime; cmd.Parameters.Add("@Data", SqlDbType.VarBinary, -1).Value = bytes; cmd.ExecuteNonQuery(); }
                         tx.Commit();
                     }
                 }
@@ -244,20 +267,20 @@ namespace GiantGroupM3.Requests
                 {
                     cn.Open(); using (var tx = cn.BeginTransaction(IsolationLevel.Serializable))
                     {
-                        using (var lockCmd = new SqlCommand("SELECT status FROM dbo.JobRequest WITH (UPDLOCK,HOLDLOCK) WHERE jobRequestID=@ID AND clientID=@ClientID", cn, tx))
+                        using (var lockCmd = new SqlCommand("SELECT status FROM dbo.JobRequest WITH (UPDLOCK,HOLDLOCK) WHERE jobRequestID=@ID AND (@IsManager=1 OR clientID=@ClientID)", cn, tx))
                         {
-                            lockCmd.Parameters.Add("@ID", SqlDbType.Int).Value = id; lockCmd.Parameters.Add("@ClientID", SqlDbType.Int).Value = ClientId;
+                            lockCmd.Parameters.Add("@ID", SqlDbType.Int).Value = id; lockCmd.Parameters.Add("@ClientID", SqlDbType.Int).Value = ClientId; lockCmd.Parameters.Add("@IsManager", SqlDbType.Bit).Value = IsStaffManager;
                             var status = lockCmd.ExecuteScalar(); if (status == null || string.Equals(Convert.ToString(status), "Cancelled", StringComparison.OrdinalIgnoreCase)) { tx.Rollback(); ShowMessage("Photos on cancelled requests cannot be removed."); return; }
                         }
                         using (var cmd = new SqlCommand(@"DELETE sc FROM dbo.SitePhotoContent sc
                      JOIN dbo.SitePhoto sp ON sp.photoID=sc.photoID
-                     WHERE sp.photoID=@PhotoID AND sp.jobRequestID=@ID AND sp.jobID IS NULL AND sc.UploadedByClient=1;
+                     WHERE sp.photoID=@PhotoID AND sp.jobRequestID=@ID AND sp.jobID IS NULL AND sc.UploadedByClient=@UploaderIsClient;
                      IF @@ROWCOUNT=1 DELETE FROM dbo.SitePhoto WHERE photoID=@PhotoID AND jobRequestID=@ID AND jobID IS NULL;", cn, tx))
-                        { cmd.Parameters.Add("@PhotoID", SqlDbType.Int).Value = photoId; cmd.Parameters.Add("@ID", SqlDbType.Int).Value = id; cmd.ExecuteNonQuery(); }
+                        { cmd.Parameters.Add("@PhotoID", SqlDbType.Int).Value = photoId; cmd.Parameters.Add("@ID", SqlDbType.Int).Value = id; cmd.Parameters.Add("@UploaderIsClient", SqlDbType.Bit).Value = IsClientUser; cmd.ExecuteNonQuery(); }
                         tx.Commit();
                     }
                 }
-                ShowMessage("Photo removed."); OpenPhotos(id);
+                ShowMessage("Photo removal processed. Only photos uploaded by your account type can be removed."); OpenPhotos(id);
             }
             catch (Exception ex) { System.Diagnostics.Trace.TraceError("Remove photo: " + ex); ShowMessage("Could not remove photo."); OpenPhotos(id); }
         }

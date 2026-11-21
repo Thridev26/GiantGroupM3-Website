@@ -85,8 +85,7 @@ namespace GiantGroupM3
                         WHERE ri3.jobRequestID = jr.jobRequestID AND jt3.jobTypeName LIKE @likeSearch
                     )
                   )
-                ORDER BY CASE WHEN jr.status = 'Site Evaluated' THEN 1 ELSE 0 END,
-                         jr.siteEvaluationDate ASC, jr.jobRequestID DESC;";
+                 ORDER BY jr.jobRequestID DESC;";
 
             try
             {
