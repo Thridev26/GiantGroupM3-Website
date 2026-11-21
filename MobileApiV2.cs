@@ -584,7 +584,7 @@ namespace GiantGroupM3
                     try
                     {
                         using (var cmd = new SqlCommand(@"INSERT INTO dbo.Quote (jobRequestID, dateIssued, expiryDate, dateGenerated, amount, quoteStatus)
-                            SELECT @r, GETDATE(), DATEADD(month, 1, GETDATE()), GETDATE(), @a, 'Sent'
+                            SELECT @r, GETDATE(), DATEADD(month, 1, GETDATE()), GETDATE(), @a, 'Not sent'
                             WHERE NOT EXISTS (SELECT 1 FROM dbo.Quote WHERE jobRequestID = @r);
                             SELECT ISNULL((SELECT TOP 1 QuoteID FROM dbo.Quote WHERE jobRequestID = @r ORDER BY QuoteID DESC), 0), @@ROWCOUNT;", c, tx))
                         {
@@ -606,7 +606,6 @@ namespace GiantGroupM3
                     catch (Exception) { try { tx.Rollback(); } catch (Exception) { } throw; }
                 }
             }
-            GiantGroupM3.Services.ClientNotifications.QuoteReady(conn, requestId, ctx.Request, f.Services, f.Travel, f.Vat, f.Total);
             ctx.Response.StatusCode = 201;
             Json(ctx, LoadQuote(conn, quoteId));
         }
@@ -638,6 +637,14 @@ namespace GiantGroupM3
                 if (!TryDecimal(b["amount"], out amount) || amount < 0 || amount > 100000000m) throw new V2Error(400, "Enter a valid amount.");
                 amount = Math.Round(amount, 2);
             }
+            // Quotes waiting for review: they can only be approved (set to Sent), and only by a Systems Manager or Owner.
+            if (oldStatus == "Not sent" && newStatus != "Not sent" && newStatus != "Sent")
+                throw new V2Error(400, "Approve the quote (set it to Sent) before accepting or rejecting it.");
+            bool approving = oldStatus == "Not sent" && newStatus == "Sent";
+            int staffLevel = ctx.Items["StaffLevel"] as int? ?? 0;
+            if (approving && staffLevel < 5)
+                throw new V2Error(403, "Only a Systems Manager or Owner can approve a quote.");
+
             DateTime? expiry = cur[0]["expiryDate"] == null ? (DateTime?)null : Convert.ToDateTime(cur[0]["expiryDate"]);
             if (b["expiryDate"] != null && b["expiryDate"].Type != JTokenType.Null)
             {
@@ -675,7 +682,8 @@ namespace GiantGroupM3
                     catch (Exception) { try { tx.Rollback(); } catch (Exception) { } throw; }
                 }
             }
-            GiantGroupM3.Services.ClientNotifications.QuoteUpdatedByStaff(conn, id, ctx.Request);
+            if (approving) GiantGroupM3.Services.ClientNotifications.QuoteApproved(conn, id, ctx.Request);
+            else GiantGroupM3.Services.ClientNotifications.QuoteUpdatedByStaff(conn, id, ctx.Request);
             Json(ctx, LoadQuote(conn, id));
         }
 

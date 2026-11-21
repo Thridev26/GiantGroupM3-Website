@@ -71,6 +71,7 @@ namespace GiantGroupM3
 
 
                 _me = Authenticate(ctx);
+                ctx.Items["StaffLevel"] = _me == null ? 0 : _me.Level;
 
                 if (p.Length == 1 && p[0] == "dashboard" && m == "GET") { Dashboard(ctx); return; }
 

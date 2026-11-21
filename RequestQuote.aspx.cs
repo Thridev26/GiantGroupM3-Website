@@ -552,7 +552,7 @@ END
                         {
                             const string insertQuoteQuery = @"
                                 INSERT INTO Quote (jobRequestID, dateIssued, expiryDate, dateGenerated, amount, quoteStatus)
-                                SELECT @JobRequestID, GETDATE(), DATEADD(month, 1, GETDATE()), GETDATE(), @Amount, 'Sent'
+                                SELECT @JobRequestID, GETDATE(), DATEADD(month, 1, GETDATE()), GETDATE(), @Amount, 'Not sent'
                                 WHERE NOT EXISTS (SELECT 1 FROM Quote WHERE jobRequestID = @JobRequestID)";
 
                             using (SqlCommand cmdInsert = new SqlCommand(insertQuoteQuery, conn, tx))
@@ -590,9 +590,6 @@ END
                     return;
                 }
 
-                // Quote is saved and committed: email the client the breakdown (never throws).
-                GiantGroupM3.Services.ClientNotifications.QuoteReady(connString, jobRequestId, Request,
-                    figures.Services, figures.Travel, figures.Vat, figures.Total);
             }
             catch (Exception ex)
             {
@@ -602,7 +599,7 @@ END
             }
 
             SetSteps(3);
-            ShowMessage("Quote generated, saved and marked as Sent. Use the button on the right to open it.", "alert alert-success rounded-3 mb-4", true);
+            ShowMessage("Your quote has been generated and sent to our team for review. You will receive an email once it has been approved.", "alert alert-success rounded-3 mb-4", true);
         }
 
         /// <summary>Highlights the progress bar: 1 = choosing, 2 = reviewing, 3 = generated.</summary>

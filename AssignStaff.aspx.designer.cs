@@ -112,6 +112,9 @@ namespace GiantGroupM3
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Panel pnlSchedule;
+        protected global::System.Web.UI.WebControls.Panel pnlCurrentStaff;
+        protected global::System.Web.UI.WebControls.Label lblCurrentStaffNote;
+        protected global::System.Web.UI.WebControls.GridView gvCurrentStaff;
 
         /// <summary>
         /// txtWorkDate control.
