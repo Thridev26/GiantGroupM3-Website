@@ -183,6 +183,8 @@ namespace GiantGroupM3
 
                 Panel field = new Panel { CssClass = "ev-field" };
                 Label label = new Label { Text = HttpUtility.HtmlEncode(detailName), AssociatedControlID = "txtDetail_" + jobDetailId + "_" + itemId };
+                bool required = IsPricingDetail(jobDetailId);
+                if (required) label.Text += " <span class=\"ev-required\" aria-label=\"required\">*</span>";
                 TextBox input = new TextBox
                 {
                     ID = "txtDetail_" + jobDetailId + "_" + itemId,
@@ -191,6 +193,7 @@ namespace GiantGroupM3
                     Text = IsPostBack ? string.Empty : existingValue
                 };
                 input.Attributes["autocomplete"] = "off";
+                if (required) input.Attributes["aria-required"] = "true";
                 Label hint = new Label { CssClass = "ev-hint", Text = HttpUtility.HtmlEncode(GetDataTypeHint(dataType)) };
                 field.Controls.Add(label);
                 field.Controls.Add(input);
@@ -210,17 +213,33 @@ namespace GiantGroupM3
             List<DetailToSave> values = new List<DetailToSave>();
             foreach (TextBox input in FindTextBoxes(phDetails))
             {
-                if (string.IsNullOrWhiteSpace(input.Text) || input.Text.Trim().Equals("Not Specified", StringComparison.OrdinalIgnoreCase))
-                    continue;
-
                 string[] parts = input.ID.Split('_');
-                if (parts.Length != 3 || !int.TryParse(parts[1], out int jobDetailId) || !int.TryParse(parts[2], out int requestItemId))
+
+                if (parts.Length != 3 ||
+                    !int.TryParse(parts[1], out int jobDetailId) ||
+                    !int.TryParse(parts[2], out int requestItemId))
                 {
-                    ShowMessage("A detail field could not be identified. Refresh the page and try again.");
+                    ShowMessage("A detail field could not be identified. Refresh the page and try again.", true);
                     return;
                 }
 
                 string value = input.Text.Trim();
+
+                // Validate compulsory pricing fields
+                if (IsPricingDetail(jobDetailId) && !IsPositiveQuantity(value))
+                {
+                    input.Focus();
+                    ShowMessage("Complete " + GetDetailName(jobDetailId) +
+                        " with a number greater than zero.", true);
+                    return;
+                }
+
+                // Allow optional fields to remain empty
+                if (string.IsNullOrWhiteSpace(value) ||
+                    value.Equals("Not Specified", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
                 if (value.Length > 50)
                 {
                     input.Focus();
@@ -239,9 +258,12 @@ namespace GiantGroupM3
                 if (validationError != null)
                 {
                     input.Focus();
-                    ShowMessage("'" + value + "' " + validationError + " for " + GetDetailName(jobDetailId) + ".");
+                    ShowMessage("'" + value + "' " + validationError +
+     " for " + GetDetailName(jobDetailId) + ".", true);
                     return;
                 }
+
+               
 
                 values.Add(new DetailToSave { JobDetailID = jobDetailId, RequestItemID = requestItemId, Value = value });
             }
@@ -309,15 +331,71 @@ namespace GiantGroupM3
 
         protected void btnSiteEvaluated_Click(object sender, EventArgs e)
         {
-            if (_requestId <= 0) return;
+            if (!IsOperationsAuthorized() || _requestId <= 0) return;
             try
             {
+                // Check the current inputs as well as the saved database values.
+                foreach (TextBox input in FindTextBoxes(phDetails))
+                {
+                    string[] parts = input.ID.Split('_');
+                    if (parts.Length != 3 || !int.TryParse(parts[1], out int detailId) || !IsPricingDetail(detailId)) continue;
+                    if (!IsPositiveQuantity(input.Text.Trim()))
+                    {
+                        input.Focus();
+                        ShowMessage("Complete " + GetDetailName(detailId) +
+     " with a number greater than zero, then click Capture details.", true);
+                        return;
+                    }
+                }
                 using (SqlConnection conn = new SqlConnection(_connString))
                 using (SqlCommand cmd = new SqlCommand(@"UPDATE dbo.JobRequest SET status = 'Site Evaluated' WHERE jobRequestID = @id AND siteEvaluationDate IS NOT NULL", conn))
                 {
                     cmd.Parameters.Add("@id", SqlDbType.Int).Value = _requestId;
                     conn.Open();
-                    int changed = cmd.ExecuteNonQuery();
+                    int changed;
+                    const string checkSql = @"
+                        SELECT ri.requestItemID, jt.jobTypeName, jd.detailName, jd.jobDetailID, id.detailValue
+                        FROM dbo.RequestItem ri
+                        INNER JOIN dbo.JobType jt ON jt.jobTypeID = ri.jobTypeID
+                        LEFT JOIN dbo.JobDetail jd ON jd.jobTypeID = ri.jobTypeID AND jd.jobDetailID =
+                            CASE jt.jobTypeName WHEN 'Tree Felling' THEN 1 WHEN 'Grass Cutting' THEN 6
+                            WHEN 'Tree Planting' THEN 10 WHEN 'Vegetation Clearance' THEN 14 WHEN 'Hedge Trimming' THEN 18 END
+                        LEFT JOIN dbo.ItemDetail id ON id.requestItemID = ri.requestItemID AND id.jobDetailID = jd.jobDetailID
+                        WHERE ri.jobRequestID = @id;";
+                    using (SqlTransaction tx = conn.BeginTransaction(IsolationLevel.Serializable))
+                    {
+                        cmd.Transaction = tx;
+                        using (SqlCommand check = new SqlCommand(checkSql, conn, tx))
+                        {
+                            check.Parameters.Add("@id", SqlDbType.Int).Value = _requestId;
+                            using (SqlDataReader reader = check.ExecuteReader())
+                            {
+                                bool any = false;
+                                while (reader.Read())
+                                {
+                                    any = true;
+                                    string service = Convert.ToString(reader["jobTypeName"]);
+                                    if (reader["jobDetailID"] == DBNull.Value)
+                                    {
+                                        ShowMessage("No pricing detail is configured for " + service + ".");
+                                        return;
+                                    }
+                                    string saved = Convert.ToString(reader["detailValue"]).Trim();
+                                    int detailId = Convert.ToInt32(reader["jobDetailID"]);
+                                    int itemId = Convert.ToInt32(reader["requestItemID"]);
+                                    TextBox input = FindTextBoxes(phDetails).FirstOrDefault(t => t.ID == "txtDetail_" + detailId + "_" + itemId);
+                                    if (!IsPositiveQuantity(saved) || input == null || saved != input.Text.Trim())
+                                    {
+                                        ShowMessage("Complete and capture the required pricing detail for " + service + ": " + Convert.ToString(reader["detailName"]) + ".");
+                                        return;
+                                    }
+                                }
+                                if (!any) { ShowMessage("No requested items were found."); return; }
+                            }
+                        }
+                        changed = cmd.ExecuteNonQuery();
+                        tx.Commit();
+                    }
                     if (changed == 1)
                     {
                         litStatus.Text = "Site Evaluated";
@@ -337,6 +415,19 @@ namespace GiantGroupM3
                 System.Diagnostics.Trace.TraceError("EvaluateRequest status update failed: " + ex);
                 ShowMessage("The request status could not be updated. Please try again.");
             }
+        }
+
+        private static bool IsPricingDetail(int id)
+        {
+            return id == 1 || id == 6 || id == 10 || id == 14 || id == 18;
+        }
+
+        private static bool IsPositiveQuantity(string value)
+        {
+            return decimal.TryParse(value, NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign,
+                CultureInfo.InvariantCulture, out decimal quantity)
+                && quantity < 10000000000000000m
+                && Math.Round(quantity, 2, MidpointRounding.AwayFromZero) > 0;
         }
 
         private string GetValidatedDataType(int jobDetailId, int requestItemId, int requestId)
@@ -418,10 +509,13 @@ namespace GiantGroupM3
             return null;
         }
 
-        private void ShowMessage(string message)
+        private void ShowMessage(string message, bool isError = false)
         {
             lblMessage.Text = HttpUtility.HtmlEncode(message);
             lblMessage.Visible = true;
+            lblMessage.CssClass = isError
+                ? "ev-message ev-error"
+                : "ev-message";
         }
 
         private sealed class DetailToSave

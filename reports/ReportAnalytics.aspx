@@ -818,7 +818,34 @@
                             borderRadius: 5
                         }]
                     },
-                    options: commonOptions(true, false)
+                    options: {
+                        ...commonOptions(true, false),
+                        plugins: {
+                            ...commonOptions(true, false).plugins,
+                            legend: {
+                                position: "bottom",
+                                labels: {
+                                    generateLabels: function () {
+                                        return [
+                                            {
+                                                text: "Profit",
+                                                fillStyle: green,
+                                                strokeStyle: green,
+                                                hidden: false
+                                            },
+                                            {
+                                                text: "Loss",
+                                                fillStyle: "#cc5555",
+                                                strokeStyle: "#cc5555",
+                                                hidden: false
+                                            }
+                                        ];
+                                    }
+                                },
+                                onClick: function () { }
+                            }
+                        }
+                    }
                 }
             );
 
