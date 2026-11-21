@@ -131,7 +131,7 @@ Logging in:
 Requesting work and quotes (needs a client account):
 - Use Submit New Job Request on the Client Portal. Describe the job and attach photos of the site.
 - Request statuses: Pending (submitted, waiting for a site evaluation date); Evaluation Date Set (a date has been assigned); Site Evaluated (the site has been visited and measured, so a quote is being prepared); Quote Sent (a quote is ready for you); Quote Accepted (you accepted it); Cancelled (the quote was rejected, or the request was cancelled by staff).
-- When a quote is Sent, you can review it, print it (use your browser's print dialog or Save as PDF), then accept or reject it. You will only see quotes that are Sent, Accepted or Rejected.
+- When a quote is Sent, you will also receive an email with a PDF copy of the quote attached. You can review the quote in your Client Portal, print it (using your browser's print dialog or Save as PDF), then accept or reject it. You will only see quotes that are Sent, Accepted or Rejected.
 - A quote is valid for one month from the day it is issued. After that you can no longer respond to it; contact the business.
 - If you reject a quote, the request is set to Cancelled and no new quote is made for it. To go ahead anyway, contact the business.
 - After you accept a quote, the team schedules the work. Job statuses are Not Started, In Progress, Completed and Archived.
@@ -144,10 +144,18 @@ Paying:
 - There is no separate invoice document. The accepted quote's total is the amount due.
 - To pay, open Invoicing in the top menu and choose Manage & Make Payments, which takes you to PayFast.
 
-Notifications:
-- The website only sends emails for one-time codes (login and password reset), and the contact form message. It does not send automatic emails or SMS for quotes, bookings, payments or job progress, so clients should check their Client Portal for updates.
 
-NOT available on the website (do not describe these as working): self-service cancelling or rescheduling; printable invoices, booking confirmations or payment receipts; automatic email or SMS notifications about quotes, bookings, invoices or jobs; reports; and any page not mentioned above.";
+
+Notifications:
+- The website sends automatic email notifications to clients at the following stages: request received; evaluation scheduled; site evaluated; quote ready; quote updated; quote accepted or declined; job scheduled; work started; and job completed.
+- When a quote is ready, a PDF copy of the quote is attached to the email.
+- The website also sends one-time codes for login and password reset.
+- Contact form messages are also sent by email.
+
+NOT available on the website (do not describe these as working): self-service cancelling or rescheduling; printable invoices, booking confirmations or payment receipts; reports; and any page not mentioned above.";
+
+
+
 
         // ------------------------------------------------------------------ staff only (added only for logged-in staff)
         private const string StaffHelp = @"STAFF HELP (only for logged-in staff)
