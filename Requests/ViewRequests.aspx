@@ -12,16 +12,21 @@
     </style>
     <div class="history-wrap px-3">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-            <div><h1>My Service Requests</h1><p class="text-muted mb-0">Manage your requests and site photos.</p></div>
+            <div><h1><%= IsStaffManager ? "All Service Requests" : "My Service Requests" %></h1><p class="text-muted mb-0"><%= IsStaffManager ? "View requests and manage site photos for all clients." : "Manage your requests and site photos." %></p></div>
+            <% if (!IsStaffManager) { %>
             <a href="~/Requests/SubmitRequest.aspx" runat="server" class="btn btn-success">Submit a new request</a>
+            <% } %>
         </div>
         <asp:Panel ID="pnlError" runat="server" Visible="false" CssClass="alert alert-danger">We couldn't load your request details. Please retry or contact support.</asp:Panel>
         <asp:Panel ID="pnlMessage" runat="server" Visible="false" CssClass="alert alert-info"><asp:Literal ID="litMessage" runat="server" Mode="Encode" /></asp:Panel>
+        <% if (!IsStaffManager) { %>
         <div class="alert alert-info">Request details cannot be edited. To change a request, cancel it (if eligible) and submit a new one, or call Giant Group at <a href="tel:0848331373">084 833 1373</a>. Cancellation is only available for Pending / Evaluation date set requests with no evaluation date, or where the evaluation is after today.</div>
+        <% } %>
         <div class="history-scroll">
-            <asp:GridView ID="gvRequests" runat="server" AutoGenerateColumns="false" CssClass="table table-striped table-hover history-table" GridLines="None" EmptyDataText="You have not submitted any service requests yet." UseAccessibleHeader="true" DataKeyNames="jobRequestID" OnRowCommand="gvRequests_RowCommand" OnRowDataBound="gvRequests_RowDataBound">
+            <asp:GridView ID="gvRequests" runat="server" AutoGenerateColumns="false" CssClass="table table-striped table-hover history-table" GridLines="None" EmptyDataText="No service requests found." UseAccessibleHeader="true" DataKeyNames="jobRequestID" OnRowCommand="gvRequests_RowCommand" OnRowDataBound="gvRequests_RowDataBound">
                 <Columns>
                     <asp:BoundField DataField="jobRequestID" HeaderText="Request #" />
+                    <asp:BoundField DataField="ClientName" HeaderText="Client" />
                     <asp:BoundField DataField="dateRecieved" HeaderText="Submitted" DataFormatString="{0:dd MMM yyyy}" />
                     <asp:BoundField DataField="siteAddress" HeaderText="Site address" />
                     <asp:BoundField DataField="JobTypes" HeaderText="Requested work" />
@@ -47,7 +52,7 @@
             <div class="photo-grid"><asp:Repeater ID="rptPhotos" runat="server" OnItemCommand="rptPhotos_ItemCommand"><ItemTemplate>
                 <div class="photo-card">
                     <a href='<%# PhotoUrl(Eval("photoID")) %>' target="_blank" rel="noopener"><img src='<%# PhotoUrl(Eval("photoID")) %>' alt="Site photo" loading="lazy" /></a>
-                    <div class="small text-muted mt-2"><%#: Eval("uploadDate", "{0:dd MMM yyyy}") %> — BEFORE</div>
+                    <div class="small text-muted mt-2"><%#: Eval("uploadDate", "{0:dd MMM yyyy}") %>   BEFORE</div>
                     <asp:LinkButton ID="btnRemove" runat="server" CssClass="btn btn-outline-danger btn-sm mt-2" CommandName="RemovePhoto" CommandArgument='<%# Eval("photoID") %>' Visible='<%# Convert.ToBoolean(Eval("CanDelete")) %>' CausesValidation="false" OnClientClick="return confirm('Remove this photo?');">Remove</asp:LinkButton>
                 </div>
             </ItemTemplate></asp:Repeater></div>
