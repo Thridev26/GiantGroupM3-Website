@@ -455,6 +455,29 @@
 #chatbotPopup .oak-chat-close:hover {
     background: rgba(255,255,255,.25);
 }
+#chatbotPopup .oak-chat-expand {
+    position: absolute;
+    top: 10px;
+    right: 58px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.3);
+    color: #fff;
+    font-size: 17px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    box-sizing: border-box;
+}
+
+#chatbotPopup .oak-chat-expand:hover {
+    background: rgba(255,255,255,.25);
+}
 
 #chatbotPopup .oak-chat-body {
     flex: 1 1 auto;
@@ -565,6 +588,28 @@ body.dark-mode #chatbotPopup .oak-dots span {
 
 #chatbotPopup .oak-chat-icon.is-thinking {
     animation: oakBob 1s ease-in-out infinite;
+}
+/* Expanded Oak chatbot */
+#chatbotPopup.is-expanded {
+    top: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    left: 1rem;
+    width: auto;
+    height: auto;
+    max-width: none;
+    max-height: none;
+    border-radius: 18px;
+}
+
+/* Expanded Oak on smaller screens */
+@media (max-width: 576px) {
+    #chatbotPopup.is-expanded {
+        top: .5rem;
+        right: .5rem;
+        bottom: .5rem;
+        left: .5rem;
+    }
 }
 
 
@@ -1211,6 +1256,9 @@ body.dark-mode .gg-msg.is-error { background: #3a1f1c; color: #f1948a; }
                 <!-- Header -->
                 <div class="oak-chat-head">
                     <button type="button" class="oak-chat-close" aria-label="Close chat" onclick="toggleChatbot()">&times;</button>
+                    <button type="button" class="oak-chat-expand" onclick="toggleOakExpand()" aria-label="Expand chat" title="Expand chat">
+    <i class="bi bi-arrows-fullscreen"></i>
+</button>
                     <img src="<%= ResolveUrl("~/Content/oak-icon.png") %>" alt="Oak" class="oak-chat-icon" id="oakHeaderIcon" />
                     <h6 class="fw-bold mb-0">Oak</h6>
                     <small style="opacity: .85;">Giant Group Assistant</small>
@@ -1223,6 +1271,7 @@ body.dark-mode .gg-msg.is-error { background: #3a1f1c; color: #f1948a; }
                             Hi, I'm <strong>Oak</strong>, The Giant Group's virtual assistant. If you need anything, such as prices, opening hours, our services or how to reach us, just ask me.
                         </div>
                     </div>
+                 
                     <% if (!IsLoggedIn()) { %>
                     <div class="d-flex mb-3">
                         <div class="p-3 bg-white rounded-3 shadow-sm text-dark small gg-bubble" style="max-width: 90%;">
@@ -1234,6 +1283,27 @@ body.dark-mode .gg-msg.is-error { background: #3a1f1c; color: #f1948a; }
                         </div>
                     </div>
                     <% } %>
+                                       <% if (!IsLoggedIn()) { %>
+<div class="mb-3">
+    <div class="small text-muted mb-2 fw-semibold">YOU CAN ASK ME:</div>
+    <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-outline-success btn-sm" onclick="document.getElementById('chatInput').value='What services do you offer?'; sendChatMessage();">Our services</button>
+        <button type="button" class="btn btn-outline-success btn-sm" onclick="document.getElementById('chatInput').value='How do I request a quote?'; sendChatMessage();">Request a quote</button>
+        <button type="button" class="btn btn-outline-success btn-sm" onclick="document.getElementById('chatInput').value='How do I create an account?'; sendChatMessage();">Create an account</button>
+        <button type="button" class="btn btn-outline-success btn-sm" onclick="document.getElementById('chatInput').value='How can I contact you?'; sendChatMessage();">Contact details</button>
+    </div>
+</div>
+<% } else { %>
+<div  class="mb-3">
+    <div class="small text-muted mb-2 fw-semibold">YOU CAN ASK ME:</div>
+    <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-outline-success btn-sm" onclick="document.getElementById('chatInput').value='How do I track my request?'; sendChatMessage();">Track my request</button>
+        <button type="button" class="btn btn-outline-success btn-sm" onclick="document.getElementById('chatInput').value='How do I view my quote?'; sendChatMessage();">View my quote</button>
+        <button type="button" class="btn btn-outline-success btn-sm" onclick="document.getElementById('chatInput').value='How do I accept a quote?'; sendChatMessage();">Accept a quote</button>
+        <button type="button" class="btn btn-outline-success btn-sm" onclick="document.getElementById('chatInput').value='What do my job statuses mean?'; sendChatMessage();">Job statuses</button>
+    </div>
+</div>
+<% } %>
                 </div>
 
                 <!-- Input -->
@@ -1617,6 +1687,23 @@ function saveOakChat() {
                 if (inp) inp.focus();
             } else {
                 chatPopup.style.display = "none";
+            }
+}
+
+      function toggleOakExpand() {
+    var popup = document.getElementById('chatbotPopup');
+    var button = document.querySelector('#chatbotPopup .oak-chat-expand');
+        if (!popup || !button) return;
+           var   icon = button.querySelector('i');
+     popup.classList.toggle('is-expanded');
+    if (popup.classList.contains('is-expanded')) {
+        if (icon) icon.className = 'bi bi-fullscreen-exit';
+        button.setAttribute('aria-label', 'Minimise chat');
+                button.setAttribute('title', 'Minimise chat');
+    } else {
+        if (icon) icon.className = 'bi bi-arrows-fullscreen';
+        button.setAttribute('aria-label', 'Expand chat');
+        button.setAttribute('title', 'Expand chat');
             }
         }
 
