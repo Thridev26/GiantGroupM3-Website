@@ -37,7 +37,21 @@ namespace GiantGroupM3
         // ==================================================
         // OWNER SECURITY AND PAGE LOAD
         // ==================================================
+        protected override void OnPreInit(EventArgs e)
+        {
+            base.OnPreInit(e);
 
+            // Check whether authentication or session has expired
+            if (!Request.IsAuthenticated ||
+                Session["UserLevel"] == null)
+            {
+                string returnUrl = HttpUtility.UrlEncode(Request.RawUrl);
+
+                Response.Redirect(
+                    "~/Account/Login.aspx?ReturnUrl=" + returnUrl,
+                    true);
+            }
+        }
         protected void Page_Load(object sender, EventArgs e)
         {
             SiteMaster siteMaster = Master as SiteMaster;
