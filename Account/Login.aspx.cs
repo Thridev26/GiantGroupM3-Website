@@ -298,6 +298,9 @@ namespace GiantGroupM3.Account
             Session["MfaAttempts"] = 0;
             Session["MfaLastSent"] = DateTime.Now;
 
+            // Clear any message left from the password step, and show which address the code went to.
+            ErrorMessage.Visible = false;
+            litMfaEmail.Text = HttpUtility.HtmlEncode(email);
             loginForm.Visible = false;
             MfaPanel.Visible = true;
         }
