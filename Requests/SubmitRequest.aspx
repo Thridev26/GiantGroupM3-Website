@@ -38,11 +38,8 @@
             </div>
             <div class="mb-2">
                 <label class="form-label" for="siteMap">Confirm the site location on the map *</label>
-                <p class="request-help">The map will search for your address when you leave the address field. You can also search again below, click the map to move the marker, or drag the marker to adjust it.</p>
+                <p class="request-help">The map will search for your address when you leave the address field. You can adjust the marker within 500 metres of the located address. If the suggested address is wrong, correct the address before continuing.</p>
                 <div id="siteMap" aria-label="Map for selecting the job site location"></div>
-                <div class="map-search-actions">
-                    <button type="button" id="btnFindAddress" class="btn btn-outline-success btn-sm">Find address on map</button>
-                </div>
                 <div id="geocodeStatus" class="request-help mt-2" role="status" aria-live="polite"></div>
                 <asp:HiddenField ID="hfLatitude" runat="server" />
                 <asp:HiddenField ID="hfLongitude" runat="server" />
@@ -85,103 +82,105 @@
             var latField = document.getElementById('<%= hfLatitude.ClientID %>');
             var lngField = document.getElementById('<%= hfLongitude.ClientID %>');
             var addressField = document.getElementById('<%= txtSiteAddress.ClientID %>');
-            var findAddressButton = document.getElementById('btnFindAddress');
-            var geocodeStatus = document.getElementById('geocodeStatus');
-            var coordinateText = document.getElementById('selectedCoordinates');
+            var submit = document.getElementById('<%= btnSubmit.ClientID %>');
+            var status = document.getElementById('geocodeStatus');
+            var coordinates = document.getElementById('selectedCoordinates');
             var map = L.map('siteMap').setView([-29, 24], 5);
-            var marker = null;
-            var lastGeocodeAt = 0;
-            var geocodeInProgress = false;
-
+            var marker, circle, origin, accepted;
+            var version = 0, locatedAddress = '', pendingAddress = '';
+            var radius = 500;
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'
             }).addTo(map);
 
-            function saveLocation(latlng) {
-                latField.value = latlng.lat.toFixed(6);
-                lngField.value = latlng.lng.toFixed(6);
-                coordinateText.textContent = latField.value + ', ' + lngField.value;
+            function message(text, error) {
+                status.textContent = text;
+                status.className = error ? 'text-danger mt-2' : 'request-help mt-2';
             }
-
-            function setGeocodeStatus(message, isError) {
-                geocodeStatus.textContent = message;
-                geocodeStatus.className = isError ? 'text-danger mt-2' : 'request-help mt-2';
+            function clearLocation() {
+                origin = accepted = null;
+                locatedAddress = pendingAddress = '';
+                if (marker) { map.removeLayer(marker); marker = null; }
+                if (circle) { map.removeLayer(circle); circle = null; }
+                latField.value = lngField.value = '';
+                coordinates.textContent = 'No location selected';
             }
-
-            function placeMarker(latlng) {
-                if (marker) {
-                    marker.setLatLng(latlng);
-                } else {
-                    marker = L.marker(latlng, { draggable: true }).addTo(map);
-                    marker.on('dragend', function () {
-                        saveLocation(marker.getLatLng());
-                        setGeocodeStatus('Marker adjusted manually. Please check that it is at the correct site.', false);
-                    });
-                }
-                saveLocation(latlng);
+            function saveLocation(point) {
+                accepted = point;
+                latField.value = point.lat.toFixed(6);
+                lngField.value = point.lng.toFixed(6);
+                coordinates.textContent = latField.value + ', ' + lngField.value;
             }
-
-            async function findAddressOnMap() {
-                var address = (addressField.value || '').trim();
-                if (address.length < 5) {
-                    setGeocodeStatus('Enter a more complete site address before searching.', true);
+            function adjust(point) {
+                if (!origin || locatedAddress !== addressField.value.trim()) {
+                    message('Enter and locate your site address first.', true);
                     return;
                 }
-                if (geocodeInProgress) return;
-
-                // Nominatim's public service should not be used for keystroke-by-keystroke autocomplete.
-                // Search on blur or when the client clicks the button, with a minimum interval between calls.
-                var wait = 1100 - (Date.now() - lastGeocodeAt);
-                if (wait > 0) await new Promise(function (resolve) { window.setTimeout(resolve, wait); });
-
-                geocodeInProgress = true;
-                findAddressButton.disabled = true;
-                setGeocodeStatus('Searching for this address…', false);
+                if (map.distance(origin, point) > radius) {
+                    marker.setLatLng(accepted);
+                    message('Location rejected: the marker must remain within 500 metres of the located address.', true);
+                    return;
+                }
+                marker.setLatLng(point);
+                saveLocation(point);
+                message('Site location selected. Please confirm that it is correct.', false);
+            }
+            async function locate(previous) {
+                var address = addressField.value.trim();
+                if (address === locatedAddress || address === pendingAddress) return;
+                var current = ++version;
+                clearLocation();
+                if (address.length < 5) {
+                    if (address.length) message('Enter a more complete site address.', true);
+                    return;
+                }
+                pendingAddress = address;
+                message('Locating your address...', false);
                 try {
-                    var query = address + ', South Africa';
-                    var url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=za&q=' + encodeURIComponent(query);
-                    lastGeocodeAt = Date.now();
-                    var response = await fetch(url, { headers: { 'Accept': 'application/json', 'Accept-Language': 'en' } });
-                    if (!response.ok) throw new Error('Address lookup service returned HTTP ' + response.status);
-                    var results = await response.json();
-                    if (!results || results.length === 0) {
-                        setGeocodeStatus('We could not find that address. Try adding the suburb or city, then search again or place the marker manually.', true);
+                    var response = await fetch('<%= ResolveUrl("~/Requests/SubmitRequest.aspx/LocateAddress") %>', {
+                        method: 'POST', credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+                        body: JSON.stringify({ address: address })
+                    });
+                    if (!response.ok) throw new Error('Lookup failed');
+                    var result = (await response.json()).d;
+                    if (current !== version || address !== addressField.value.trim()) return;
+                    if (!result || !result.Success) {
+                        message((result && result.Message) || 'Address lookup failed. Please try again.', true);
                         return;
                     }
-
-                    var result = results[0];
-                    var lat = Number(result.lat);
-                    var lon = Number(result.lon);
-                    if (!Number.isFinite(lat) || !Number.isFinite(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
-                        throw new Error('The address lookup returned invalid coordinates.');
-                    }
-
-                    var location = L.latLng(lat, lon);
-                    map.setView(location, 17);
-                    placeMarker(location);
-                    setGeocodeStatus('Suggested location: ' + (result.display_name || address) + '. Check the marker and drag it if needed.', false);
+                    origin = L.latLng(result.Latitude, result.Longitude);
+                    locatedAddress = address;
+                    circle = L.circle(origin, { radius: radius, color: '#198754', fillOpacity: 0.08, interactive: false }).addTo(map);
+                    var point = previous && map.distance(origin, previous) <= radius ? previous : origin;
+                    marker = L.marker(point, { draggable: true }).addTo(map);
+                    marker.on('dragend', function () { adjust(marker.getLatLng()); });
+                    saveLocation(point);
+                    map.setView(origin, 16);
+                    message('Located: ' + result.DisplayName + '. You may adjust the marker within 500 metres.', false);
                 } catch (error) {
-                    console.error('Address lookup failed:', error);
-                    setGeocodeStatus('Address lookup is temporarily unavailable. You can still click the map to place the marker manually.', true);
+                    if (current === version) message('Address lookup is unavailable. Leave the address field again to retry.', true);
                 } finally {
-                    geocodeInProgress = false;
-                    findAddressButton.disabled = false;
+                    if (current === version) pendingAddress = '';
                 }
             }
-
-            // Automatically look up the address after the client finishes entering it and leaves the field.
-            addressField.addEventListener('blur', function () {
-                if (addressField.value.trim().length >= 5) findAddressOnMap();
+            addressField.addEventListener('input', function () {
+                ++version;
+                clearLocation();
+                message('Leave the address field to locate the new address.', false);
             });
-            findAddressButton.addEventListener('click', findAddressOnMap);
-
-            map.on('click', function (event) {
-                placeMarker(event.latlng);
-                setGeocodeStatus('Marker placed manually. Please check that it is at the correct site.', false);
-            });
-
-            // Web Forms can update layout after validation; ensure Leaflet measures the map correctly.
+            addressField.addEventListener('blur', function () { locate(null); });
+            map.on('click', function (event) { adjust(event.latlng); });
+            // Do not bypass the normal Web Forms validators; the server also checks the location.
+            submit.addEventListener('click', function (event) {
+                if (pendingAddress) {
+                    event.preventDefault(); event.stopImmediatePropagation();
+                    message('Please wait for the address lookup to finish before submitting.', true);
+                }
+            }, true);
+            var previous = latField.value && lngField.value ? L.latLng(Number(latField.value), Number(lngField.value)) : null;
+            if (addressField.value.trim()) locate(previous);
             window.setTimeout(function () { map.invalidateSize(); }, 100);
         })();
     </script>

@@ -5,6 +5,12 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Globalization;
 using System.Linq;
+using System.Web;
+using System.Web.Services;
+using System.Web.Script.Services;
+using System.Net;
+using System.IO;
+using Newtonsoft.Json.Linq;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 
@@ -115,6 +121,20 @@ namespace GiantGroupM3.Requests
                 return;
             }
 
+            // Never trust coordinates or a reference point supplied by the browser.
+            AddressResult verified = LookupAddress(address);
+            if (!verified.Success)
+            {
+                ShowError(verified.Message);
+                return;
+            }
+            if (DistanceMetres(verified.Latitude, verified.Longitude,
+                (double)latitude, (double)longitude) > 500.0)
+            {
+                ShowError("The selected site location must be within 500 metres of the entered address.");
+                return;
+            }
+
             List<int> selectedJobTypeIds = new List<int>();
             foreach (ListItem item in cblJobTypes.Items)
             {
@@ -211,6 +231,96 @@ namespace GiantGroupM3.Requests
                 System.Diagnostics.Trace.TraceError("Client job request submission failed: " + ex);
                 ShowError("We could not submit your request just now. Please try again. If the problem continues, contact support.");
             }
+        }
+
+        public sealed class AddressResult
+        {
+            public bool Success { get; set; }
+            public double Latitude { get; set; }
+            public double Longitude { get; set; }
+            public string DisplayName { get; set; }
+            public string Message { get; set; }
+        }
+
+        private static readonly object GeocodeLock = new object();
+        private static DateTime lastLookup = DateTime.MinValue;
+
+        [WebMethod(EnableSession = true)]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public static AddressResult LocateAddress(string address)
+        {
+            HttpContext context = HttpContext.Current;
+            string role = Convert.ToString(context.Session["UserRole"]);
+            int clientId;
+            if (!context.Request.IsAuthenticated ||
+                !int.TryParse(Convert.ToString(context.Session["ClientID"]), out clientId) || clientId <= 0 ||
+                (!role.Equals("Client", StringComparison.OrdinalIgnoreCase) &&
+                 !role.Equals("Owner", StringComparison.OrdinalIgnoreCase)))
+                return new AddressResult { Message = "Please log in again." };
+            return LookupAddress(address);
+        }
+
+        private static AddressResult LookupAddress(string address)
+        {
+            address = (address ?? "").Trim();
+            if (address.Length < 5 || address.Length > 100)
+                return new AddressResult { Message = "Enter a complete site address of no more than 100 characters." };
+            string key = "GiantGroup.Geocode." + address.ToUpperInvariant();
+            lock (GeocodeLock)
+            {
+                AddressResult cached = HttpRuntime.Cache[key] as AddressResult;
+                if (cached != null) return cached;
+                // Limit requests from this application process to one per second.
+                if ((DateTime.UtcNow - lastLookup).TotalMilliseconds < 1100)
+                    return new AddressResult { Message = "Address lookup is busy. Leave the address field again to retry." };
+                lastLookup = DateTime.UtcNow;
+                try
+                {
+                    string url = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=za&q=" +
+                        Uri.EscapeDataString(address + ", South Africa");
+                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+                    request.UserAgent = "GiantGroup-ClientPortal/1.0";
+                    request.Accept = "application/json";
+                    request.Headers[HttpRequestHeader.AcceptLanguage] = "en";
+                    request.Timeout = 8000;
+                    request.ReadWriteTimeout = 8000;
+                    using (WebResponse response = request.GetResponse())
+                    using (StreamReader reader = new StreamReader(response.GetResponseStream()))
+                    {
+                        JArray results = JArray.Parse(reader.ReadToEnd());
+                        double lat, lon;
+                        if (results.Count == 0 ||
+                            !double.TryParse((string)results[0]["lat"], NumberStyles.Float, CultureInfo.InvariantCulture, out lat) ||
+                            !double.TryParse((string)results[0]["lon"], NumberStyles.Float, CultureInfo.InvariantCulture, out lon) ||
+                            double.IsNaN(lat) || double.IsNaN(lon) || Math.Abs(lat) > 90 || Math.Abs(lon) > 180)
+                            return new AddressResult { Message = "Address not found. Add the street number, suburb and town, then try again." };
+                        AddressResult found = new AddressResult
+                        {
+                            Success = true,
+                            Latitude = lat,
+                            Longitude = lon,
+                            DisplayName = (string)results[0]["display_name"] ?? address
+                        };
+                        HttpRuntime.Cache.Insert(key, found, null, DateTime.UtcNow.AddHours(24), System.Web.Caching.Cache.NoSlidingExpiration);
+                        return found;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Trace.TraceWarning("Site address lookup failed: " + ex.Message);
+                    return new AddressResult { Message = "Address lookup is temporarily unavailable. Please try again." };
+                }
+            }
+        }
+
+        private static double DistanceMetres(double lat1, double lon1, double lat2, double lon2)
+        {
+            const double radians = Math.PI / 180.0;
+            double dLat = (lat2 - lat1) * radians;
+            double dLon = (lon2 - lon1) * radians;
+            double a = Math.Pow(Math.Sin(dLat / 2), 2) +
+                Math.Cos(lat1 * radians) * Math.Cos(lat2 * radians) * Math.Pow(Math.Sin(dLon / 2), 2);
+            return 6371000.0 * 2 * Math.Asin(Math.Sqrt(Math.Min(1.0, Math.Max(0.0, a))));
         }
 
         private void ShowSuccessIfOwnedRequest()
