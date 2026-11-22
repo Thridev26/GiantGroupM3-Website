@@ -141,6 +141,11 @@ namespace GiantGroupM3.Account
         protected global::System.Web.UI.WebControls.Panel MfaPanel;
 
         /// <summary>
+        /// litMfaEmail control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Literal litMfaEmail;
+
+        /// <summary>
         /// MfaCode control.
         /// </summary>
         /// <remarks>

@@ -75,7 +75,9 @@
                     <div class="text-center mb-4">
                         <span class="gg-tile is-lg mb-3"><i class="bi bi-envelope-check"></i></span>
                         <h2 class="gg-display h4 mb-2" style="color: var(--gg-text);">Check your email</h2>
-                        <p class="gg-muted small mb-0">Enter the 6-digit verification code we sent to your email address to finish signing in.</p>
+                        <p class="gg-muted small mb-2">Enter the 6-digit verification code we sent to</p>
+                        <p class="small mb-2" style="color: var(--gg-text); font-weight: 600;"><asp:Literal runat="server" ID="litMfaEmail" /></p>
+                        <p class="gg-muted small mb-0">Check your inbox. If you don't see it, check your spam or junk folder.</p>
                     </div>
 
                     <div class="mb-3">
